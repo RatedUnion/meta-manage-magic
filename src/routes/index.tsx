@@ -44,8 +44,11 @@ function Index() {
             <a href="#contact" className="hover:text-foreground">Contact</a>
           </nav>
           <a href="#contact">
-            <Button size="sm">Get in touch</Button>
+            <Button size="sm" variant="ghost">Contact</Button>
           </a>
+          <Link to="/book">
+            <Button size="sm">Book now</Button>
+          </Link>
         </div>
       </header>
 
