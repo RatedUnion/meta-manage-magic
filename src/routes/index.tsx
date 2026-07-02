@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Calendar, GraduationCap, Truck, ClipboardList, Phone, Mail, MapPin, Users, ArrowRight } from "lucide-react";
 import heroImage from "@/assets/hero-trinidad.jpg";
 import { Button } from "@/components/ui/button";
@@ -44,8 +44,11 @@ function Index() {
             <a href="#contact" className="hover:text-foreground">Contact</a>
           </nav>
           <a href="#contact">
-            <Button size="sm">Get in touch</Button>
+            <Button size="sm" variant="ghost">Contact</Button>
           </a>
+          <Link to="/book">
+            <Button size="sm">Book now</Button>
+          </Link>
         </div>
       </header>
 
@@ -76,11 +79,11 @@ function Index() {
             reservations for people who value follow-through. Serving the twin islands, virtually.
           </p>
           <div className="mt-10 flex flex-wrap gap-3">
-            <a href="#contact">
+            <Link to="/book">
               <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90">
-                Book a call <ArrowRight className="ml-1 h-4 w-4" />
+                Book now <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
-            </a>
+            </Link>
             <a href="#services">
               <Button size="lg" variant="outline" className="border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground">
                 Explore services
