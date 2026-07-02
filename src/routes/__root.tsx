@@ -77,14 +77,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Dedicated Ultimatum Appointed Associates — Virtual Services in Trinidad & Tobago" },
+      {
+        name: "description",
+        content:
+          "Dedicated Ultimatum Appointed Associates — virtual online booking, classes, delivery, and reservations serving Port of Spain, San Fernando, Chaguanas and across Trinidad & Tobago.",
+      },
+      { property: "og:title", content: "Dedicated Ultimatum Appointed Associates" },
+      {
+        property: "og:description",
+        content:
+          "Virtual services across Trinidad & Tobago — online booking, classes, delivery, and reservations. Passionately curious. Standing on the shoulders of giants.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
