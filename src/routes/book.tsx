@@ -415,6 +415,14 @@ function ConfirmationCard({ confirmation, onReset }: { confirmation: Confirmatio
         />
         <Detail icon={<User className="h-4 w-4" />} label="Name" value={confirmation.name} />
         <Detail icon={<Mail className="h-4 w-4" />} label="Email" value={confirmation.email} />
+        {confirmation.photos > 0 && (
+          <Detail
+            icon={<Images className="h-4 w-4" />}
+            label="Photos attached"
+            value={`${confirmation.photos} ${confirmation.photos === 1 ? "photo" : "photos"}`}
+          />
+        )}
+
       </dl>
 
       <div className="mt-8 rounded-lg border border-border bg-secondary/50 p-4 text-sm text-muted-foreground">
