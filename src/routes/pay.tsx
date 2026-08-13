@@ -78,10 +78,10 @@ const LOCAL_BANKS = [
     branch: "Park Street, Port of Spain",
   },
   {
-    bank: "First Citizens Bank",
+    bank: "First Citizens Bank Limited",
     country: "Trinidad & Tobago",
     account: "Dedicated Ultimatum Appointed Associates",
-    number: "2451 0098 7712",
+    number: "003108954",
     type: "Savings (TTD)",
     swift: "FCTTTTPS",
     branch: "San Fernando",
