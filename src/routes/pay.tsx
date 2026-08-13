@@ -78,6 +78,8 @@ const FCB_BANK = {
   branch: "San Fernando",
 };
 
+const PAYPAL_LINK = "https://paypal.me/unionrated?locale.x=en_US&country.x=TT";
+
 const CARD_BRANDS = [
   { id: "linx", label: "LINX", hint: "Local debit" },
   { id: "visa", label: "Visa", hint: "Local & foreign" },
