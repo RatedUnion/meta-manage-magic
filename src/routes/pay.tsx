@@ -7,6 +7,7 @@ import {
   Check,
   Copy,
   CreditCard,
+  ExternalLink,
   Globe2,
   Lock,
   ShieldCheck,
