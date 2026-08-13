@@ -43,14 +43,16 @@ function Index() {
             <a href="#services" className="hover:text-foreground">Services</a>
             <a href="#about" className="hover:text-foreground">About</a>
             <a href="#locations" className="hover:text-foreground">Locations</a>
+            <Link to="/pay" className="hover:text-foreground">Pay</Link>
             <a href="#contact" className="hover:text-foreground">Contact</a>
           </nav>
-          <a href="#contact">
-            <Button size="sm" variant="ghost">Contact</Button>
-          </a>
+          <Link to="/pay">
+            <Button size="sm" variant="ghost">Pay</Button>
+          </Link>
           <Link to="/book">
             <Button size="sm">Book now</Button>
           </Link>
+
         </div>
       </header>
 
