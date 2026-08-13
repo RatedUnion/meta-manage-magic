@@ -67,47 +67,15 @@ const SERVICES = [
   "Reservation",
 ];
 
-const LOCAL_BANKS = [
-  {
-    bank: "Republic Bank Limited",
-    country: "Trinidad & Tobago",
-    account: "Dedicated Ultimatum Appointed Associates",
-    number: "180 123 456 701",
-    type: "Chequing (TTD)",
-    swift: "RBNKTTPX",
-    branch: "Park Street, Port of Spain",
-  },
-  {
-    bank: "First Citizens Bank Limited",
-    country: "Trinidad & Tobago",
-    account: "Dedicated Ultimatum Appointed Associates",
-    number: "003108954",
-    type: "Savings (TTD)",
-    swift: "FCTTTTPS",
-    branch: "San Fernando",
-  },
-];
-
-const FOREIGN_BANKS = [
-  {
-    bank: "Republic Bank Limited — International Desk",
-    country: "USD Wire",
-    account: "Dedicated Ultimatum Appointed Associates",
-    number: "IBAN TT58 RBNK 0001 8012 3456 7010 01",
-    type: "Foreign currency (USD)",
-    swift: "RBNKTTPX",
-    branch: "Intermediary: Citibank N.A., New York — CITIUS33",
-  },
-  {
-    bank: "Wise Business (EUR/GBP)",
-    country: "Europe / United Kingdom",
-    account: "Dedicated Ultimatum Appointed Associates",
-    number: "IBAN BE79 9670 1234 5678",
-    type: "Multi-currency (EUR, GBP)",
-    swift: "TRWIBEB1XXX",
-    branch: "Rue du Trône 100, Brussels",
-  },
-];
+const FCB_BANK = {
+  bank: "First Citizens Bank Limited",
+  country: "Trinidad & Tobago",
+  account: "Dedicated Ultimatum Appointed Associates",
+  number: "003108954",
+  type: "Savings (TTD)",
+  swift: "FCTTTTPS",
+  branch: "San Fernando",
+};
 
 const CARD_BRANDS = [
   { id: "linx", label: "LINX", hint: "Local debit" },
