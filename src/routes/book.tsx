@@ -88,6 +88,50 @@ function BookPage() {
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
+  const [photos, setPhotos] = useState<PhotoItem[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    return () => {
+      photos.forEach((p) => URL.revokeObjectURL(p.url));
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const addPhotos = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const incoming = Array.from(files);
+    const accepted: PhotoItem[] = [];
+    let rejectedType = 0;
+    let rejectedSize = 0;
+
+    for (const file of incoming) {
+      if (photos.length + accepted.length >= MAX_PHOTOS) {
+        toast.error(`You can attach up to ${MAX_PHOTOS} photos`);
+        break;
+      }
+      if (!ACCEPTED_TYPES.includes(file.type)) { rejectedType++; continue; }
+      if (file.size > MAX_PHOTO_BYTES) { rejectedSize++; continue; }
+      accepted.push({
+        id: `${file.name}-${file.size}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        file,
+        url: URL.createObjectURL(file),
+      });
+    }
+
+    if (rejectedType) toast.error("Only JPG, PNG, WEBP or HEIC images are supported");
+    if (rejectedSize) toast.error("Each photo must be under 10 MB");
+    if (accepted.length) setPhotos((prev) => [...prev, ...accepted]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removePhoto = (id: string) => {
+    setPhotos((prev) => {
+      const target = prev.find((p) => p.id === id);
+      if (target) URL.revokeObjectURL(target.url);
+      return prev.filter((p) => p.id !== id);
+    });
+  };
 
   const selectedService = useMemo(
     () => SERVICES.find((s) => s.id === serviceId),
@@ -123,6 +167,7 @@ function BookPage() {
         time: parsed.data.time,
         name: parsed.data.name,
         email: parsed.data.email,
+        photos: photos.length,
       });
       toast.success("Appointment requested", {
         description: `Ref ${ref} — confirmation sent to ${parsed.data.email}.`,
@@ -135,7 +180,9 @@ function BookPage() {
     setConfirmation(null);
     setServiceId(""); setDate(undefined); setTime("");
     setName(""); setEmail(""); setPhone(""); setNotes("");
+    setPhotos((prev) => { prev.forEach((p) => URL.revokeObjectURL(p.url)); return []; });
   };
+
 
   return (
     <main className="min-h-screen bg-background text-foreground">
