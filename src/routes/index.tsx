@@ -17,6 +17,8 @@ export const Route = createFileRoute("/")({
 });
 
 const services = [
+  { icon: Wrench, title: "Mobile Mechanic", desc: "Repairs, OEM parts installation, diagnostics and maintenance — we come to you." },
+  { icon: Zap, title: "Electrician", desc: "Building and automotive electrical work, troubleshooting and safe installs." },
   { icon: Calendar, title: "Online Booking", desc: "Reserve your slot from anywhere, any time — confirmed in minutes." },
   { icon: GraduationCap, title: "Online Classes", desc: "Live and on-demand sessions built around real learning outcomes." },
   { icon: Truck, title: "Delivery", desc: "Reliable, tracked delivery across the twin islands." },
@@ -75,8 +77,9 @@ function Index() {
             Dedicated. Appointed. <span className="text-accent">Delivered.</span>
           </h1>
           <p className="mt-6 max-w-2xl text-lg text-primary-foreground/80">
-            Dedicated Ultimatum Appointed Associates — booking, classes, delivery and
-            reservations for people who value follow-through. Serving the twin islands, virtually.
+            Dedicated Ultimatum Appointed Associates — mobile mechanic, electrician, booking,
+            classes, delivery and reservations for people who value follow-through. Serving the twin
+            islands, virtually and on-site.
           </p>
           <div className="mt-10 flex flex-wrap gap-3">
             <Link to="/book">
@@ -93,7 +96,7 @@ function Index() {
           <div className="mt-16 flex flex-wrap items-center gap-x-8 gap-y-3 text-sm text-primary-foreground/70">
             <span className="flex items-center gap-2"><Users className="h-4 w-4" /> 118 followers</span>
             <span className="hidden h-1 w-1 rounded-full bg-primary-foreground/30 sm:inline-block" />
-            <span>Online booking · Classes · Delivery · Reservations</span>
+            <span>Mobile mechanic · Electrician · Booking · Classes · Delivery · Reservations</span>
           </div>
         </div>
       </section>
@@ -109,9 +112,10 @@ function Index() {
           </div>
           <div className="md:col-span-8 md:pl-8">
             <p className="text-lg leading-relaxed text-muted-foreground">
-              We're a small, virtual practice grounded in one idea: show up, do the work, and be
-              accountable for the outcome. Whether you're booking a class, scheduling a delivery,
-              or reserving a slot — you get people who take the appointment seriously.
+              We're a small practice grounded in one idea: show up, do the work, and be accountable
+              for the outcome. From mobile mechanic visits and electrical troubleshooting to
+              booking a class or scheduling a delivery — you get people who take the appointment
+              seriously.
             </p>
             <div className="mt-10 space-y-8 border-l-2 border-accent pl-6">
               <blockquote>
@@ -138,7 +142,7 @@ function Index() {
             <div>
               <p className="text-xs uppercase tracking-widest text-muted-foreground">Services</p>
               <h2 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">
-                Four ways we work with you
+                Six ways we work with you
               </h2>
             </div>
             <p className="max-w-md text-muted-foreground">
@@ -146,7 +150,7 @@ function Index() {
             </p>
           </div>
 
-          <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {services.map(({ icon: Icon, title, desc }) => (
               <div
                 key={title}
