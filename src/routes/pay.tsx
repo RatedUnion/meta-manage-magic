@@ -353,24 +353,14 @@ function PayPage() {
 
             <TabsContent value="bank" className="mt-6 space-y-8">
               <section className="space-y-4">
-                <h2 className="text-lg font-semibold tracking-tight">Local banks (Trinidad &amp; Tobago)</h2>
-                <div className="grid gap-4 md:grid-cols-2">
-                  {LOCAL_BANKS.map((b) => <BankCard key={b.bank} entry={b} />)}
-                </div>
-              </section>
-
-              <section className="space-y-4">
-                <h2 className="text-lg font-semibold tracking-tight">Foreign banks &amp; wire transfers</h2>
-                <div className="grid gap-4 md:grid-cols-2">
-                  {FOREIGN_BANKS.map((b) => <BankCard key={b.bank} entry={b} />)}
-                </div>
+                <h2 className="text-lg font-semibold tracking-tight">Bank transfer details</h2>
+                <BankCard entry={FCB_BANK} />
               </section>
 
               <div className="rounded-xl border border-border/70 bg-muted/40 p-5 text-sm text-muted-foreground">
                 <p className="font-medium text-foreground">Before you transfer</p>
                 <ul className="mt-2 list-disc space-y-1 pl-5">
                   <li>Use your booking reference (DUA-XXXXX) as the payment narrative.</li>
-                  <li>Foreign wires may attract intermediary bank fees — please send them as "OUR".</li>
                   <li>Email the transfer confirmation to delegated@live.com so we can release the job.</li>
                 </ul>
               </div>
