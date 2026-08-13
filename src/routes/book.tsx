@@ -318,6 +318,57 @@ function BookPage() {
                 </div>
               </section>
 
+              {/* Photos */}
+              <section className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="photos">Photos (optional)</Label>
+                  <span className="text-xs text-muted-foreground">{photos.length}/{MAX_PHOTOS}</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Share photos of the fault — engine bay, error codes, panel, wiring or the area to be worked on.
+                  It helps us bring the right parts and tools.
+                </p>
+
+                <input
+                  ref={fileInputRef}
+                  id="photos"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="sr-only"
+                  onChange={(e) => addPhotos(e.target.files)}
+                />
+
+                <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+                  {photos.map((p) => (
+                    <div key={p.id} className="group relative aspect-square overflow-hidden rounded-lg border border-border bg-secondary/40">
+                      <img src={p.url} alt={`Attached issue photo: ${p.file.name}`} className="h-full w-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removePhoto(p.id)}
+                        aria-label={`Remove ${p.file.name}`}
+                        className="absolute right-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-full bg-background/85 text-foreground shadow-sm transition hover:bg-background"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+
+                  {photos.length < MAX_PHOTOS && (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-border bg-card text-muted-foreground transition hover:border-accent hover:text-foreground"
+                    >
+                      <ImagePlus className="h-5 w-5" />
+                      <span className="text-xs">Add photo</span>
+                    </button>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">JPG, PNG, WEBP or HEIC · up to 10 MB each.</p>
+              </section>
+
+
               <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-6">
                 <div className="text-sm text-muted-foreground">
                   {selectedService && date && time ? (
