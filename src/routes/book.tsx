@@ -61,6 +61,12 @@ const bookingSchema = z.object({
   notes: z.string().trim().max(500).optional(),
 });
 
+const MAX_PHOTOS = 5;
+const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
+const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
+
+type PhotoItem = { id: string; file: File; url: string };
+
 type Confirmation = {
   ref: string;
   service: string;
@@ -68,7 +74,9 @@ type Confirmation = {
   time: string;
   name: string;
   email: string;
+  photos: number;
 };
+
 
 function BookPage() {
   const [serviceId, setServiceId] = useState<string>("");
