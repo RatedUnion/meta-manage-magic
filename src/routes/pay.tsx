@@ -245,9 +245,10 @@ function PayPage() {
           </div>
         ) : (
           <Tabs defaultValue="card" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="card">Card</TabsTrigger>
               <TabsTrigger value="bank">Bank transfer</TabsTrigger>
+              <TabsTrigger value="paypal">PayPal</TabsTrigger>
             </TabsList>
 
             <TabsContent value="card" className="mt-6">
