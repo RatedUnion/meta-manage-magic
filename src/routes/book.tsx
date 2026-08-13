@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
-import { ArrowLeft, CalendarIcon, CheckCircle2, Clock, Mail, Phone, User } from "lucide-react";
+import { ArrowLeft, CalendarIcon, CheckCircle2, Clock, ImagePlus, Images, Mail, Phone, User, X } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
+
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -60,6 +61,12 @@ const bookingSchema = z.object({
   notes: z.string().trim().max(500).optional(),
 });
 
+const MAX_PHOTOS = 5;
+const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
+const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
+
+type PhotoItem = { id: string; file: File; url: string };
+
 type Confirmation = {
   ref: string;
   service: string;
@@ -67,7 +74,9 @@ type Confirmation = {
   time: string;
   name: string;
   email: string;
+  photos: number;
 };
+
 
 function BookPage() {
   const [serviceId, setServiceId] = useState<string>("");
@@ -79,6 +88,50 @@ function BookPage() {
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
+  const [photos, setPhotos] = useState<PhotoItem[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    return () => {
+      photos.forEach((p) => URL.revokeObjectURL(p.url));
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const addPhotos = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const incoming = Array.from(files);
+    const accepted: PhotoItem[] = [];
+    let rejectedType = 0;
+    let rejectedSize = 0;
+
+    for (const file of incoming) {
+      if (photos.length + accepted.length >= MAX_PHOTOS) {
+        toast.error(`You can attach up to ${MAX_PHOTOS} photos`);
+        break;
+      }
+      if (!ACCEPTED_TYPES.includes(file.type)) { rejectedType++; continue; }
+      if (file.size > MAX_PHOTO_BYTES) { rejectedSize++; continue; }
+      accepted.push({
+        id: `${file.name}-${file.size}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        file,
+        url: URL.createObjectURL(file),
+      });
+    }
+
+    if (rejectedType) toast.error("Only JPG, PNG, WEBP or HEIC images are supported");
+    if (rejectedSize) toast.error("Each photo must be under 10 MB");
+    if (accepted.length) setPhotos((prev) => [...prev, ...accepted]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removePhoto = (id: string) => {
+    setPhotos((prev) => {
+      const target = prev.find((p) => p.id === id);
+      if (target) URL.revokeObjectURL(target.url);
+      return prev.filter((p) => p.id !== id);
+    });
+  };
 
   const selectedService = useMemo(
     () => SERVICES.find((s) => s.id === serviceId),
@@ -114,6 +167,7 @@ function BookPage() {
         time: parsed.data.time,
         name: parsed.data.name,
         email: parsed.data.email,
+        photos: photos.length,
       });
       toast.success("Appointment requested", {
         description: `Ref ${ref} — confirmation sent to ${parsed.data.email}.`,
@@ -126,7 +180,9 @@ function BookPage() {
     setConfirmation(null);
     setServiceId(""); setDate(undefined); setTime("");
     setName(""); setEmail(""); setPhone(""); setNotes("");
+    setPhotos((prev) => { prev.forEach((p) => URL.revokeObjectURL(p.url)); return []; });
   };
+
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -262,6 +318,57 @@ function BookPage() {
                 </div>
               </section>
 
+              {/* Photos */}
+              <section className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="photos">Photos (optional)</Label>
+                  <span className="text-xs text-muted-foreground">{photos.length}/{MAX_PHOTOS}</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Share photos of the fault — engine bay, error codes, panel, wiring or the area to be worked on.
+                  It helps us bring the right parts and tools.
+                </p>
+
+                <input
+                  ref={fileInputRef}
+                  id="photos"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="sr-only"
+                  onChange={(e) => addPhotos(e.target.files)}
+                />
+
+                <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+                  {photos.map((p) => (
+                    <div key={p.id} className="group relative aspect-square overflow-hidden rounded-lg border border-border bg-secondary/40">
+                      <img src={p.url} alt={`Attached issue photo: ${p.file.name}`} className="h-full w-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removePhoto(p.id)}
+                        aria-label={`Remove ${p.file.name}`}
+                        className="absolute right-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-full bg-background/85 text-foreground shadow-sm transition hover:bg-background"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+
+                  {photos.length < MAX_PHOTOS && (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-border bg-card text-muted-foreground transition hover:border-accent hover:text-foreground"
+                    >
+                      <ImagePlus className="h-5 w-5" />
+                      <span className="text-xs">Add photo</span>
+                    </button>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">JPG, PNG, WEBP or HEIC · up to 10 MB each.</p>
+              </section>
+
+
               <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-6">
                 <div className="text-sm text-muted-foreground">
                   {selectedService && date && time ? (
@@ -308,6 +415,14 @@ function ConfirmationCard({ confirmation, onReset }: { confirmation: Confirmatio
         />
         <Detail icon={<User className="h-4 w-4" />} label="Name" value={confirmation.name} />
         <Detail icon={<Mail className="h-4 w-4" />} label="Email" value={confirmation.email} />
+        {confirmation.photos > 0 && (
+          <Detail
+            icon={<Images className="h-4 w-4" />}
+            label="Photos attached"
+            value={`${confirmation.photos} ${confirmation.photos === 1 ? "photo" : "photos"}`}
+          />
+        )}
+
       </dl>
 
       <div className="mt-8 rounded-lg border border-border bg-secondary/50 p-4 text-sm text-muted-foreground">
