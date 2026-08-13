@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Calendar, GraduationCap, Truck, ClipboardList, Phone, Mail, MapPin, Users, ArrowRight } from "lucide-react";
+import { Calendar, GraduationCap, Truck, ClipboardList, Phone, Mail, MapPin, Users, ArrowRight, Wrench, Zap } from "lucide-react";
 import heroImage from "@/assets/hero-trinidad.jpg";
 import { Button } from "@/components/ui/button";
 

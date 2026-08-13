@@ -36,6 +36,8 @@ export const Route = createFileRoute("/book")({
 });
 
 const SERVICES = [
+  { id: "mechanic", label: "Mobile Mechanic", duration: "60 min" },
+  { id: "electrician", label: "Electrician", duration: "60 min" },
   { id: "booking", label: "Online Booking Consultation", duration: "30 min" },
   { id: "class", label: "Online Class", duration: "60 min" },
   { id: "delivery", label: "Delivery Scheduling", duration: "20 min" },
