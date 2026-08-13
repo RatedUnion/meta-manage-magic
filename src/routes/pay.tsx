@@ -7,6 +7,7 @@ import {
   Check,
   Copy,
   CreditCard,
+  ExternalLink,
   Globe2,
   Lock,
   ShieldCheck,
@@ -76,6 +77,8 @@ const FCB_BANK = {
   swift: "FCTTTTPS",
   branch: "San Fernando",
 };
+
+const PAYPAL_LINK = "https://paypal.me/unionrated?locale.x=en_US&country.x=TT";
 
 const CARD_BRANDS = [
   { id: "linx", label: "LINX", hint: "Local debit" },
@@ -242,9 +245,10 @@ function PayPage() {
           </div>
         ) : (
           <Tabs defaultValue="card" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="card">Card</TabsTrigger>
               <TabsTrigger value="bank">Bank transfer</TabsTrigger>
+              <TabsTrigger value="paypal">PayPal</TabsTrigger>
             </TabsList>
 
             <TabsContent value="card" className="mt-6">
