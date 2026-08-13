@@ -67,47 +67,15 @@ const SERVICES = [
   "Reservation",
 ];
 
-const LOCAL_BANKS = [
-  {
-    bank: "Republic Bank Limited",
-    country: "Trinidad & Tobago",
-    account: "Dedicated Ultimatum Appointed Associates",
-    number: "180 123 456 701",
-    type: "Chequing (TTD)",
-    swift: "RBNKTTPX",
-    branch: "Park Street, Port of Spain",
-  },
-  {
-    bank: "First Citizens Bank Limited",
-    country: "Trinidad & Tobago",
-    account: "Dedicated Ultimatum Appointed Associates",
-    number: "003108954",
-    type: "Savings (TTD)",
-    swift: "FCTTTTPS",
-    branch: "San Fernando",
-  },
-];
-
-const FOREIGN_BANKS = [
-  {
-    bank: "Republic Bank Limited — International Desk",
-    country: "USD Wire",
-    account: "Dedicated Ultimatum Appointed Associates",
-    number: "IBAN TT58 RBNK 0001 8012 3456 7010 01",
-    type: "Foreign currency (USD)",
-    swift: "RBNKTTPX",
-    branch: "Intermediary: Citibank N.A., New York — CITIUS33",
-  },
-  {
-    bank: "Wise Business (EUR/GBP)",
-    country: "Europe / United Kingdom",
-    account: "Dedicated Ultimatum Appointed Associates",
-    number: "IBAN BE79 9670 1234 5678",
-    type: "Multi-currency (EUR, GBP)",
-    swift: "TRWIBEB1XXX",
-    branch: "Rue du Trône 100, Brussels",
-  },
-];
+const FCB_BANK = {
+  bank: "First Citizens Bank Limited",
+  country: "Trinidad & Tobago",
+  account: "Dedicated Ultimatum Appointed Associates",
+  number: "003108954",
+  type: "Savings (TTD)",
+  swift: "FCTTTTPS",
+  branch: "San Fernando",
+};
 
 const CARD_BRANDS = [
   { id: "linx", label: "LINX", hint: "Local debit" },
@@ -248,7 +216,7 @@ function PayPage() {
           <p className="text-xs uppercase tracking-widest text-muted-foreground">Payments</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">Settle your invoice</h1>
           <p className="mt-3 text-muted-foreground">
-            Pay by LINX, Visa or American Express, or transfer from a local or foreign bank.
+            Pay by LINX, Visa or American Express, or transfer to our First Citizens Bank account.
             All amounts can be quoted in TTD, USD, GBP, EUR or CAD.
           </p>
           <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
@@ -385,24 +353,14 @@ function PayPage() {
 
             <TabsContent value="bank" className="mt-6 space-y-8">
               <section className="space-y-4">
-                <h2 className="text-lg font-semibold tracking-tight">Local banks (Trinidad &amp; Tobago)</h2>
-                <div className="grid gap-4 md:grid-cols-2">
-                  {LOCAL_BANKS.map((b) => <BankCard key={b.bank} entry={b} />)}
-                </div>
-              </section>
-
-              <section className="space-y-4">
-                <h2 className="text-lg font-semibold tracking-tight">Foreign banks &amp; wire transfers</h2>
-                <div className="grid gap-4 md:grid-cols-2">
-                  {FOREIGN_BANKS.map((b) => <BankCard key={b.bank} entry={b} />)}
-                </div>
+                <h2 className="text-lg font-semibold tracking-tight">Bank transfer details</h2>
+                <BankCard entry={FCB_BANK} />
               </section>
 
               <div className="rounded-xl border border-border/70 bg-muted/40 p-5 text-sm text-muted-foreground">
                 <p className="font-medium text-foreground">Before you transfer</p>
                 <ul className="mt-2 list-disc space-y-1 pl-5">
                   <li>Use your booking reference (DUA-XXXXX) as the payment narrative.</li>
-                  <li>Foreign wires may attract intermediary bank fees — please send them as "OUR".</li>
                   <li>Email the transfer confirmation to delegated@live.com so we can release the job.</li>
                 </ul>
               </div>
