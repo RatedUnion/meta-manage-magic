@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
-import { ArrowLeft, CalendarIcon, CheckCircle2, Clock, Mail, Phone, User } from "lucide-react";
+import { ArrowLeft, CalendarIcon, CheckCircle2, Clock, ImagePlus, Images, Mail, Phone, User, X } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
+
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
