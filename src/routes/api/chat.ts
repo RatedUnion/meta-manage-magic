@@ -65,7 +65,7 @@ export const Route = createFileRoute("/api/chat")({
         const result = streamText({
           model: openai.responses("openai/gpt-5.6-sol"),
           system: SYSTEM_PROMPT,
-          messages: convertToModelMessages(body.messages as UIMessage[]),
+          messages: await convertToModelMessages(body.messages as UIMessage[]),
           tools: { web_search: openai.tools.webSearch({}) },
           abortSignal: request.signal,
           providerOptions: {
