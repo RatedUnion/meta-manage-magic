@@ -216,7 +216,7 @@ function PayPage() {
           <p className="text-xs uppercase tracking-widest text-muted-foreground">Payments</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">Settle your invoice</h1>
           <p className="mt-3 text-muted-foreground">
-            Pay by LINX, Visa or American Express, or transfer from a local or foreign bank.
+            Pay by LINX, Visa or American Express, or transfer to our First Citizens Bank account.
             All amounts can be quoted in TTD, USD, GBP, EUR or CAD.
           </p>
           <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
