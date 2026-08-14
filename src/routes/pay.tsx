@@ -369,6 +369,30 @@ function PayPage() {
                 </ul>
               </div>
             </TabsContent>
+
+            <TabsContent value="paypal" className="mt-6 space-y-6">
+              <div className="rounded-xl border border-border/70 bg-card p-5">
+                <div className="flex items-center gap-2">
+                  <ExternalLink className="h-4 w-4 text-primary" />
+                  <h3 className="font-semibold tracking-tight">Pay with PayPal</h3>
+                </div>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Send your payment securely through PayPal. Use your booking reference as the note.
+                </p>
+                <Separator className="my-4" />
+                {PAYPAL_LINK ? (
+                  <Button asChild className="w-full sm:w-auto">
+                    <a href={PAYPAL_LINK} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2">
+                      Open PayPal.me <ExternalLink className="h-4 w-4" />
+                    </a>
+                  </Button>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    PayPal link is not configured yet. Please use the Card or Bank transfer tab, or contact us at delegated@live.com.
+                  </p>
+                )}
+              </div>
+            </TabsContent>
           </Tabs>
         )}
       </div>
