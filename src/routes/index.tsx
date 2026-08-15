@@ -17,13 +17,14 @@ export const Route = createFileRoute("/")({
 });
 
 const services = [
-  { icon: Wrench, title: "Mobile Mechanic", desc: "Repairs, OEM parts installation, diagnostics and maintenance — we come to you." },
-  { icon: Zap, title: "Electrician", desc: "Building and automotive electrical work, troubleshooting and safe installs." },
-  { icon: Calendar, title: "Online Booking", desc: "Reserve your slot from anywhere, any time — confirmed in minutes." },
-  { icon: GraduationCap, title: "Online Classes", desc: "Live and on-demand sessions built around real learning outcomes." },
-  { icon: Truck, title: "Delivery", desc: "Reliable, tracked delivery across the twin islands." },
-  { icon: ClipboardList, title: "Reservations", desc: "Effortless reservations with clear, honest communication." },
+  { icon: Wrench, slug: "mobile-mechanic", title: "Mobile Mechanic", desc: "Repairs, OEM parts installation, diagnostics and maintenance — we come to you." },
+  { icon: Zap, slug: "electrician", title: "Electrician", desc: "Building and automotive electrical work, troubleshooting and safe installs." },
+  { icon: Calendar, slug: "online-booking", title: "Online Booking", desc: "Reserve your slot from anywhere, any time — confirmed in minutes." },
+  { icon: GraduationCap, slug: "online-classes", title: "Online Classes", desc: "Live and on-demand sessions built around real learning outcomes." },
+  { icon: Truck, slug: "delivery", title: "Delivery", desc: "Reliable, tracked delivery across the twin islands." },
+  { icon: ClipboardList, slug: "reservations", title: "Reservations", desc: "Effortless reservations with clear, honest communication." },
 ];
+
 
 const locations = [
   "Downtown", "Port of Spain", "Newtown", "Cocorite", "Chaguanas", "San Fernando",
@@ -153,9 +154,11 @@ function Index() {
           </div>
 
           <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {services.map(({ icon: Icon, title, desc }) => (
-              <div
+            {services.map(({ icon: Icon, title, desc, slug }) => (
+              <Link
                 key={title}
+                to="/services/$slug"
+                params={{ slug }}
                 className="group rounded-2xl border border-border bg-card p-6 transition hover:-translate-y-0.5 hover:border-accent hover:shadow-[var(--shadow-soft)]"
               >
                 <div className="grid h-11 w-11 place-items-center rounded-xl bg-primary text-primary-foreground">
@@ -163,8 +166,12 @@ function Index() {
                 </div>
                 <h3 className="mt-5 text-lg font-semibold tracking-tight">{title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{desc}</p>
-              </div>
+                <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-accent">
+                  View pane <ArrowRight className="h-3.5 w-3.5" />
+                </span>
+              </Link>
             ))}
+
           </div>
         </div>
       </section>
