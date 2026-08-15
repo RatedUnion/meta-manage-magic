@@ -41,7 +41,7 @@ function Index() {
             <span className="hidden sm:inline">Dedicated Ultimatum</span>
           </a>
           <nav className="hidden gap-8 text-sm text-muted-foreground md:flex">
-            <a href="#services" className="hover:text-foreground">Services</a>
+            <Link to="/services" className="hover:text-foreground">Services</Link>
             <a href="#about" className="hover:text-foreground">About</a>
             <a href="#locations" className="hover:text-foreground">Locations</a>
             <Link to="/pay" className="hover:text-foreground">Pay</Link>
