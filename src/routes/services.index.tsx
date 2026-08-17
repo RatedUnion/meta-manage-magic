@@ -1,4 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { zodValidator, fallback } from "@tanstack/zod-adapter";
+import { z } from "zod";
 import {
   Calendar,
   ClipboardList,
@@ -7,6 +9,7 @@ import {
   Wrench,
   Zap,
   ArrowRight,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SERVICES, serviceReference } from "@/data/services";
@@ -22,7 +25,21 @@ const ICONS = {
   clipboard: ClipboardList,
 } as const;
 
+type SpecialtySlug = "online-booking" | "online-classes" | "delivery" | "reservations";
+
+const SPECIALTY_FILTERS: { slug: SpecialtySlug; label: string }[] = [
+  { slug: "online-booking", label: "Online booking" },
+  { slug: "online-classes", label: "Online classes" },
+  { slug: "delivery", label: "Delivery" },
+  { slug: "reservations", label: "Reservations" },
+];
+
+const searchSchema = z.object({
+  specialty: fallback(z.string(), "").default(""),
+});
+
 export const Route = createFileRoute("/services/")({
+  validateSearch: zodValidator(searchSchema),
   head: () => {
     const title = "Services — Dedicated Ultimatum Appointed Associates";
     const description =
