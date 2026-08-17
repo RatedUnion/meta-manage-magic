@@ -76,6 +76,15 @@ export const Route = createFileRoute("/services/")({
 });
 
 function ServicesIndexPage() {
+  const { specialty } = Route.useSearch();
+  const navigate = useNavigate({ from: "/services/" });
+
+  const filteredServices = specialty
+    ? SERVICES.filter((s) => s.slug === specialty)
+    : SERVICES;
+
+  const activeSpecialty = SPECIALTY_FILTERS.find((f) => f.slug === specialty);
+
   return (
     <main className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur">
@@ -106,8 +115,49 @@ function ServicesIndexPage() {
           </p>
         </div>
 
-        <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {SERVICES.map((service) => {
+        <div className="mt-8 flex flex-wrap items-center gap-2">
+          {SPECIALTY_FILTERS.map((filter) => {
+            const isActive = specialty === filter.slug;
+            return (
+              <button
+                key={filter.slug}
+                type="button"
+                onClick={() =>
+                  navigate({
+                    search: (prev) => ({
+                      ...prev,
+                      specialty: isActive ? "" : filter.slug,
+                    }),
+                  })
+                }
+                className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${
+                  isActive
+                    ? "border-accent bg-accent text-accent-foreground"
+                    : "border-border bg-card text-muted-foreground hover:border-accent hover:text-foreground"
+                }`}
+              >
+                {filter.label}
+              </button>
+            );
+          })}
+          {activeSpecialty && (
+            <button
+              type="button"
+              onClick={() => navigate({ search: (prev) => ({ ...prev, specialty: "" }) })}
+              className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-medium text-muted-foreground transition hover:text-foreground"
+            >
+              <X className="h-3.5 w-3.5" /> Clear
+            </button>
+          )}
+        </div>
+
+        <p className="mt-4 text-sm text-muted-foreground">
+          {filteredServices.length} {filteredServices.length === 1 ? "result" : "results"}
+          {activeSpecialty && ` for “${activeSpecialty.label}”`}
+        </p>
+
+        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {filteredServices.map((service) => {
             const Icon = ICONS[service.icon];
             const reference = serviceReference(service.code);
             return (
@@ -146,6 +196,20 @@ function ServicesIndexPage() {
             );
           })}
         </div>
+
+        {filteredServices.length === 0 && (
+          <div className="mt-10 rounded-2xl border border-dashed border-border p-10 text-center">
+            <p className="text-muted-foreground">No services match this filter.</p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-4"
+              onClick={() => navigate({ search: (prev) => ({ ...prev, specialty: "" }) })}
+            >
+              Show all services
+            </Button>
+          </div>
+        )}
       </section>
     </main>
   );
