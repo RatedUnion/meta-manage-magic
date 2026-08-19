@@ -198,7 +198,7 @@ function BookPage() {
     toast.success("Appointment requested", {
       description: calendar.scheduled
         ? `Ref ${ref} — added to our Google Calendar with mobile reminders.`
-        : `Ref ${ref} — confirmation sent to ${parsed.data.email}.`,
+        : `Ref ${ref} — we'll be in touch to confirm your slot.`,
     });
     setSubmitting(false);
   };
