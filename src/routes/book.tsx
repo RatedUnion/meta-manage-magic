@@ -457,9 +457,10 @@ function ConfirmationCard({ confirmation, onReset }: { confirmation: Confirmatio
         <div className="mt-6 rounded-lg border border-accent/40 bg-accent/10 p-4 text-sm">
           <p className="font-medium text-foreground">Added to our Google Calendar</p>
           <p className="mt-1 text-muted-foreground">
-            Reminders fire on the technician's mobile 24 hours, 1 hour and 15 minutes before your slot,
-            with your number <span className="text-foreground">+1 868-763-1106</span> on the event.
+            Mobile reminders fire 24 hours, 1 hour and 15 minutes before your slot, and your phone
+            number is on the event so the technician can reach you.
           </p>
+
           {confirmation.calendarLink && (
             <a
               href={confirmation.calendarLink}
