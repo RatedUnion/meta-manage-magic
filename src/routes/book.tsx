@@ -453,6 +453,26 @@ function ConfirmationCard({ confirmation, onReset }: { confirmation: Confirmatio
 
       </dl>
 
+      {confirmation.calendarScheduled && (
+        <div className="mt-6 rounded-lg border border-accent/40 bg-accent/10 p-4 text-sm">
+          <p className="font-medium text-foreground">Added to our Google Calendar</p>
+          <p className="mt-1 text-muted-foreground">
+            Reminders fire on the technician's mobile 24 hours, 1 hour and 15 minutes before your slot,
+            with your number <span className="text-foreground">+1 868-763-1106</span> on the event.
+          </p>
+          {confirmation.calendarLink && (
+            <a
+              href={confirmation.calendarLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-block text-foreground underline underline-offset-4"
+            >
+              View calendar event
+            </a>
+          )}
+        </div>
+      )}
+
       <div className="mt-8 rounded-lg border border-border bg-secondary/50 p-4 text-sm text-muted-foreground">
         We've sent a confirmation to <span className="text-foreground">{confirmation.email}</span>.
         You'll get a reminder the day before. Need to reschedule? Call{" "}
@@ -461,6 +481,7 @@ function ConfirmationCard({ confirmation, onReset }: { confirmation: Confirmatio
         </a>
         .
       </div>
+
 
       <div className="mt-6 flex flex-wrap gap-3">
         <Button onClick={onReset} variant="outline">Book another</Button>
