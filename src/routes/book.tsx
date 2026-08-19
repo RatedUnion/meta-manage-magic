@@ -146,7 +146,7 @@ function BookPage() {
     return dow === 0; // closed Sundays
   };
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const parsed = bookingSchema.safeParse({
       service: serviceId, date, time, name, email, phone,
@@ -157,24 +157,47 @@ function BookPage() {
       return;
     }
     setSubmitting(true);
-    // Simulate submission
-    setTimeout(() => {
-      const ref = "DUA-" + Math.random().toString(36).slice(2, 7).toUpperCase();
-      setConfirmation({
-        ref,
-        service: selectedService?.label ?? "",
-        date: parsed.data.date,
-        time: parsed.data.time,
-        name: parsed.data.name,
-        email: parsed.data.email,
-        photos: photos.length,
+    const ref = "DUA-" + Math.random().toString(36).slice(2, 7).toUpperCase();
+
+    let calendar: { scheduled: boolean; htmlLink?: string } = { scheduled: false };
+    try {
+      calendar = await scheduleOnCalendar({
+        data: {
+          service: selectedService?.label ?? "Appointment",
+          date: format(parsed.data.date, "yyyy-MM-dd"),
+          time: parsed.data.time,
+          durationMinutes: parseInt(selectedService?.duration ?? "60", 10) || 60,
+          name: parsed.data.name,
+          email: parsed.data.email,
+          phone: parsed.data.phone,
+          notes: parsed.data.notes,
+          photos: photos.length,
+          ref,
+        },
       });
-      toast.success("Appointment requested", {
-        description: `Ref ${ref} — confirmation sent to ${parsed.data.email}.`,
-      });
-      setSubmitting(false);
-    }, 700);
+    } catch {
+      calendar = { scheduled: false };
+    }
+
+    setConfirmation({
+      ref,
+      service: selectedService?.label ?? "",
+      date: parsed.data.date,
+      time: parsed.data.time,
+      name: parsed.data.name,
+      email: parsed.data.email,
+      photos: photos.length,
+      calendarLink: calendar.htmlLink,
+      calendarScheduled: calendar.scheduled,
+    });
+    toast.success("Appointment requested", {
+      description: calendar.scheduled
+        ? `Ref ${ref} — added to our Google Calendar with mobile reminders.`
+        : `Ref ${ref} — confirmation sent to ${parsed.data.email}.`,
+    });
+    setSubmitting(false);
   };
+
 
   const reset = () => {
     setConfirmation(null);
