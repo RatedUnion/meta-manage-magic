@@ -5,15 +5,23 @@ import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/")({
   component: Index,
-  head: () => ({
-    meta: [
-      {
-        property: "og:image",
-        content:
-          "https://id-preview--ec505fba-f8b5-455f-aa0d-4a8ee19005e2.lovable.app/og-image.jpg",
-      },
-    ],
-  }),
+  head: () => {
+    const title =
+      "Mobile Mechanic & Electrician in Trinidad & Tobago — Dedicated Ultimatum";
+    const description =
+      "Mobile mechanic, electrical work, online booking, classes, delivery and reservations across Port of Spain, San Fernando and Chaguanas.";
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:type", content: "website" },
+        { property: "og:url", content: "https://meta-manage-magic.lovable.app/" },
+      ],
+      links: [{ rel: "canonical", href: "https://meta-manage-magic.lovable.app/" }],
+    };
+  },
 });
 
 const services = [

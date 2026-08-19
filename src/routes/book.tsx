@@ -198,7 +198,7 @@ function BookPage() {
     toast.success("Appointment requested", {
       description: calendar.scheduled
         ? `Ref ${ref} — added to our Google Calendar with mobile reminders.`
-        : `Ref ${ref} — confirmation sent to ${parsed.data.email}.`,
+        : `Ref ${ref} — we'll be in touch to confirm your slot.`,
     });
     setSubmitting(false);
   };
@@ -475,8 +475,9 @@ function ConfirmationCard({ confirmation, onReset }: { confirmation: Confirmatio
       )}
 
       <div className="mt-8 rounded-lg border border-border bg-secondary/50 p-4 text-sm text-muted-foreground">
-        We've sent a confirmation to <span className="text-foreground">{confirmation.email}</span>.
-        You'll get a reminder the day before. Need to reschedule? Call{" "}
+        Keep your reference number handy — we'll contact you at{" "}
+        <span className="text-foreground">{confirmation.email}</span> to confirm the appointment.
+        Need to reschedule? Call{" "}
         <a href="tel:+18687631106" className="text-foreground underline underline-offset-4">
           <Phone className="mr-1 inline h-3.5 w-3.5" />+1 868-763-1106
         </a>
