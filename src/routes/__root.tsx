@@ -94,11 +94,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "Dedicated Ultimatum Appointed Associates — Virtual Services in Trinidad & Tobago" },
-      { name: "description", content: "Meta Business Hub helps businesses manage their presence across Meta platforms." },
-      { property: "og:description", content: "Meta Business Hub helps businesses manage their presence across Meta platforms." },
-      { name: "twitter:description", content: "Meta Business Hub helps businesses manage their presence across Meta platforms." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7e83f683-dfdd-4485-a2bd-adb05a296ff7/id-preview-119a7121--ec505fba-f8b5-455f-aa0d-4a8ee19005e2.lovable.app-1782987444019.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7e83f683-dfdd-4485-a2bd-adb05a296ff7/id-preview-119a7121--ec505fba-f8b5-455f-aa0d-4a8ee19005e2.lovable.app-1782987444019.png" },
+      {
+        name: "twitter:description",
+        content:
+          "Mobile mechanic, electrician, online booking, classes, delivery and reservations across Trinidad & Tobago.",
+      },
+      { property: "og:site_name", content: "Dedicated Ultimatum Appointed Associates" },
     ],
     links: [
       {
