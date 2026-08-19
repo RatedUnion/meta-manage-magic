@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
 import { ArrowLeft, CalendarIcon, CheckCircle2, Clock, ImagePlus, Images, Mail, Phone, User, X } from "lucide-react";
@@ -12,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { addBookingToCalendar } from "@/lib/calendar.functions";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/book")({
@@ -75,10 +77,13 @@ type Confirmation = {
   name: string;
   email: string;
   photos: number;
+  calendarLink?: string;
+  calendarScheduled?: boolean;
 };
 
 
 function BookPage() {
+  const scheduleOnCalendar = useServerFn(addBookingToCalendar);
   const [serviceId, setServiceId] = useState<string>("");
   const [date, setDate] = useState<Date | undefined>();
   const [time, setTime] = useState<string>("");
@@ -146,7 +151,7 @@ function BookPage() {
     return dow === 0; // closed Sundays
   };
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const parsed = bookingSchema.safeParse({
       service: serviceId, date, time, name, email, phone,
@@ -157,24 +162,47 @@ function BookPage() {
       return;
     }
     setSubmitting(true);
-    // Simulate submission
-    setTimeout(() => {
-      const ref = "DUA-" + Math.random().toString(36).slice(2, 7).toUpperCase();
-      setConfirmation({
-        ref,
-        service: selectedService?.label ?? "",
-        date: parsed.data.date,
-        time: parsed.data.time,
-        name: parsed.data.name,
-        email: parsed.data.email,
-        photos: photos.length,
+    const ref = "DUA-" + Math.random().toString(36).slice(2, 7).toUpperCase();
+
+    let calendar: { scheduled: boolean; htmlLink?: string } = { scheduled: false };
+    try {
+      calendar = await scheduleOnCalendar({
+        data: {
+          service: selectedService?.label ?? "Appointment",
+          date: format(parsed.data.date, "yyyy-MM-dd"),
+          time: parsed.data.time,
+          durationMinutes: parseInt(selectedService?.duration ?? "60", 10) || 60,
+          name: parsed.data.name,
+          email: parsed.data.email,
+          phone: parsed.data.phone,
+          notes: parsed.data.notes,
+          photos: photos.length,
+          ref,
+        },
       });
-      toast.success("Appointment requested", {
-        description: `Ref ${ref} — confirmation sent to ${parsed.data.email}.`,
-      });
-      setSubmitting(false);
-    }, 700);
+    } catch {
+      calendar = { scheduled: false };
+    }
+
+    setConfirmation({
+      ref,
+      service: selectedService?.label ?? "",
+      date: parsed.data.date,
+      time: parsed.data.time,
+      name: parsed.data.name,
+      email: parsed.data.email,
+      photos: photos.length,
+      calendarLink: calendar.htmlLink,
+      calendarScheduled: calendar.scheduled,
+    });
+    toast.success("Appointment requested", {
+      description: calendar.scheduled
+        ? `Ref ${ref} — added to our Google Calendar with mobile reminders.`
+        : `Ref ${ref} — confirmation sent to ${parsed.data.email}.`,
+    });
+    setSubmitting(false);
   };
+
 
   const reset = () => {
     setConfirmation(null);
@@ -425,6 +453,27 @@ function ConfirmationCard({ confirmation, onReset }: { confirmation: Confirmatio
 
       </dl>
 
+      {confirmation.calendarScheduled && (
+        <div className="mt-6 rounded-lg border border-accent/40 bg-accent/10 p-4 text-sm">
+          <p className="font-medium text-foreground">Added to our Google Calendar</p>
+          <p className="mt-1 text-muted-foreground">
+            Mobile reminders fire 24 hours, 1 hour and 15 minutes before your slot, and your phone
+            number is on the event so the technician can reach you.
+          </p>
+
+          {confirmation.calendarLink && (
+            <a
+              href={confirmation.calendarLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-block text-foreground underline underline-offset-4"
+            >
+              View calendar event
+            </a>
+          )}
+        </div>
+      )}
+
       <div className="mt-8 rounded-lg border border-border bg-secondary/50 p-4 text-sm text-muted-foreground">
         We've sent a confirmation to <span className="text-foreground">{confirmation.email}</span>.
         You'll get a reminder the day before. Need to reschedule? Call{" "}
@@ -433,6 +482,7 @@ function ConfirmationCard({ confirmation, onReset }: { confirmation: Confirmatio
         </a>
         .
       </div>
+
 
       <div className="mt-6 flex flex-wrap gap-3">
         <Button onClick={onReset} variant="outline">Book another</Button>
