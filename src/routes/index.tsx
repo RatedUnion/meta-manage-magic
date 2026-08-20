@@ -85,8 +85,13 @@ function Index() {
             Virtual · Trinidad & Tobago
           </p>
           <h1 className="max-w-3xl text-4xl font-semibold leading-[1.05] tracking-tight text-primary-foreground sm:text-5xl md:text-6xl">
-            Dedicated. Appointed. <span className="text-accent">Delivered.</span>
+            Mobile Mechanic &amp; Electrical Services in{" "}
+            <span className="text-accent">Trinidad &amp; Tobago</span>
           </h1>
+          <p className="mt-4 max-w-2xl text-base font-medium uppercase tracking-widest text-primary-foreground/70">
+            Dedicated. Appointed. Delivered.
+          </p>
+
           <p className="mt-6 max-w-2xl text-lg text-primary-foreground/80">
             Dedicated Ultimatum Appointed Associates — mobile mechanic, electrician, booking,
             classes, delivery and reservations for people who value follow-through. Serving the twin
