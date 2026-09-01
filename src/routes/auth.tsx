@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
@@ -43,16 +42,6 @@ function AuthPage() {
     return () => sub.subscription.unsubscribe();
   }, [navigate]);
 
-  const signInGoogle = async () => {
-    setBusy(true);
-    try {
-      await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-    } catch {
-      toast.error("Google sign-in failed. Try again.");
-      setBusy(false);
-    }
-  };
-
   const signInEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
@@ -76,14 +65,6 @@ function AuthPage() {
           <p className="mt-2 text-sm text-muted-foreground">
             Booking history is private. Sign in to review appointment requests.
           </p>
-
-          <Button onClick={signInGoogle} disabled={busy} className="mt-6 w-full" variant="secondary">
-            Continue with Google
-          </Button>
-
-          <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-wider text-muted-foreground">
-            <span className="h-px flex-1 bg-border" /> or <span className="h-px flex-1 bg-border" />
-          </div>
 
           <form onSubmit={signInEmail} className="space-y-4">
             <div className="space-y-2">
