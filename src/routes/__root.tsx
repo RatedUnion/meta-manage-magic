@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { ChatBot } from "@/components/ChatBot";
+import { LofiPlayer } from "@/components/LofiPlayer";
 
 function NotFoundComponent() {
   return (
@@ -137,6 +138,7 @@ function RootComponent() {
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
       <ChatBot />
+      <LofiPlayer />
       <Toaster />
     </QueryClientProvider>
   );
