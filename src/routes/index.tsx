@@ -53,6 +53,7 @@ function Index() {
             <a href="#about" className="hover:text-foreground">About</a>
             <a href="#locations" className="hover:text-foreground">Locations</a>
             <Link to="/pay" className="hover:text-foreground">Pay</Link>
+            <Link to="/bookings" className="hover:text-foreground">Bookings</Link>
             <a href="#contact" className="hover:text-foreground">Contact</a>
           </nav>
           <Link to="/pay">

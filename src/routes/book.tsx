@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { addBookingToCalendar } from "@/lib/calendar.functions";
+import { saveBooking } from "@/lib/bookings.functions";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/book")({
@@ -84,6 +85,7 @@ type Confirmation = {
 
 function BookPage() {
   const scheduleOnCalendar = useServerFn(addBookingToCalendar);
+  const persistBooking = useServerFn(saveBooking);
   const [serviceId, setServiceId] = useState<string>("");
   const [date, setDate] = useState<Date | undefined>();
   const [time, setTime] = useState<string>("");
@@ -182,6 +184,25 @@ function BookPage() {
       });
     } catch {
       calendar = { scheduled: false };
+    }
+
+    try {
+      await persistBooking({
+        data: {
+          reference: ref,
+          service: selectedService?.label ?? "Appointment",
+          booking_date: format(parsed.data.date, "yyyy-MM-dd"),
+          booking_time: parsed.data.time,
+          name: parsed.data.name,
+          email: parsed.data.email,
+          phone: parsed.data.phone,
+          notes: parsed.data.notes,
+          photo_count: photos.length,
+          calendar_event_url: calendar.htmlLink,
+        },
+      });
+    } catch {
+      toast.error("We couldn't save your booking to our records — please call us to confirm.");
     }
 
     setConfirmation({
