@@ -85,6 +85,7 @@ type Confirmation = {
 
 function BookPage() {
   const scheduleOnCalendar = useServerFn(addBookingToCalendar);
+  const persistBooking = useServerFn(saveBooking);
   const [serviceId, setServiceId] = useState<string>("");
   const [date, setDate] = useState<Date | undefined>();
   const [time, setTime] = useState<string>("");
