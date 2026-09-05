@@ -46,6 +46,7 @@ export const Route = createFileRoute("/_authenticated/bookings")({
 });
 
 const STATUSES = ["pending", "confirmed", "completed", "cancelled"] as const;
+const PAY_FILTERS = ["all", "paid", "unpaid"] as const;
 
 const statusTone: Record<string, string> = {
   pending: "bg-amber-500/15 text-amber-600 border-amber-500/30",
@@ -53,6 +54,18 @@ const statusTone: Record<string, string> = {
   completed: "bg-sky-500/15 text-sky-600 border-sky-500/30",
   cancelled: "bg-destructive/10 text-destructive border-destructive/30",
 };
+
+const payTone: Record<string, string> = {
+  paid: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30",
+  unpaid: "bg-muted text-muted-foreground border-border",
+  refunded: "bg-destructive/10 text-destructive border-destructive/30",
+};
+
+function money(amount: number | null, currency: string | null) {
+  if (amount == null) return null;
+  return `${Number(amount).toFixed(2)} ${currency ?? ""}`.trim();
+}
+
 
 function BookingsPage() {
   const navigate = useNavigate();
