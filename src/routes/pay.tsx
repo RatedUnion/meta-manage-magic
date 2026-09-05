@@ -398,9 +398,11 @@ function PayPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email for receipt</Label>
+                  <Label htmlFor="email">Email on the booking</Label>
                   <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
+                  <p className="text-xs text-muted-foreground">Use the same email you booked with — we match the payment to your booking.</p>
                 </div>
+
 
                 <Button type="submit" size="lg" className="w-full" disabled={submitting}>
                   {submitting ? "Authorising…" : `Pay ${amount ? `${symbol}${amount}` : ""} ${currency}`.trim()}
