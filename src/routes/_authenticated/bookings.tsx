@@ -3,14 +3,16 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
-import { ArrowLeft, CalendarDays, LogOut, Mail, Phone, RefreshCw, Search } from "lucide-react";
+import { ArrowLeft, CalendarDays, CreditCard, LogOut, Mail, Phone, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { listBookings, updateBookingStatus } from "@/lib/bookings.functions";
+import { listBookings, updateBookingStatus, updatePaymentStatus } from "@/lib/bookings.functions";
+
 
 export const Route = createFileRoute("/_authenticated/bookings")({
   component: BookingsPage,
