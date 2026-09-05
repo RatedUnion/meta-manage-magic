@@ -3,14 +3,16 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
-import { ArrowLeft, CalendarDays, LogOut, Mail, Phone, RefreshCw, Search } from "lucide-react";
+import { ArrowLeft, CalendarDays, CreditCard, LogOut, Mail, Phone, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { listBookings, updateBookingStatus } from "@/lib/bookings.functions";
+import { listBookings, updateBookingStatus, updatePaymentStatus } from "@/lib/bookings.functions";
+
 
 export const Route = createFileRoute("/_authenticated/bookings")({
   component: BookingsPage,
@@ -44,6 +46,7 @@ export const Route = createFileRoute("/_authenticated/bookings")({
 });
 
 const STATUSES = ["pending", "confirmed", "completed", "cancelled"] as const;
+const PAY_FILTERS = ["all", "paid", "unpaid"] as const;
 
 const statusTone: Record<string, string> = {
   pending: "bg-amber-500/15 text-amber-600 border-amber-500/30",
@@ -52,29 +55,51 @@ const statusTone: Record<string, string> = {
   cancelled: "bg-destructive/10 text-destructive border-destructive/30",
 };
 
+const payTone: Record<string, string> = {
+  paid: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30",
+  unpaid: "bg-muted text-muted-foreground border-border",
+  refunded: "bg-destructive/10 text-destructive border-destructive/30",
+};
+
+function money(amount: number | null, currency: string | null) {
+  if (amount == null) return null;
+  return `${Number(amount).toFixed(2)} ${currency ?? ""}`.trim();
+}
+
+
 function BookingsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const fetchBookings = useServerFn(listBookings);
   const setStatus = useServerFn(updateBookingStatus);
+  const setPayment = useServerFn(updatePaymentStatus);
   const [q, setQ] = useState("");
+  const [payFilter, setPayFilter] = useState<(typeof PAY_FILTERS)[number]>("all");
 
   const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: ["bookings"],
     queryFn: () => fetchBookings(),
   });
 
-  const rows = useMemo(() => {
+  const counts = useMemo(() => {
     const list = data ?? [];
+    const paid = list.filter((b) => b.payment_status === "paid").length;
+    return { all: list.length, paid, unpaid: list.length - paid };
+  }, [data]);
+
+  const rows = useMemo(() => {
+    let list = data ?? [];
+    if (payFilter === "paid") list = list.filter((b) => b.payment_status === "paid");
+    if (payFilter === "unpaid") list = list.filter((b) => b.payment_status !== "paid");
     const needle = q.trim().toLowerCase();
     if (!needle) return list;
     return list.filter((b) =>
-      [b.reference, b.name, b.email, b.phone, b.service, b.status]
+      [b.reference, b.name, b.email, b.phone, b.service, b.status, b.payment_status, b.payment_reference ?? ""]
         .join(" ")
         .toLowerCase()
         .includes(needle),
     );
-  }, [data, q]);
+  }, [data, q, payFilter]);
 
   const onStatus = async (id: string, status: (typeof STATUSES)[number]) => {
     try {
@@ -85,6 +110,17 @@ function BookingsPage() {
       toast.error(e instanceof Error ? e.message : "Update failed");
     }
   };
+
+  const onPayment = async (id: string, payment_status: "unpaid" | "paid" | "refunded") => {
+    try {
+      await setPayment({ data: { id, payment_status } });
+      toast.success(`Marked ${payment_status}`);
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Update failed");
+    }
+  };
+
 
   const signOut = async () => {
     await queryClient.cancelQueries();
@@ -103,8 +139,11 @@ function BookingsPage() {
             </Link>
             <h1 className="mt-3 text-3xl font-semibold tracking-tight">Booking history</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              {data ? `${data.length} booking${data.length === 1 ? "" : "s"} saved` : "Loading bookings…"}
+              {data
+                ? `${counts.all} booking${counts.all === 1 ? "" : "s"} saved · ${counts.paid} paid · ${counts.unpaid} unpaid`
+                : "Loading bookings…"}
             </p>
+
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
@@ -121,10 +160,29 @@ function BookingsPage() {
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search by reference, name, email, phone or service"
+            placeholder="Search by reference, name, email, phone, service or payment"
             className="pl-9"
           />
         </div>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          {PAY_FILTERS.map((f) => (
+            <button
+              key={f}
+              type="button"
+              onClick={() => setPayFilter(f)}
+              className={cn(
+                "rounded-full border px-4 py-1.5 text-sm capitalize transition-colors",
+                payFilter === f
+                  ? "border-primary bg-primary/10 text-foreground"
+                  : "border-border text-muted-foreground hover:border-primary/50",
+              )}
+            >
+              {f === "all" ? "All" : f} ({counts[f]})
+            </button>
+          ))}
+        </div>
+
 
         <div className="mt-6 space-y-4">
           {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}

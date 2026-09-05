@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
+
 import {
   ArrowLeft,
   Banknote,
@@ -28,6 +30,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { recordBookingPayment } from "@/lib/bookings.functions";
+
 
 export const Route = createFileRoute("/pay")({
   component: PayPage,
@@ -87,6 +91,12 @@ const CARD_BRANDS = [
 ] as const;
 
 const cardSchema = z.object({
+  bookingRef: z
+    .string()
+    .trim()
+    .min(3, "Enter the booking reference from your confirmation")
+    .max(40)
+    .transform((v) => v.toUpperCase()),
   amount: z.coerce.number().positive("Enter an amount greater than zero").max(1_000_000),
   service: z.string().min(1, "Choose what you're paying for"),
   brand: z.string().min(1, "Choose a card type"),
@@ -99,6 +109,7 @@ const cardSchema = z.object({
   cvv: z.string().regex(/^\d{3,4}$/, "Enter a valid security code"),
   email: z.string().trim().email("Enter a valid email").max(255),
 });
+
 
 function formatCardNumber(value: string) {
   const digits = value.replace(/\D/g, "").slice(0, 16);
@@ -163,7 +174,9 @@ function BankCard({
 }
 
 function PayPage() {
+  const payBooking = useServerFn(recordBookingPayment);
   const [currency, setCurrency] = useState<string>("TTD");
+  const [bookingRef, setBookingRef] = useState("");
   const [amount, setAmount] = useState("");
   const [service, setService] = useState("");
   const [brand, setBrand] = useState<string>("linx");
@@ -173,33 +186,59 @@ function PayPage() {
   const [cvv, setCvv] = useState("");
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [receipt, setReceipt] = useState<{ ref: string; amount: string; brand: string } | null>(null);
+  const [receipt, setReceipt] = useState<
+    { ref: string; amount: string; brand: string; bookingRef: string } | null
+  >(null);
 
   const symbol = useMemo(
     () => CURRENCIES.find((c) => c.code === currency)?.symbol ?? "",
     [currency],
   );
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const parsed = cardSchema.safeParse({ amount, service, brand, name, number, expiry, cvv, email });
+    const parsed = cardSchema.safeParse({ bookingRef, amount, service, brand, name, number, expiry, cvv, email });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? "Please check your card details");
       return;
     }
     setSubmitting(true);
-    setTimeout(() => {
-      const ref = "PAY-" + Math.random().toString(36).slice(2, 7).toUpperCase();
+    const ref = "PAY-" + Math.random().toString(36).slice(2, 7).toUpperCase();
+    const brandLabel = CARD_BRANDS.find((b) => b.id === parsed.data.brand)?.label ?? "Card";
+    try {
+      const result = await payBooking({
+        data: {
+          reference: parsed.data.bookingRef,
+          email: parsed.data.email,
+          amount: parsed.data.amount,
+          currency,
+          method: brandLabel,
+          payment_reference: ref,
+        },
+      });
+      if (!result.matched) {
+        toast.error("We couldn't find that booking", {
+          description: "Check the reference and use the same email you booked with. No card was charged.",
+        });
+        return;
+      }
       setReceipt({
         ref,
         amount: `${symbol}${parsed.data.amount.toFixed(2)} ${currency}`,
-        brand: CARD_BRANDS.find((b) => b.id === parsed.data.brand)?.label ?? "Card",
+        brand: brandLabel,
+        bookingRef: parsed.data.bookingRef,
       });
       setNumber(""); setCvv(""); setExpiry("");
-      toast.success("Payment authorised", { description: `Ref ${ref} — receipt sent to ${parsed.data.email}.` });
+      toast.success("Payment authorised", {
+        description: `Ref ${ref} — booking ${parsed.data.bookingRef} is now marked paid.`,
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Payment could not be recorded");
+    } finally {
       setSubmitting(false);
-    }, 900);
+    }
   };
+
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -239,8 +278,10 @@ function PayPage() {
               {receipt.brand} · {receipt.amount} · Reference {receipt.ref}
             </p>
             <p className="mt-2 text-sm text-muted-foreground">
+              Booking <span className="font-mono">{receipt.bookingRef}</span> is now marked paid.
               Keep this reference — quote it when your technician arrives or when you contact us.
             </p>
+
             <Button className="mt-6" onClick={() => setReceipt(null)}>Make another payment</Button>
           </div>
         ) : (
@@ -253,8 +294,24 @@ function PayPage() {
 
             <TabsContent value="card" className="mt-6">
               <form onSubmit={onSubmit} className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="bookingref">Booking reference</Label>
+                  <Input
+                    id="bookingref"
+                    value={bookingRef}
+                    onChange={(e) => setBookingRef(e.target.value.toUpperCase())}
+                    placeholder="DUA-XXXXX"
+                    className="font-mono"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    From your booking confirmation. Don't have one yet?{" "}
+                    <Link to="/book" className="underline underline-offset-2">Book a service first</Link>.
+                  </p>
+                </div>
+
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
+
                     <Label htmlFor="currency">Currency</Label>
                     <Select value={currency} onValueChange={setCurrency}>
                       <SelectTrigger id="currency"><SelectValue /></SelectTrigger>
@@ -341,9 +398,11 @@ function PayPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email for receipt</Label>
+                  <Label htmlFor="email">Email on the booking</Label>
                   <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
+                  <p className="text-xs text-muted-foreground">Use the same email you booked with — we match the payment to your booking.</p>
                 </div>
+
 
                 <Button type="submit" size="lg" className="w-full" disabled={submitting}>
                   {submitting ? "Authorising…" : `Pay ${amount ? `${symbol}${amount}` : ""} ${currency}`.trim()}

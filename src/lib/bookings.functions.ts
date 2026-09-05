@@ -68,3 +68,61 @@ export const updateBookingStatus = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });
+
+/** Owner only: manually flip a booking between paid / unpaid / refunded. */
+export const updatePaymentStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({ id: z.string().uuid(), payment_status: z.enum(["unpaid", "paid", "refunded"]) })
+      .parse(data),
+  )
+  .handler(async ({ context, data }) => {
+    const { error } = await context.supabase
+      .from("bookings")
+      .update({
+        payment_status: data.payment_status,
+        paid_at: data.payment_status === "paid" ? new Date().toISOString() : null,
+      })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+const paymentSchema = z.object({
+  reference: z.string().trim().min(3).max(40),
+  email: z.string().trim().email(),
+  amount: z.number().positive().max(1_000_000),
+  currency: z.string().min(3).max(3),
+  method: z.string().min(2).max(40),
+  payment_reference: z.string().min(3).max(40),
+});
+
+/**
+ * Public: attaches a completed payment to an existing booking.
+ * The caller must know both the booking reference and the email on that booking.
+ */
+export const recordBookingPayment = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => paymentSchema.parse(data))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await supabaseAdmin
+      .from("bookings")
+      .update({
+        payment_status: "paid",
+        payment_amount: data.amount,
+        payment_currency: data.currency,
+        payment_method: data.method,
+        payment_reference: data.payment_reference,
+        paid_at: new Date().toISOString(),
+      })
+      .eq("reference", data.reference.toUpperCase())
+      .ilike("email", data.email)
+      .select("id, service, booking_date, booking_time");
+    if (error) throw new Error(error.message);
+    if (!rows || rows.length === 0) {
+      return { matched: false as const };
+    }
+    return { matched: true as const, booking: rows[0]! };
+  });
+

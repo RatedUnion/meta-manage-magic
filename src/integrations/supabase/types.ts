@@ -24,6 +24,12 @@ export type Database = {
           id: string
           name: string
           notes: string | null
+          paid_at: string | null
+          payment_amount: number | null
+          payment_currency: string | null
+          payment_method: string | null
+          payment_reference: string | null
+          payment_status: string
           phone: string
           photo_count: number
           reference: string
@@ -40,6 +46,12 @@ export type Database = {
           id?: string
           name: string
           notes?: string | null
+          paid_at?: string | null
+          payment_amount?: number | null
+          payment_currency?: string | null
+          payment_method?: string | null
+          payment_reference?: string | null
+          payment_status?: string
           phone: string
           photo_count?: number
           reference: string
@@ -56,6 +68,12 @@ export type Database = {
           id?: string
           name?: string
           notes?: string | null
+          paid_at?: string | null
+          payment_amount?: number | null
+          payment_currency?: string | null
+          payment_method?: string | null
+          payment_reference?: string | null
+          payment_status?: string
           phone?: string
           photo_count?: number
           reference?: string
