@@ -87,6 +87,12 @@ const CARD_BRANDS = [
 ] as const;
 
 const cardSchema = z.object({
+  bookingRef: z
+    .string()
+    .trim()
+    .min(3, "Enter the booking reference from your confirmation")
+    .max(40)
+    .transform((v) => v.toUpperCase()),
   amount: z.coerce.number().positive("Enter an amount greater than zero").max(1_000_000),
   service: z.string().min(1, "Choose what you're paying for"),
   brand: z.string().min(1, "Choose a card type"),
@@ -99,6 +105,7 @@ const cardSchema = z.object({
   cvv: z.string().regex(/^\d{3,4}$/, "Enter a valid security code"),
   email: z.string().trim().email("Enter a valid email").max(255),
 });
+
 
 function formatCardNumber(value: string) {
   const digits = value.replace(/\D/g, "").slice(0, 16);
