@@ -278,8 +278,10 @@ function PayPage() {
               {receipt.brand} · {receipt.amount} · Reference {receipt.ref}
             </p>
             <p className="mt-2 text-sm text-muted-foreground">
+              Booking <span className="font-mono">{receipt.bookingRef}</span> is now marked paid.
               Keep this reference — quote it when your technician arrives or when you contact us.
             </p>
+
             <Button className="mt-6" onClick={() => setReceipt(null)}>Make another payment</Button>
           </div>
         ) : (
