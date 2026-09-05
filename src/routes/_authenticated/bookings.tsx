@@ -160,10 +160,29 @@ function BookingsPage() {
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search by reference, name, email, phone or service"
+            placeholder="Search by reference, name, email, phone, service or payment"
             className="pl-9"
           />
         </div>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          {PAY_FILTERS.map((f) => (
+            <button
+              key={f}
+              type="button"
+              onClick={() => setPayFilter(f)}
+              className={cn(
+                "rounded-full border px-4 py-1.5 text-sm capitalize transition-colors",
+                payFilter === f
+                  ? "border-primary bg-primary/10 text-foreground"
+                  : "border-border text-muted-foreground hover:border-primary/50",
+              )}
+            >
+              {f === "all" ? "All" : f} ({counts[f]})
+            </button>
+          ))}
+        </div>
+
 
         <div className="mt-6 space-y-4">
           {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
