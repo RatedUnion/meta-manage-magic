@@ -139,8 +139,11 @@ function BookingsPage() {
             </Link>
             <h1 className="mt-3 text-3xl font-semibold tracking-tight">Booking history</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              {data ? `${data.length} booking${data.length === 1 ? "" : "s"} saved` : "Loading bookings…"}
+              {data
+                ? `${counts.all} booking${counts.all === 1 ? "" : "s"} saved · ${counts.paid} paid · ${counts.unpaid} unpaid`
+                : "Loading bookings…"}
             </p>
+
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
