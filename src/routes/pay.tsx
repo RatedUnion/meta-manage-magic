@@ -170,7 +170,9 @@ function BankCard({
 }
 
 function PayPage() {
+  const payBooking = useServerFn(recordBookingPayment);
   const [currency, setCurrency] = useState<string>("TTD");
+  const [bookingRef, setBookingRef] = useState("");
   const [amount, setAmount] = useState("");
   const [service, setService] = useState("");
   const [brand, setBrand] = useState<string>("linx");
@@ -180,33 +182,59 @@ function PayPage() {
   const [cvv, setCvv] = useState("");
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [receipt, setReceipt] = useState<{ ref: string; amount: string; brand: string } | null>(null);
+  const [receipt, setReceipt] = useState<
+    { ref: string; amount: string; brand: string; bookingRef: string } | null
+  >(null);
 
   const symbol = useMemo(
     () => CURRENCIES.find((c) => c.code === currency)?.symbol ?? "",
     [currency],
   );
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const parsed = cardSchema.safeParse({ amount, service, brand, name, number, expiry, cvv, email });
+    const parsed = cardSchema.safeParse({ bookingRef, amount, service, brand, name, number, expiry, cvv, email });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? "Please check your card details");
       return;
     }
     setSubmitting(true);
-    setTimeout(() => {
-      const ref = "PAY-" + Math.random().toString(36).slice(2, 7).toUpperCase();
+    const ref = "PAY-" + Math.random().toString(36).slice(2, 7).toUpperCase();
+    const brandLabel = CARD_BRANDS.find((b) => b.id === parsed.data.brand)?.label ?? "Card";
+    try {
+      const result = await payBooking({
+        data: {
+          reference: parsed.data.bookingRef,
+          email: parsed.data.email,
+          amount: parsed.data.amount,
+          currency,
+          method: brandLabel,
+          payment_reference: ref,
+        },
+      });
+      if (!result.matched) {
+        toast.error("We couldn't find that booking", {
+          description: "Check the reference and use the same email you booked with. No card was charged.",
+        });
+        return;
+      }
       setReceipt({
         ref,
         amount: `${symbol}${parsed.data.amount.toFixed(2)} ${currency}`,
-        brand: CARD_BRANDS.find((b) => b.id === parsed.data.brand)?.label ?? "Card",
+        brand: brandLabel,
+        bookingRef: parsed.data.bookingRef,
       });
       setNumber(""); setCvv(""); setExpiry("");
-      toast.success("Payment authorised", { description: `Ref ${ref} — receipt sent to ${parsed.data.email}.` });
+      toast.success("Payment authorised", {
+        description: `Ref ${ref} — booking ${parsed.data.bookingRef} is now marked paid.`,
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Payment could not be recorded");
+    } finally {
       setSubmitting(false);
-    }, 900);
+    }
   };
+
 
   return (
     <main className="min-h-screen bg-background text-foreground">
