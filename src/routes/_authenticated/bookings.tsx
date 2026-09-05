@@ -72,24 +72,34 @@ function BookingsPage() {
   const queryClient = useQueryClient();
   const fetchBookings = useServerFn(listBookings);
   const setStatus = useServerFn(updateBookingStatus);
+  const setPayment = useServerFn(updatePaymentStatus);
   const [q, setQ] = useState("");
+  const [payFilter, setPayFilter] = useState<(typeof PAY_FILTERS)[number]>("all");
 
   const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: ["bookings"],
     queryFn: () => fetchBookings(),
   });
 
-  const rows = useMemo(() => {
+  const counts = useMemo(() => {
     const list = data ?? [];
+    const paid = list.filter((b) => b.payment_status === "paid").length;
+    return { all: list.length, paid, unpaid: list.length - paid };
+  }, [data]);
+
+  const rows = useMemo(() => {
+    let list = data ?? [];
+    if (payFilter === "paid") list = list.filter((b) => b.payment_status === "paid");
+    if (payFilter === "unpaid") list = list.filter((b) => b.payment_status !== "paid");
     const needle = q.trim().toLowerCase();
     if (!needle) return list;
     return list.filter((b) =>
-      [b.reference, b.name, b.email, b.phone, b.service, b.status]
+      [b.reference, b.name, b.email, b.phone, b.service, b.status, b.payment_status, b.payment_reference ?? ""]
         .join(" ")
         .toLowerCase()
         .includes(needle),
     );
-  }, [data, q]);
+  }, [data, q, payFilter]);
 
   const onStatus = async (id: string, status: (typeof STATUSES)[number]) => {
     try {
@@ -100,6 +110,17 @@ function BookingsPage() {
       toast.error(e instanceof Error ? e.message : "Update failed");
     }
   };
+
+  const onPayment = async (id: string, payment_status: "unpaid" | "paid" | "refunded") => {
+    try {
+      await setPayment({ data: { id, payment_status } });
+      toast.success(`Marked ${payment_status}`);
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Update failed");
+    }
+  };
+
 
   const signOut = async () => {
     await queryClient.cancelQueries();
