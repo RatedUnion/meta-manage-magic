@@ -30,6 +30,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { recordBookingPayment } from "@/lib/bookings.functions";
+
 
 export const Route = createFileRoute("/pay")({
   component: PayPage,
