@@ -294,8 +294,24 @@ function PayPage() {
 
             <TabsContent value="card" className="mt-6">
               <form onSubmit={onSubmit} className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="bookingref">Booking reference</Label>
+                  <Input
+                    id="bookingref"
+                    value={bookingRef}
+                    onChange={(e) => setBookingRef(e.target.value.toUpperCase())}
+                    placeholder="DUA-XXXXX"
+                    className="font-mono"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    From your booking confirmation. Don't have one yet?{" "}
+                    <Link to="/book" className="underline underline-offset-2">Book a service first</Link>.
+                  </p>
+                </div>
+
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
+
                     <Label htmlFor="currency">Currency</Label>
                     <Select value={currency} onValueChange={setCurrency}>
                       <SelectTrigger id="currency"><SelectValue /></SelectTrigger>
