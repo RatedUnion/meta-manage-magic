@@ -245,8 +245,6 @@ function BookingsPage() {
 
               {b.notes && <p className="mt-3 rounded-lg bg-muted/50 p-3 text-sm">{b.notes}</p>}
 
-              <div className="mt-4 flex flex-wrap gap-2">
-              {b.notes && <p className="mt-3 rounded-lg bg-muted/50 p-3 text-sm">{b.notes}</p>}
 
               {b.payment_status === "paid" && (
                 <p className="mt-3 inline-flex flex-wrap items-center gap-2 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700">
