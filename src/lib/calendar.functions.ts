@@ -72,7 +72,9 @@ export const addBookingToCalendar = createServerFn({ method: "POST" })
     };
 
     try {
-      const res = await fetch(`${GATEWAY_URL}/calendars/primary/events`, {
+      const res = await fetch(
+        `${GATEWAY_URL}/calendars/primary/events?sendUpdates=all`,
+        {
         method: "POST",
         headers: {
           Authorization: `Bearer ${lovableKey}`,
