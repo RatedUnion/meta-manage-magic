@@ -203,35 +203,48 @@ function PayPage() {
       return;
     }
     setSubmitting(true);
-    const ref = "PAY-" + Math.random().toString(36).slice(2, 7).toUpperCase();
-    const brandLabel = CARD_BRANDS.find((b) => b.id === parsed.data.brand)?.label ?? "Card";
+    const brandLabel = CARD_BRANDS.find((b) => b.id === parsed.data.brand)?.label ?? "Visa";
     try {
       const result = await payBooking({
         data: {
           reference: parsed.data.bookingRef,
           email: parsed.data.email,
           amount: parsed.data.amount,
-          currency,
+          currency: currency as "TTD" | "USD" | "GBP" | "EUR" | "CAD",
           method: brandLabel,
-          payment_reference: ref,
         },
       });
-      if (!result.matched) {
+      if (result.status === "throttled") {
+        toast.error("Too many attempts", {
+          description: "For security we've paused payments from this device for a few minutes. No card was charged.",
+        });
+        return;
+      }
+      if (result.status === "not_found") {
         toast.error("We couldn't find that booking", {
           description: "Check the reference and use the same email you booked with. No card was charged.",
         });
         return;
       }
+      if (result.status === "already_paid") {
+        toast.info("That booking is already paid", {
+          description: result.payment_reference
+            ? `Existing payment reference ${result.payment_reference}. No card was charged.`
+            : "No card was charged.",
+        });
+        return;
+      }
       setReceipt({
-        ref,
+        ref: result.payment_reference,
         amount: `${symbol}${parsed.data.amount.toFixed(2)} ${currency}`,
         brand: brandLabel,
         bookingRef: parsed.data.bookingRef,
       });
       setNumber(""); setCvv(""); setExpiry("");
       toast.success("Payment authorised", {
-        description: `Ref ${ref} — booking ${parsed.data.bookingRef} is now marked paid.`,
+        description: `Ref ${result.payment_reference} — booking ${parsed.data.bookingRef} is now marked paid.`,
       });
+
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Payment could not be recorded");
     } finally {

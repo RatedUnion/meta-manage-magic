@@ -83,6 +83,30 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_attempts: {
+        Row: {
+          created_at: string
+          id: string
+          ip: string
+          reference: string
+          succeeded: boolean
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip?: string
+          reference: string
+          succeeded?: boolean
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip?: string
+          reference?: string
+          succeeded?: boolean
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
