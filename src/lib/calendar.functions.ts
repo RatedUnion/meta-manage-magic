@@ -55,8 +55,11 @@ export const addBookingToCalendar = createServerFn({ method: "POST" })
       ]
         .filter(Boolean)
         .join("\n"),
+      location: "Trinidad and Tobago",
       start: { dateTime: start, timeZone: "America/Port_of_Spain" },
       end: { dateTime: end, timeZone: "America/Port_of_Spain" },
+      attendees: [{ email: data.email, displayName: data.name }],
+
       reminders: {
         useDefault: false,
         overrides: [
