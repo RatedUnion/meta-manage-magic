@@ -246,15 +246,43 @@ function BookingsPage() {
               {b.notes && <p className="mt-3 rounded-lg bg-muted/50 p-3 text-sm">{b.notes}</p>}
 
               <div className="mt-4 flex flex-wrap gap-2">
+              {b.notes && <p className="mt-3 rounded-lg bg-muted/50 p-3 text-sm">{b.notes}</p>}
+
+              {b.payment_status === "paid" && (
+                <p className="mt-3 inline-flex flex-wrap items-center gap-2 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700">
+                  <CreditCard className="h-4 w-4" />
+                  {money(b.payment_amount, b.payment_currency) ?? "Payment received"}
+                  {b.payment_method ? ` · ${b.payment_method}` : ""}
+                  {b.payment_reference ? ` · ${b.payment_reference}` : ""}
+                  {b.paid_at ? ` · ${format(new Date(b.paid_at), "d MMM yyyy, HH:mm")}` : ""}
+                </p>
+              )}
+
+              <div className="mt-4 flex flex-wrap gap-2">
                 {STATUSES.filter((s) => s !== b.status).map((s) => (
                   <Button key={s} size="sm" variant="outline" onClick={() => onStatus(b.id, s)}>
                     Mark {s}
                   </Button>
                 ))}
+                {b.payment_status === "paid" ? (
+                  <>
+                    <Button size="sm" variant="ghost" onClick={() => onPayment(b.id, "unpaid")}>
+                      Mark unpaid
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => onPayment(b.id, "refunded")}>
+                      Mark refunded
+                    </Button>
+                  </>
+                ) : (
+                  <Button size="sm" variant="secondary" onClick={() => onPayment(b.id, "paid")}>
+                    Mark paid
+                  </Button>
+                )}
               </div>
             </article>
           ))}
         </div>
+
       </div>
     </main>
   );
