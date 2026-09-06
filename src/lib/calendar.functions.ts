@@ -55,8 +55,11 @@ export const addBookingToCalendar = createServerFn({ method: "POST" })
       ]
         .filter(Boolean)
         .join("\n"),
+      location: "Trinidad and Tobago",
       start: { dateTime: start, timeZone: "America/Port_of_Spain" },
       end: { dateTime: end, timeZone: "America/Port_of_Spain" },
+      attendees: [{ email: data.email, displayName: data.name }],
+
       reminders: {
         useDefault: false,
         overrides: [
@@ -69,15 +72,19 @@ export const addBookingToCalendar = createServerFn({ method: "POST" })
     };
 
     try {
-      const res = await fetch(`${GATEWAY_URL}/calendars/primary/events`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${lovableKey}`,
-          "X-Connection-Api-Key": connectionKey,
-          "Content-Type": "application/json",
+      const res = await fetch(
+        `${GATEWAY_URL}/calendars/primary/events?sendUpdates=all`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${lovableKey}`,
+            "X-Connection-Api-Key": connectionKey,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
         },
-        body: JSON.stringify(body),
-      });
+      );
+
 
       if (!res.ok) {
         const text = await res.text();
