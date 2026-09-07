@@ -534,8 +534,27 @@ function ConfirmationCard({ confirmation, onReset }: { confirmation: Confirmatio
             value={`${confirmation.photos} ${confirmation.photos === 1 ? "photo" : "photos"}`}
           />
         )}
-
+        <Detail
+          icon={<BadgeDollarSign className="h-4 w-4" />}
+          label="Appointment fee"
+          value={`TTD ${APPOINTMENT_FEE} — non-negotiable`}
+        />
       </dl>
+
+      <div className="mt-6 rounded-lg border border-accent/50 bg-accent/10 p-4 text-sm">
+        <p className="font-medium text-foreground">Appointment fee TTD {APPOINTMENT_FEE} is due</p>
+        <p className="mt-1 text-muted-foreground">
+          This flat fee is non-negotiable and covers call-out, assessment and diagnosis. Parts and
+          labour to finalize the project are quoted separately and only start once you approve them.
+          Pay now with your reference{" "}
+          <span className="font-mono text-foreground">{confirmation.ref}</span>.
+        </p>
+        <Link to="/pay" className="mt-3 inline-block">
+          <Button size="sm">Pay appointment fee</Button>
+        </Link>
+      </div>
+
+
 
       {confirmation.calendarScheduled && (
         <div className="mt-6 rounded-lg border border-accent/40 bg-accent/10 p-4 text-sm">
