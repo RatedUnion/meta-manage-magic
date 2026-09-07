@@ -33,7 +33,13 @@ import { cn } from "@/lib/utils";
 import { recordBookingPayment } from "@/lib/bookings.functions";
 
 
+const paySearchSchema = z.object({
+  ref: z.string().max(40).optional(),
+  amount: z.coerce.number().positive().max(1_000_000).optional(),
+});
+
 export const Route = createFileRoute("/pay")({
+  validateSearch: (search: Record<string, unknown>) => paySearchSchema.parse(search),
   component: PayPage,
   head: () => ({
     meta: [
@@ -175,9 +181,10 @@ function BankCard({
 
 function PayPage() {
   const payBooking = useServerFn(recordBookingPayment);
+  const search = Route.useSearch();
   const [currency, setCurrency] = useState<string>("TTD");
-  const [bookingRef, setBookingRef] = useState("");
-  const [amount, setAmount] = useState("");
+  const [bookingRef, setBookingRef] = useState(search.ref ?? "");
+  const [amount, setAmount] = useState(search.amount != null ? String(search.amount) : "");
   const [service, setService] = useState("");
   const [brand, setBrand] = useState<string>("linx");
   const [name, setName] = useState("");

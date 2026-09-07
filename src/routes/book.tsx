@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
-import { ArrowLeft, BadgeDollarSign, CalendarIcon, CheckCircle2, Clock, ImagePlus, Images, Mail, Phone, User, X } from "lucide-react";
+import { ArrowLeft, BadgeDollarSign, CalendarIcon, CheckCircle2, Clock, ImagePlus, Images, ListChecks, Mail, Phone, SquareCheckBig, User, X } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 
@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { addBookingToCalendar } from "@/lib/calendar.functions";
 import { saveBooking } from "@/lib/bookings.functions";
+import { SERVICES as SERVICE_CATALOG } from "@/data/services";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/book")({
@@ -88,6 +89,37 @@ const SERVICES = [
 ] as const;
 
 
+type BuildItem = {
+  key: string;
+  service: string;
+  item: string;
+  scope: string;
+  turnaround: string;
+  rate: string;
+  price: number | null;
+};
+
+/** Pull a TTD amount out of rate strings like "From TTD 250"; null when quote-only. */
+function parsePrice(rate: string): number | null {
+  const m = rate.match(/TTD\s*([\d,]+(?:\.\d+)?)/i);
+  return m ? Number(m[1].replace(/,/g, "")) : null;
+}
+
+/** Flatten every service's spec sheet into selectable build-sheet lines. */
+const BUILD_ITEMS: BuildItem[] = SERVICE_CATALOG.flatMap((svc) =>
+  svc.specs.map((spec) => ({
+    key: `${svc.slug}::${spec.item}`,
+    service: svc.title,
+    item: spec.item,
+    scope: spec.scope,
+    turnaround: spec.turnaround,
+    rate: spec.rate,
+    price: parsePrice(spec.rate),
+  })),
+);
+
+const fmtTTD = (n: number) => `TTD ${n.toLocaleString("en-TT", { maximumFractionDigits: 2 })}`;
+
 const TIME_SLOTS = [
   "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
   "13:00", "13:30", "14:00", "14:30", "15:00", "15:30",
@@ -118,6 +150,8 @@ type Confirmation = {
   name: string;
   email: string;
   photos: number;
+  items: BuildItem[];
+  total: number;
   calendarLink?: string;
   calendarScheduled?: boolean;
 };
@@ -136,7 +170,23 @@ function BookPage() {
   const [submitting, setSubmitting] = useState(false);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const toggleItem = (key: string) =>
+    setSelectedKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+
+  const selectedItems = useMemo(
+    () => BUILD_ITEMS.filter((i) => selectedKeys.has(i.key)),
+    [selectedKeys],
+  );
+  const itemsTotal = selectedItems.reduce((sum, i) => sum + (i.price ?? 0), 0);
+  const grandTotal = itemsTotal + APPOINTMENT_FEE;
 
   useEffect(() => {
     return () => {
@@ -226,6 +276,10 @@ function BookPage() {
       calendar = { scheduled: false };
     }
 
+    const buildSheetSummary = selectedItems.length
+      ? `\nBuild sheet: ${selectedItems.map((i) => i.item).join(", ")} — items ${fmtTTD(itemsTotal)} + fee ${fmtTTD(APPOINTMENT_FEE)} = ${fmtTTD(grandTotal)}`
+      : "";
+
     try {
       await persistBooking({
         data: {
@@ -236,7 +290,7 @@ function BookPage() {
           name: parsed.data.name,
           email: parsed.data.email,
           phone: parsed.data.phone,
-          notes: parsed.data.notes,
+          notes: (parsed.data.notes ?? "") + buildSheetSummary || undefined,
           photo_count: photos.length,
           calendar_event_url: calendar.htmlLink,
         },
@@ -253,6 +307,8 @@ function BookPage() {
       name: parsed.data.name,
       email: parsed.data.email,
       photos: photos.length,
+      items: selectedItems,
+      total: grandTotal,
       calendarLink: calendar.htmlLink,
       calendarScheduled: calendar.scheduled,
     });
@@ -269,6 +325,7 @@ function BookPage() {
   const reset = () => {
     setConfirmation(null);
     setServiceId(""); setDate(undefined); setTime("");
+    setSelectedKeys(new Set());
     setName(""); setEmail(""); setPhone(""); setNotes("");
     setPhotos((prev) => { prev.forEach((p) => URL.revokeObjectURL(p.url)); return []; });
   };
@@ -346,6 +403,86 @@ function BookPage() {
                   })}
                 </div>
               </section>
+
+              {/* Build sheet */}
+              <section className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="flex items-center gap-2">
+                    <ListChecks className="h-4 w-4" /> Build sheet — add items to your booking
+                  </Label>
+                  <span className="text-xs text-muted-foreground">
+                    {selectedItems.length} selected
+                  </span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Tick the work items you need from our spec sheets. Each line shows the exact scope;
+                  priced items total up below and items marked “Quoted” are priced on inspection.
+                </p>
+                <div className="overflow-hidden rounded-xl border border-border">
+                  {BUILD_ITEMS.map((i) => {
+                    const active = selectedKeys.has(i.key);
+                    const selectable = i.price != null;
+                    return (
+                      <button
+                        type="button"
+                        key={i.key}
+                        disabled={!selectable}
+                        onClick={() => toggleItem(i.key)}
+                        className={cn(
+                          "flex w-full items-start gap-3 border-b border-border/60 px-4 py-3 text-left text-sm transition last:border-b-0",
+                          active ? "bg-accent/10" : "bg-card hover:bg-secondary/40",
+                          !selectable && "cursor-not-allowed opacity-60",
+                        )}
+                      >
+                        <SquareCheckBig
+                          className={cn(
+                            "mt-0.5 h-4 w-4 shrink-0",
+                            active ? "text-accent" : "text-muted-foreground/50",
+                          )}
+                        />
+                        <span className="min-w-0 flex-1">
+                          <span className="flex flex-wrap items-baseline gap-x-2">
+                            <span className="font-medium">{i.item}</span>
+                            <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                              {i.service}
+                            </span>
+                          </span>
+                          <span className="mt-0.5 block text-xs text-muted-foreground">
+                            {i.scope} · {i.turnaround}
+                          </span>
+                        </span>
+                        <span
+                          className={cn(
+                            "shrink-0 text-xs font-medium",
+                            active ? "text-foreground" : "text-muted-foreground",
+                          )}
+                        >
+                          {i.price != null ? fmtTTD(i.price) : i.rate}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="rounded-xl border border-accent/50 bg-accent/10 p-4 text-sm">
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Selected items ({selectedItems.length})</span>
+                    <span>{fmtTTD(itemsTotal)}</span>
+                  </div>
+                  <div className="mt-1 flex justify-between text-muted-foreground">
+                    <span>Appointment fee (non-negotiable)</span>
+                    <span>{fmtTTD(APPOINTMENT_FEE)}</span>
+                  </div>
+                  <div className="mt-2 flex justify-between border-t border-accent/40 pt-2 font-semibold text-foreground">
+                    <span>Total due to confirm</span>
+                    <span>{fmtTTD(grandTotal)}</span>
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Items marked “Quoted” are assessed on site and approved by you before work starts.
+                  </p>
+                </div>
+              </section>
+
 
 
               {/* Date + Time */}
