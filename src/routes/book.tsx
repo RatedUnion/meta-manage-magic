@@ -276,6 +276,10 @@ function BookPage() {
       calendar = { scheduled: false };
     }
 
+    const buildSheetSummary = selectedItems.length
+      ? `\nBuild sheet: ${selectedItems.map((i) => i.item).join(", ")} — items ${fmtTTD(itemsTotal)} + fee ${fmtTTD(APPOINTMENT_FEE)} = ${fmtTTD(grandTotal)}`
+      : "";
+
     try {
       await persistBooking({
         data: {
@@ -286,7 +290,7 @@ function BookPage() {
           name: parsed.data.name,
           email: parsed.data.email,
           phone: parsed.data.phone,
-          notes: parsed.data.notes,
+          notes: (parsed.data.notes ?? "") + buildSheetSummary || undefined,
           photo_count: photos.length,
           calendar_event_url: calendar.htmlLink,
         },
@@ -303,6 +307,8 @@ function BookPage() {
       name: parsed.data.name,
       email: parsed.data.email,
       photos: photos.length,
+      items: selectedItems,
+      total: grandTotal,
       calendarLink: calendar.htmlLink,
       calendarScheduled: calendar.scheduled,
     });
