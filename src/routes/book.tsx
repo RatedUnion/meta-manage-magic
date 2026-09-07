@@ -257,10 +257,11 @@ function BookPage() {
       calendarScheduled: calendar.scheduled,
     });
     toast.success("Appointment requested", {
-      description: calendar.scheduled
-        ? `Ref ${ref} — added to our Google Calendar with mobile reminders.`
-        : `Ref ${ref} — we'll be in touch to confirm your slot.`,
+      description: `Ref ${ref} — appointment fee TTD ${APPOINTMENT_FEE} (non-negotiable) is due to confirm.${
+        calendar.scheduled ? " Added to our Google Calendar with mobile reminders." : ""
+      }`,
     });
+
     setSubmitting(false);
   };
 
