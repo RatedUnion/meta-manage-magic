@@ -89,6 +89,37 @@ const SERVICES = [
 ] as const;
 
 
+type BuildItem = {
+  key: string;
+  service: string;
+  item: string;
+  scope: string;
+  turnaround: string;
+  rate: string;
+  price: number | null;
+};
+
+/** Pull a TTD amount out of rate strings like "From TTD 250"; null when quote-only. */
+function parsePrice(rate: string): number | null {
+  const m = rate.match(/TTD\s*([\d,]+(?:\.\d+)?)/i);
+  return m ? Number(m[1].replace(/,/g, "")) : null;
+}
+
+/** Flatten every service's spec sheet into selectable build-sheet lines. */
+const BUILD_ITEMS: BuildItem[] = SERVICE_CATALOG.flatMap((svc) =>
+  svc.specs.map((spec) => ({
+    key: `${svc.slug}::${spec.item}`,
+    service: svc.title,
+    item: spec.item,
+    scope: spec.scope,
+    turnaround: spec.turnaround,
+    rate: spec.rate,
+    price: parsePrice(spec.rate),
+  })),
+);
+
+const fmtTTD = (n: number) => `TTD ${n.toLocaleString("en-TT", { maximumFractionDigits: 2 })}`;
+
 const TIME_SLOTS = [
   "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
   "13:00", "13:30", "14:00", "14:30", "15:00", "15:30",
