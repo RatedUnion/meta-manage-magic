@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
-import { ArrowLeft, CalendarIcon, CheckCircle2, Clock, ImagePlus, Images, Mail, Phone, User, X } from "lucide-react";
+import { ArrowLeft, BadgeDollarSign, CalendarIcon, CheckCircle2, Clock, ImagePlus, Images, Mail, Phone, User, X } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 
@@ -39,14 +39,54 @@ export const Route = createFileRoute("/book")({
   }),
 });
 
+/** Non-negotiable appointment fee charged on every booking, in TTD. */
+const APPOINTMENT_FEE = 110;
+
 const SERVICES = [
-  { id: "mechanic", label: "Mobile Mechanic", duration: "60 min" },
-  { id: "electrician", label: "Electrician", duration: "60 min" },
-  { id: "booking", label: "Online Booking Consultation", duration: "30 min" },
-  { id: "class", label: "Online Class", duration: "60 min" },
-  { id: "delivery", label: "Delivery Scheduling", duration: "20 min" },
-  { id: "reservation", label: "Reservation", duration: "30 min" },
+  {
+    id: "mechanic",
+    label: "Mobile Mechanic",
+    duration: "60 min",
+    detail: "On-site diagnostics, OEM parts fitting, brakes, battery and oil service. Written report and job reference included.",
+    price: "Appointment fee TTD 110 · repairs quoted on inspection",
+  },
+  {
+    id: "electrician",
+    label: "Electrician",
+    duration: "60 min",
+    detail: "Building and automotive electrical: fault finding, safe isolation, circuit installs, testing and certification.",
+    price: "Appointment fee TTD 110 · works quoted after assessment",
+  },
+  {
+    id: "booking",
+    label: "Online Booking Consultation",
+    duration: "30 min",
+    detail: "A guided call to scope your project, confirm parts and lead times, and lock in the right technician.",
+    price: "Appointment fee TTD 110 · credited to the job",
+  },
+  {
+    id: "class",
+    label: "Online Class",
+    duration: "60 min",
+    detail: "One-to-one virtual session on diagnostics, wiring basics or maintenance, with notes sent afterwards.",
+    price: "Appointment fee TTD 110 per session",
+  },
+  {
+    id: "delivery",
+    label: "Delivery Scheduling",
+    duration: "20 min",
+    detail: "Book a parts or package run across Trinidad, with pickup window, handling and proof of delivery.",
+    price: "Appointment fee TTD 110 · mileage quoted per route",
+  },
+  {
+    id: "reservation",
+    label: "Reservation",
+    duration: "30 min",
+    detail: "Hold a technician slot ahead of time for a planned project, inspection or site visit.",
+    price: "Appointment fee TTD 110 · holds your slot",
+  },
 ] as const;
+
 
 const TIME_SLOTS = [
   "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
@@ -217,10 +257,11 @@ function BookPage() {
       calendarScheduled: calendar.scheduled,
     });
     toast.success("Appointment requested", {
-      description: calendar.scheduled
-        ? `Ref ${ref} — added to our Google Calendar with mobile reminders.`
-        : `Ref ${ref} — we'll be in touch to confirm your slot.`,
+      description: `Ref ${ref} — appointment fee TTD ${APPOINTMENT_FEE} (non-negotiable) is due to confirm.${
+        calendar.scheduled ? " Added to our Google Calendar with mobile reminders." : ""
+      }`,
     });
+
     setSubmitting(false);
   };
 
@@ -260,6 +301,17 @@ function BookPage() {
               </p>
             </div>
 
+            <div className="mb-8 rounded-xl border border-accent/50 bg-accent/10 p-4">
+              <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <BadgeDollarSign className="h-4 w-4" /> Appointment fee TTD {APPOINTMENT_FEE} — non-negotiable
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Every booking carries a flat TTD {APPOINTMENT_FEE} appointment fee covering call-out,
+                assessment and diagnosis. Parts and labour to finalize the project are quoted separately
+                and approved by you before any work starts.
+              </p>
+            </div>
+
             <form onSubmit={onSubmit} className="space-y-10">
               {/* Service */}
               <section className="space-y-3">
@@ -273,21 +325,28 @@ function BookPage() {
                         key={s.id}
                         onClick={() => setServiceId(s.id)}
                         className={cn(
-                          "rounded-xl border p-4 text-left transition",
+                          "flex h-full flex-col rounded-xl border p-4 text-left transition",
                           active
                             ? "border-accent bg-accent/10 shadow-sm"
                             : "border-border bg-card hover:border-accent/60",
                         )}
                       >
                         <div className="font-medium">{s.label}</div>
-                        <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <Clock className="h-3.5 w-3.5" /> {s.duration}
+                        <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{s.detail}</p>
+                        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1.5">
+                            <Clock className="h-3.5 w-3.5" /> {s.duration}
+                          </span>
+                          <span className="flex items-center gap-1.5 font-medium text-foreground">
+                            <BadgeDollarSign className="h-3.5 w-3.5" /> {s.price}
+                          </span>
                         </div>
                       </button>
                     );
                   })}
                 </div>
               </section>
+
 
               {/* Date + Time */}
               <section className="grid gap-6 md:grid-cols-2">
@@ -423,11 +482,15 @@ function BookPage() {
                   {selectedService && date && time ? (
                     <span>
                       {selectedService.label} · {format(date, "MMM d")} · {time}
+                      <span className="ml-1 font-medium text-foreground">
+                        · Appointment fee TTD {APPOINTMENT_FEE} (non-negotiable)
+                      </span>
                     </span>
                   ) : (
-                    <span>Complete all fields to book.</span>
+                    <span>Complete all fields to book. Appointment fee TTD {APPOINTMENT_FEE}, non-negotiable.</span>
                   )}
                 </div>
+
                 <Button type="submit" size="lg" disabled={submitting}>
                   {submitting ? "Booking…" : "Confirm booking"}
                 </Button>
@@ -471,8 +534,27 @@ function ConfirmationCard({ confirmation, onReset }: { confirmation: Confirmatio
             value={`${confirmation.photos} ${confirmation.photos === 1 ? "photo" : "photos"}`}
           />
         )}
-
+        <Detail
+          icon={<BadgeDollarSign className="h-4 w-4" />}
+          label="Appointment fee"
+          value={`TTD ${APPOINTMENT_FEE} — non-negotiable`}
+        />
       </dl>
+
+      <div className="mt-6 rounded-lg border border-accent/50 bg-accent/10 p-4 text-sm">
+        <p className="font-medium text-foreground">Appointment fee TTD {APPOINTMENT_FEE} is due</p>
+        <p className="mt-1 text-muted-foreground">
+          This flat fee is non-negotiable and covers call-out, assessment and diagnosis. Parts and
+          labour to finalize the project are quoted separately and only start once you approve them.
+          Pay now with your reference{" "}
+          <span className="font-mono text-foreground">{confirmation.ref}</span>.
+        </p>
+        <Link to="/pay" className="mt-3 inline-block">
+          <Button size="sm">Pay appointment fee</Button>
+        </Link>
+      </div>
+
+
 
       {confirmation.calendarScheduled && (
         <div className="mt-6 rounded-lg border border-accent/40 bg-accent/10 p-4 text-sm">
