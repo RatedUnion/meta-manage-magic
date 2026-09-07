@@ -300,6 +300,17 @@ function BookPage() {
               </p>
             </div>
 
+            <div className="mb-8 rounded-xl border border-accent/50 bg-accent/10 p-4">
+              <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <BadgeDollarSign className="h-4 w-4" /> Appointment fee TTD {APPOINTMENT_FEE} — non-negotiable
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Every booking carries a flat TTD {APPOINTMENT_FEE} appointment fee covering call-out,
+                assessment and diagnosis. Parts and labour to finalize the project are quoted separately
+                and approved by you before any work starts.
+              </p>
+            </div>
+
             <form onSubmit={onSubmit} className="space-y-10">
               {/* Service */}
               <section className="space-y-3">
@@ -313,21 +324,28 @@ function BookPage() {
                         key={s.id}
                         onClick={() => setServiceId(s.id)}
                         className={cn(
-                          "rounded-xl border p-4 text-left transition",
+                          "flex h-full flex-col rounded-xl border p-4 text-left transition",
                           active
                             ? "border-accent bg-accent/10 shadow-sm"
                             : "border-border bg-card hover:border-accent/60",
                         )}
                       >
                         <div className="font-medium">{s.label}</div>
-                        <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <Clock className="h-3.5 w-3.5" /> {s.duration}
+                        <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{s.detail}</p>
+                        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1.5">
+                            <Clock className="h-3.5 w-3.5" /> {s.duration}
+                          </span>
+                          <span className="flex items-center gap-1.5 font-medium text-foreground">
+                            <BadgeDollarSign className="h-3.5 w-3.5" /> {s.price}
+                          </span>
                         </div>
                       </button>
                     );
                   })}
                 </div>
               </section>
+
 
               {/* Date + Time */}
               <section className="grid gap-6 md:grid-cols-2">
