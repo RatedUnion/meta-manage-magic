@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
-import { ArrowLeft, BadgeDollarSign, CalendarIcon, CheckCircle2, Clock, ImagePlus, Images, Mail, Phone, User, X } from "lucide-react";
+import { ArrowLeft, BadgeDollarSign, CalendarIcon, CheckCircle2, Clock, ImagePlus, Images, ListChecks, Mail, Phone, SquareCheckBig, User, X } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 
@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { addBookingToCalendar } from "@/lib/calendar.functions";
 import { saveBooking } from "@/lib/bookings.functions";
+import { SERVICES as SERVICE_CATALOG } from "@/data/services";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/book")({
