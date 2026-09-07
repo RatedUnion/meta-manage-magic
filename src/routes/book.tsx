@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
-import { ArrowLeft, CalendarIcon, CheckCircle2, Clock, ImagePlus, Images, Mail, Phone, User, X } from "lucide-react";
+import { ArrowLeft, BadgeDollarSign, CalendarIcon, CheckCircle2, Clock, ImagePlus, Images, Mail, Phone, User, X } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 
