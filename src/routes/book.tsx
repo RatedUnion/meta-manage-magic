@@ -39,14 +39,54 @@ export const Route = createFileRoute("/book")({
   }),
 });
 
+/** Non-negotiable appointment fee charged on every booking, in TTD. */
+const APPOINTMENT_FEE = 110;
+
 const SERVICES = [
-  { id: "mechanic", label: "Mobile Mechanic", duration: "60 min" },
-  { id: "electrician", label: "Electrician", duration: "60 min" },
-  { id: "booking", label: "Online Booking Consultation", duration: "30 min" },
-  { id: "class", label: "Online Class", duration: "60 min" },
-  { id: "delivery", label: "Delivery Scheduling", duration: "20 min" },
-  { id: "reservation", label: "Reservation", duration: "30 min" },
+  {
+    id: "mechanic",
+    label: "Mobile Mechanic",
+    duration: "60 min",
+    detail: "On-site diagnostics, OEM parts fitting, brakes, battery and oil service. Written report and job reference included.",
+    price: "Appointment fee TTD 110 · repairs quoted on inspection",
+  },
+  {
+    id: "electrician",
+    label: "Electrician",
+    duration: "60 min",
+    detail: "Building and automotive electrical: fault finding, safe isolation, circuit installs, testing and certification.",
+    price: "Appointment fee TTD 110 · works quoted after assessment",
+  },
+  {
+    id: "booking",
+    label: "Online Booking Consultation",
+    duration: "30 min",
+    detail: "A guided call to scope your project, confirm parts and lead times, and lock in the right technician.",
+    price: "Appointment fee TTD 110 · credited to the job",
+  },
+  {
+    id: "class",
+    label: "Online Class",
+    duration: "60 min",
+    detail: "One-to-one virtual session on diagnostics, wiring basics or maintenance, with notes sent afterwards.",
+    price: "Appointment fee TTD 110 per session",
+  },
+  {
+    id: "delivery",
+    label: "Delivery Scheduling",
+    duration: "20 min",
+    detail: "Book a parts or package run across Trinidad, with pickup window, handling and proof of delivery.",
+    price: "Appointment fee TTD 110 · mileage quoted per route",
+  },
+  {
+    id: "reservation",
+    label: "Reservation",
+    duration: "30 min",
+    detail: "Hold a technician slot ahead of time for a planned project, inspection or site visit.",
+    price: "Appointment fee TTD 110 · holds your slot",
+  },
 ] as const;
+
 
 const TIME_SLOTS = [
   "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
