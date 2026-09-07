@@ -482,11 +482,15 @@ function BookPage() {
                   {selectedService && date && time ? (
                     <span>
                       {selectedService.label} · {format(date, "MMM d")} · {time}
+                      <span className="ml-1 font-medium text-foreground">
+                        · Appointment fee TTD {APPOINTMENT_FEE} (non-negotiable)
+                      </span>
                     </span>
                   ) : (
-                    <span>Complete all fields to book.</span>
+                    <span>Complete all fields to book. Appointment fee TTD {APPOINTMENT_FEE}, non-negotiable.</span>
                   )}
                 </div>
+
                 <Button type="submit" size="lg" disabled={submitting}>
                   {submitting ? "Booking…" : "Confirm booking"}
                 </Button>
