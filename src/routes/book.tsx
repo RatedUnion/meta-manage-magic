@@ -325,6 +325,7 @@ function BookPage() {
   const reset = () => {
     setConfirmation(null);
     setServiceId(""); setDate(undefined); setTime("");
+    setSelectedKeys(new Set());
     setName(""); setEmail(""); setPhone(""); setNotes("");
     setPhotos((prev) => { prev.forEach((p) => URL.revokeObjectURL(p.url)); return []; });
   };
@@ -402,6 +403,86 @@ function BookPage() {
                   })}
                 </div>
               </section>
+
+              {/* Build sheet */}
+              <section className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="flex items-center gap-2">
+                    <ListChecks className="h-4 w-4" /> Build sheet — add items to your booking
+                  </Label>
+                  <span className="text-xs text-muted-foreground">
+                    {selectedItems.length} selected
+                  </span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Tick the work items you need from our spec sheets. Each line shows the exact scope;
+                  priced items total up below and items marked “Quoted” are priced on inspection.
+                </p>
+                <div className="overflow-hidden rounded-xl border border-border">
+                  {BUILD_ITEMS.map((i) => {
+                    const active = selectedKeys.has(i.key);
+                    const selectable = i.price != null;
+                    return (
+                      <button
+                        type="button"
+                        key={i.key}
+                        disabled={!selectable}
+                        onClick={() => toggleItem(i.key)}
+                        className={cn(
+                          "flex w-full items-start gap-3 border-b border-border/60 px-4 py-3 text-left text-sm transition last:border-b-0",
+                          active ? "bg-accent/10" : "bg-card hover:bg-secondary/40",
+                          !selectable && "cursor-not-allowed opacity-60",
+                        )}
+                      >
+                        <SquareCheckBig
+                          className={cn(
+                            "mt-0.5 h-4 w-4 shrink-0",
+                            active ? "text-accent" : "text-muted-foreground/50",
+                          )}
+                        />
+                        <span className="min-w-0 flex-1">
+                          <span className="flex flex-wrap items-baseline gap-x-2">
+                            <span className="font-medium">{i.item}</span>
+                            <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                              {i.service}
+                            </span>
+                          </span>
+                          <span className="mt-0.5 block text-xs text-muted-foreground">
+                            {i.scope} · {i.turnaround}
+                          </span>
+                        </span>
+                        <span
+                          className={cn(
+                            "shrink-0 text-xs font-medium",
+                            active ? "text-foreground" : "text-muted-foreground",
+                          )}
+                        >
+                          {i.price != null ? fmtTTD(i.price) : i.rate}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="rounded-xl border border-accent/50 bg-accent/10 p-4 text-sm">
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Selected items ({selectedItems.length})</span>
+                    <span>{fmtTTD(itemsTotal)}</span>
+                  </div>
+                  <div className="mt-1 flex justify-between text-muted-foreground">
+                    <span>Appointment fee (non-negotiable)</span>
+                    <span>{fmtTTD(APPOINTMENT_FEE)}</span>
+                  </div>
+                  <div className="mt-2 flex justify-between border-t border-accent/40 pt-2 font-semibold text-foreground">
+                    <span>Total due to confirm</span>
+                    <span>{fmtTTD(grandTotal)}</span>
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Items marked “Quoted” are assessed on site and approved by you before work starts.
+                  </p>
+                </div>
+              </section>
+
 
 
               {/* Date + Time */}
