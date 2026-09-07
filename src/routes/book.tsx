@@ -150,6 +150,8 @@ type Confirmation = {
   name: string;
   email: string;
   photos: number;
+  items: BuildItem[];
+  total: number;
   calendarLink?: string;
   calendarScheduled?: boolean;
 };
@@ -168,7 +170,23 @@ function BookPage() {
   const [submitting, setSubmitting] = useState(false);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const toggleItem = (key: string) =>
+    setSelectedKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+
+  const selectedItems = useMemo(
+    () => BUILD_ITEMS.filter((i) => selectedKeys.has(i.key)),
+    [selectedKeys],
+  );
+  const itemsTotal = selectedItems.reduce((sum, i) => sum + (i.price ?? 0), 0);
+  const grandTotal = itemsTotal + APPOINTMENT_FEE;
 
   useEffect(() => {
     return () => {
