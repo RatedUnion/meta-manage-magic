@@ -234,7 +234,7 @@ function PayPage() {
         return;
       }
       if (result.status === "already_paid") {
-        toast.info("That booking is already paid", {
+        toast.info("A payment is already on that booking", {
           description: result.payment_reference
             ? `Existing payment reference ${result.payment_reference}. No card was charged.`
             : "No card was charged.",
