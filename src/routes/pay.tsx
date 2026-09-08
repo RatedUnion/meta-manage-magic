@@ -293,13 +293,15 @@ function PayPage() {
             <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-primary/10">
               <Check className="h-6 w-6 text-primary" />
             </div>
-            <h2 className="mt-4 text-xl font-semibold tracking-tight">Payment authorised</h2>
+            <h2 className="mt-4 text-xl font-semibold tracking-tight">Payment submitted</h2>
             <p className="mt-2 text-sm text-muted-foreground">
               {receipt.brand} · {receipt.amount} · Reference {receipt.ref}
             </p>
             <p className="mt-2 text-sm text-muted-foreground">
-              Booking <span className="font-mono">{receipt.bookingRef}</span> is now marked paid.
-              Keep this reference — quote it when your technician arrives or when you contact us.
+              Booking <span className="font-mono">{receipt.bookingRef}</span> is marked
+              <span className="font-medium text-foreground"> awaiting confirmation</span>. We confirm it as
+              paid once the funds show in our First Citizens Bank account (Acc. 003108954), usually within one
+              business day. Keep this reference — quote it when your technician arrives or when you contact us.
             </p>
 
             <Button className="mt-6" onClick={() => setReceipt(null)}>Make another payment</Button>
