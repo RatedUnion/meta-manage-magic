@@ -92,13 +92,16 @@ function BookingsPage() {
   const counts = useMemo(() => {
     const list = data ?? [];
     const paid = list.filter((b) => b.payment_status === "paid").length;
-    return { all: list.length, paid, unpaid: list.length - paid };
+    const awaiting = list.filter((b) => b.payment_status === "pending_review").length;
+    return { all: list.length, awaiting, paid, unpaid: list.length - paid - awaiting };
   }, [data]);
 
   const rows = useMemo(() => {
     let list = data ?? [];
     if (payFilter === "paid") list = list.filter((b) => b.payment_status === "paid");
-    if (payFilter === "unpaid") list = list.filter((b) => b.payment_status !== "paid");
+    if (payFilter === "awaiting") list = list.filter((b) => b.payment_status === "pending_review");
+    if (payFilter === "unpaid")
+      list = list.filter((b) => b.payment_status !== "paid" && b.payment_status !== "pending_review");
     const needle = q.trim().toLowerCase();
     if (!needle) return list;
     return list.filter((b) =>
