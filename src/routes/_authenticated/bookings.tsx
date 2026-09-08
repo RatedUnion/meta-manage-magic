@@ -57,8 +57,16 @@ const statusTone: Record<string, string> = {
 
 const payTone: Record<string, string> = {
   paid: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30",
+  pending_review: "bg-amber-500/15 text-amber-600 border-amber-500/30",
   unpaid: "bg-muted text-muted-foreground border-border",
   refunded: "bg-destructive/10 text-destructive border-destructive/30",
+};
+
+const payLabel: Record<string, string> = {
+  paid: "Paid",
+  pending_review: "Awaiting confirmation",
+  refunded: "Refunded",
+  unpaid: "Unpaid",
 };
 
 function money(amount: number | null, currency: string | null) {
