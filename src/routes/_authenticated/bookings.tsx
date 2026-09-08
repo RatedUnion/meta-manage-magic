@@ -222,7 +222,7 @@ function BookingsPage() {
                       {b.status}
                     </Badge>
                     <Badge variant="outline" className={payTone[b.payment_status] ?? ""}>
-                      {b.payment_status === "paid" ? "Paid" : b.payment_status === "refunded" ? "Refunded" : "Unpaid"}
+                      {payLabel[b.payment_status] ?? "Unpaid"}
                     </Badge>
                     <span className="font-mono text-xs text-muted-foreground">{b.reference}</span>
                   </div>
