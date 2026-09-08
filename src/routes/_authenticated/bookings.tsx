@@ -46,7 +46,7 @@ export const Route = createFileRoute("/_authenticated/bookings")({
 });
 
 const STATUSES = ["pending", "confirmed", "completed", "cancelled"] as const;
-const PAY_FILTERS = ["all", "paid", "unpaid"] as const;
+const PAY_FILTERS = ["all", "awaiting", "paid", "unpaid"] as const;
 
 const statusTone: Record<string, string> = {
   pending: "bg-amber-500/15 text-amber-600 border-amber-500/30",
