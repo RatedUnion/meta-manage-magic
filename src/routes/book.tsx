@@ -620,11 +620,12 @@ function BookPage() {
                     <span>
                       {selectedService.label} · {format(date, "MMM d")} · {time}
                       <span className="ml-1 font-medium text-foreground">
-                        · Appointment fee TTD {APPOINTMENT_FEE} (non-negotiable)
+                        · Total due {fmtTTD(grandTotal)}
+                        {selectedItems.length > 0 && ` (${selectedItems.length} items + fee)`}
                       </span>
                     </span>
                   ) : (
-                    <span>Complete all fields to book. Appointment fee TTD {APPOINTMENT_FEE}, non-negotiable.</span>
+                    <span>Complete all fields to book. Appointment fee {fmtTTD(APPOINTMENT_FEE)}, non-negotiable.</span>
                   )}
                 </div>
 
@@ -673,21 +674,46 @@ function ConfirmationCard({ confirmation, onReset }: { confirmation: Confirmatio
         )}
         <Detail
           icon={<BadgeDollarSign className="h-4 w-4" />}
-          label="Appointment fee"
-          value={`TTD ${APPOINTMENT_FEE} — non-negotiable`}
+          label="Total due"
+          value={`${fmtTTD(confirmation.total)} — includes ${fmtTTD(APPOINTMENT_FEE)} non-negotiable appointment fee`}
         />
       </dl>
 
+      {confirmation.items.length > 0 && (
+        <div className="mt-6 rounded-lg border border-border bg-secondary/40 p-4 text-sm">
+          <p className="flex items-center gap-1.5 font-medium text-foreground">
+            <ListChecks className="h-4 w-4" /> Build sheet ({confirmation.items.length} items)
+          </p>
+          <ul className="mt-2 space-y-1.5">
+            {confirmation.items.map((i) => (
+              <li key={i.key} className="flex items-baseline justify-between gap-3">
+                <span className="min-w-0">
+                  <span className="font-medium">{i.item}</span>
+                  <span className="ml-2 text-xs text-muted-foreground">{i.scope}</span>
+                </span>
+                <span className="shrink-0 text-xs text-muted-foreground">{i.rate}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div className="mt-6 rounded-lg border border-accent/50 bg-accent/10 p-4 text-sm">
-        <p className="font-medium text-foreground">Appointment fee TTD {APPOINTMENT_FEE} is due</p>
-        <p className="mt-1 text-muted-foreground">
-          This flat fee is non-negotiable and covers call-out, assessment and diagnosis. Parts and
-          labour to finalize the project are quoted separately and only start once you approve them.
-          Pay now with your reference{" "}
-          <span className="font-mono text-foreground">{confirmation.ref}</span>.
+        <p className="font-medium text-foreground">
+          {fmtTTD(confirmation.total)} is due to confirm your booking
         </p>
-        <Link to="/pay" className="mt-3 inline-block">
-          <Button size="sm">Pay appointment fee</Button>
+        <p className="mt-1 text-muted-foreground">
+          This includes the non-negotiable appointment fee of {fmtTTD(APPOINTMENT_FEE)} covering
+          call-out, assessment and diagnosis. Anything marked “Quoted” on the build sheet is priced
+          after inspection and only starts once you approve it. Pay securely now with your
+          reference <span className="font-mono text-foreground">{confirmation.ref}</span>.
+        </p>
+        <Link
+          to="/pay"
+          search={{ ref: confirmation.ref, amount: confirmation.total }}
+          className="mt-3 inline-block"
+        >
+          <Button size="sm">Pay {fmtTTD(confirmation.total)} securely</Button>
         </Link>
       </div>
 
