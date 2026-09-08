@@ -74,7 +74,10 @@ export const updatePaymentStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
     z
-      .object({ id: z.string().uuid(), payment_status: z.enum(["unpaid", "paid", "refunded"]) })
+      .object({
+        id: z.string().uuid(),
+        payment_status: z.enum(["unpaid", "pending_review", "paid", "refunded"]),
+      })
       .parse(data),
   )
   .handler(async ({ context, data }) => {
