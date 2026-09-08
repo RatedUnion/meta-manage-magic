@@ -181,15 +181,17 @@ export const recordBookingPayment = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin
       .from("bookings")
       .update({
-        payment_status: "paid",
+        // Funds are not settled until the owner confirms them against the
+        // First Citizens account — never mark a booking paid automatically.
+        payment_status: "pending_review",
         payment_amount: data.amount,
         payment_currency: data.currency,
         payment_method: data.method,
         payment_reference: paymentReference,
-        paid_at: new Date().toISOString(),
+        paid_at: null,
       })
       .eq("id", existing.id)
-      .neq("payment_status", "paid");
+      .eq("payment_status", existing.payment_status);
     if (error) throw new Error("Payment could not be processed");
 
     await logAttempt(true);
