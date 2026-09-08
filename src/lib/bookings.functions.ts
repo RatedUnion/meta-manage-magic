@@ -167,7 +167,7 @@ export const recordBookingPayment = createServerFn({ method: "POST" })
       return { status: "not_found" as const };
     }
 
-    if (existing.payment_status === "paid") {
+    if (existing.payment_status === "paid" || existing.payment_status === "pending_review") {
       await logAttempt(true);
       return {
         status: "already_paid" as const,
