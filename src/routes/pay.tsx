@@ -248,8 +248,8 @@ function PayPage() {
         bookingRef: parsed.data.bookingRef,
       });
       setNumber(""); setCvv(""); setExpiry("");
-      toast.success("Payment authorised", {
-        description: `Ref ${result.payment_reference} — booking ${parsed.data.bookingRef} is now marked paid.`,
+      toast.success("Payment submitted", {
+        description: `Ref ${result.payment_reference} — awaiting confirmation against our First Citizens account.`,
       });
 
     } catch (err) {
