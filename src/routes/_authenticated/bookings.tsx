@@ -122,7 +122,10 @@ function BookingsPage() {
     }
   };
 
-  const onPayment = async (id: string, payment_status: "unpaid" | "paid" | "refunded") => {
+  const onPayment = async (
+    id: string,
+    payment_status: "unpaid" | "pending_review" | "paid" | "refunded",
+  ) => {
     try {
       await setPayment({ data: { id, payment_status } });
       toast.success(`Marked ${payment_status}`);
