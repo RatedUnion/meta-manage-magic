@@ -154,7 +154,7 @@ function BookingsPage() {
             <h1 className="mt-3 text-3xl font-semibold tracking-tight">Booking history</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               {data
-                ? `${counts.all} booking${counts.all === 1 ? "" : "s"} saved · ${counts.paid} paid · ${counts.unpaid} unpaid`
+                ? `${counts.all} booking${counts.all === 1 ? "" : "s"} saved · ${counts.awaiting} awaiting confirmation · ${counts.paid} paid · ${counts.unpaid} unpaid`
                 : "Loading bookings…"}
             </p>
 
