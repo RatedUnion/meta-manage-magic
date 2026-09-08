@@ -46,7 +46,7 @@ export const Route = createFileRoute("/_authenticated/bookings")({
 });
 
 const STATUSES = ["pending", "confirmed", "completed", "cancelled"] as const;
-const PAY_FILTERS = ["all", "paid", "unpaid"] as const;
+const PAY_FILTERS = ["all", "awaiting", "paid", "unpaid"] as const;
 
 const statusTone: Record<string, string> = {
   pending: "bg-amber-500/15 text-amber-600 border-amber-500/30",
@@ -57,8 +57,16 @@ const statusTone: Record<string, string> = {
 
 const payTone: Record<string, string> = {
   paid: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30",
+  pending_review: "bg-amber-500/15 text-amber-600 border-amber-500/30",
   unpaid: "bg-muted text-muted-foreground border-border",
   refunded: "bg-destructive/10 text-destructive border-destructive/30",
+};
+
+const payLabel: Record<string, string> = {
+  paid: "Paid",
+  pending_review: "Awaiting confirmation",
+  refunded: "Refunded",
+  unpaid: "Unpaid",
 };
 
 function money(amount: number | null, currency: string | null) {
@@ -84,13 +92,16 @@ function BookingsPage() {
   const counts = useMemo(() => {
     const list = data ?? [];
     const paid = list.filter((b) => b.payment_status === "paid").length;
-    return { all: list.length, paid, unpaid: list.length - paid };
+    const awaiting = list.filter((b) => b.payment_status === "pending_review").length;
+    return { all: list.length, awaiting, paid, unpaid: list.length - paid - awaiting };
   }, [data]);
 
   const rows = useMemo(() => {
     let list = data ?? [];
     if (payFilter === "paid") list = list.filter((b) => b.payment_status === "paid");
-    if (payFilter === "unpaid") list = list.filter((b) => b.payment_status !== "paid");
+    if (payFilter === "awaiting") list = list.filter((b) => b.payment_status === "pending_review");
+    if (payFilter === "unpaid")
+      list = list.filter((b) => b.payment_status !== "paid" && b.payment_status !== "pending_review");
     const needle = q.trim().toLowerCase();
     if (!needle) return list;
     return list.filter((b) =>
@@ -111,7 +122,10 @@ function BookingsPage() {
     }
   };
 
-  const onPayment = async (id: string, payment_status: "unpaid" | "paid" | "refunded") => {
+  const onPayment = async (
+    id: string,
+    payment_status: "unpaid" | "pending_review" | "paid" | "refunded",
+  ) => {
     try {
       await setPayment({ data: { id, payment_status } });
       toast.success(`Marked ${payment_status}`);
@@ -140,7 +154,7 @@ function BookingsPage() {
             <h1 className="mt-3 text-3xl font-semibold tracking-tight">Booking history</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               {data
-                ? `${counts.all} booking${counts.all === 1 ? "" : "s"} saved · ${counts.paid} paid · ${counts.unpaid} unpaid`
+                ? `${counts.all} booking${counts.all === 1 ? "" : "s"} saved · ${counts.awaiting} awaiting confirmation · ${counts.paid} paid · ${counts.unpaid} unpaid`
                 : "Loading bookings…"}
             </p>
 
@@ -208,7 +222,7 @@ function BookingsPage() {
                       {b.status}
                     </Badge>
                     <Badge variant="outline" className={payTone[b.payment_status] ?? ""}>
-                      {b.payment_status === "paid" ? "Paid" : b.payment_status === "refunded" ? "Refunded" : "Unpaid"}
+                      {payLabel[b.payment_status] ?? "Unpaid"}
                     </Badge>
                     <span className="font-mono text-xs text-muted-foreground">{b.reference}</span>
                   </div>
@@ -246,14 +260,28 @@ function BookingsPage() {
               {b.notes && <p className="mt-3 rounded-lg bg-muted/50 p-3 text-sm">{b.notes}</p>}
 
 
-              {b.payment_status === "paid" && (
-                <p className="mt-3 inline-flex flex-wrap items-center gap-2 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700">
-                  <CreditCard className="h-4 w-4" />
-                  {money(b.payment_amount, b.payment_currency) ?? "Payment received"}
-                  {b.payment_method ? ` · ${b.payment_method}` : ""}
-                  {b.payment_reference ? ` · ${b.payment_reference}` : ""}
-                  {b.paid_at ? ` · ${format(new Date(b.paid_at), "d MMM yyyy, HH:mm")}` : ""}
-                </p>
+              {(b.payment_status === "paid" || b.payment_status === "pending_review") && (
+                <div
+                  className={cn(
+                    "mt-3 rounded-lg px-3 py-2 text-sm",
+                    b.payment_status === "paid"
+                      ? "bg-emerald-500/10 text-emerald-700"
+                      : "bg-amber-500/10 text-amber-700",
+                  )}
+                >
+                  <p className="inline-flex flex-wrap items-center gap-2">
+                    <CreditCard className="h-4 w-4" />
+                    {money(b.payment_amount, b.payment_currency) ?? "Payment submitted"}
+                    {b.payment_method ? ` · ${b.payment_method}` : ""}
+                    {b.payment_reference ? ` · ${b.payment_reference}` : ""}
+                    {b.paid_at ? ` · ${format(new Date(b.paid_at), "d MMM yyyy, HH:mm")}` : ""}
+                  </p>
+                  {b.payment_status === "pending_review" && (
+                    <p className="mt-1 text-xs">
+                      Check First Citizens Bank Acc. 003108954 for this amount, then confirm it below.
+                    </p>
+                  )}
+                </div>
               )}
 
               <div className="mt-4 flex flex-wrap gap-2">
@@ -262,7 +290,17 @@ function BookingsPage() {
                     Mark {s}
                   </Button>
                 ))}
-                {b.payment_status === "paid" ? (
+                {b.payment_status === "pending_review" && (
+                  <>
+                    <Button size="sm" onClick={() => onPayment(b.id, "paid")}>
+                      Confirm funds received
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => onPayment(b.id, "unpaid")}>
+                      Reject payment
+                    </Button>
+                  </>
+                )}
+                {b.payment_status === "paid" && (
                   <>
                     <Button size="sm" variant="ghost" onClick={() => onPayment(b.id, "unpaid")}>
                       Mark unpaid
@@ -271,7 +309,8 @@ function BookingsPage() {
                       Mark refunded
                     </Button>
                   </>
-                ) : (
+                )}
+                {(b.payment_status === "unpaid" || b.payment_status === "refunded") && (
                   <Button size="sm" variant="secondary" onClick={() => onPayment(b.id, "paid")}>
                     Mark paid
                   </Button>

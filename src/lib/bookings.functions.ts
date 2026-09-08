@@ -74,7 +74,10 @@ export const updatePaymentStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
     z
-      .object({ id: z.string().uuid(), payment_status: z.enum(["unpaid", "paid", "refunded"]) })
+      .object({
+        id: z.string().uuid(),
+        payment_status: z.enum(["unpaid", "pending_review", "paid", "refunded"]),
+      })
       .parse(data),
   )
   .handler(async ({ context, data }) => {
@@ -164,7 +167,7 @@ export const recordBookingPayment = createServerFn({ method: "POST" })
       return { status: "not_found" as const };
     }
 
-    if (existing.payment_status === "paid") {
+    if (existing.payment_status === "paid" || existing.payment_status === "pending_review") {
       await logAttempt(true);
       return {
         status: "already_paid" as const,
@@ -178,15 +181,17 @@ export const recordBookingPayment = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin
       .from("bookings")
       .update({
-        payment_status: "paid",
+        // Funds are not settled until the owner confirms them against the
+        // First Citizens account — never mark a booking paid automatically.
+        payment_status: "pending_review",
         payment_amount: data.amount,
         payment_currency: data.currency,
         payment_method: data.method,
         payment_reference: paymentReference,
-        paid_at: new Date().toISOString(),
+        paid_at: null,
       })
       .eq("id", existing.id)
-      .neq("payment_status", "paid");
+      .eq("payment_status", existing.payment_status);
     if (error) throw new Error("Payment could not be processed");
 
     await logAttempt(true);
