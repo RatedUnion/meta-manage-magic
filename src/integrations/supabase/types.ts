@@ -83,6 +83,72 @@ export type Database = {
         }
         Relationships: []
       }
+      feedback: {
+        Row: {
+          booking_reference: string | null
+          comments: string | null
+          created_at: string
+          email: string
+          handled: boolean
+          id: string
+          kind: string
+          name: string
+          overall: number | null
+          phone: string | null
+          rating_affordability: number | null
+          rating_conclusions: number | null
+          rating_duration: number | null
+          rating_layout: number | null
+          rating_page: number | null
+          rating_representative: number | null
+          rating_timing: number | null
+          reference: string
+          service: string | null
+        }
+        Insert: {
+          booking_reference?: string | null
+          comments?: string | null
+          created_at?: string
+          email: string
+          handled?: boolean
+          id?: string
+          kind?: string
+          name: string
+          overall?: number | null
+          phone?: string | null
+          rating_affordability?: number | null
+          rating_conclusions?: number | null
+          rating_duration?: number | null
+          rating_layout?: number | null
+          rating_page?: number | null
+          rating_representative?: number | null
+          rating_timing?: number | null
+          reference: string
+          service?: string | null
+        }
+        Update: {
+          booking_reference?: string | null
+          comments?: string | null
+          created_at?: string
+          email?: string
+          handled?: boolean
+          id?: string
+          kind?: string
+          name?: string
+          overall?: number | null
+          phone?: string | null
+          rating_affordability?: number | null
+          rating_conclusions?: number | null
+          rating_duration?: number | null
+          rating_layout?: number | null
+          rating_page?: number | null
+          rating_representative?: number | null
+          rating_timing?: number | null
+          reference?: string
+          service?: string | null
+        }
+        Relationships: []
+      }
       payment_attempts: {
         Row: {
           created_at: string
