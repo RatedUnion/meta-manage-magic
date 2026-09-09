@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Calendar, GraduationCap, Truck, ClipboardList, Phone, Mail, MapPin, Users, ArrowRight, Wrench, Zap } from "lucide-react";
+import { Calendar, GraduationCap, Truck, ClipboardList, Phone, Mail, MapPin, ArrowRight, Wrench, Zap } from "lucide-react";
 import heroImage from "@/assets/hero-trinidad.jpg";
 import { Button } from "@/components/ui/button";
 
@@ -111,8 +111,6 @@ function Index() {
             </a>
           </div>
           <div className="mt-16 flex flex-wrap items-center gap-x-8 gap-y-3 text-sm text-primary-foreground/70">
-            <span className="flex items-center gap-2"><Users className="h-4 w-4" /> 118 followers</span>
-            <span className="hidden h-1 w-1 rounded-full bg-primary-foreground/30 sm:inline-block" />
             <span>Mobile mechanic · Electrician · Booking · Classes · Delivery · Reservations</span>
           </div>
         </div>
