@@ -268,7 +268,12 @@ function Index() {
       <footer className="border-t border-border bg-background">
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-10 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
           <p>© {new Date().getFullYear()} Dedicated Ultimatum Appointed Associates</p>
-          <p>Virtual services · Trinidad & Tobago</p>
+          <div className="flex items-center gap-6">
+            <p>Virtual services · Trinidad & Tobago</p>
+            <Link to="/auth" className="font-medium text-foreground/80 underline-offset-4 hover:text-primary hover:underline">
+              Owner sign in
+            </Link>
+          </div>
         </div>
       </footer>
     </main>
