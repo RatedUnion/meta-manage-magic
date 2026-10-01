@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_authenticated/bookings")({
     <main className="flex min-h-screen items-center justify-center p-8 text-center">
       <div>
         <h1 className="text-xl font-semibold">Could not load bookings</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
+        <p className="mt-2 text-sm text-muted-foreground">{error instanceof Error ? error.message : String(error)}</p>
       </div>
     </main>
   ),
