@@ -89,7 +89,7 @@ function AuthPage() {
             Booking history is private. Sign in to review appointment requests.
           </p>
 
-          <form onSubmit={signInEmail} className="space-y-4">
+          <form onSubmit={mode === "signin" ? signInEmail : signUpEmail} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
