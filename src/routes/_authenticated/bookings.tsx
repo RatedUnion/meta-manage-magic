@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, type ErrorComponentProps } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -16,11 +16,11 @@ import { listBookings, updateBookingStatus, updatePaymentStatus } from "@/lib/bo
 
 export const Route = createFileRoute("/_authenticated/bookings")({
   component: BookingsPage,
-  errorComponent: ({ error }) => (
+  errorComponent: ({ error }: ErrorComponentProps) => (
     <main className="flex min-h-screen items-center justify-center p-8 text-center">
       <div>
         <h1 className="text-xl font-semibold">Could not load bookings</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
+        <p className="mt-2 text-sm text-muted-foreground">{error instanceof Error ? error.message : String(error)}</p>
       </div>
     </main>
   ),

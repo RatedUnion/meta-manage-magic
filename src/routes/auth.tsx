@@ -42,6 +42,8 @@ function AuthPage() {
     return () => sub.subscription.unsubscribe();
   }, [navigate]);
 
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
+
   const signInEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
@@ -49,6 +51,27 @@ function AuthPage() {
     setBusy(false);
     if (error) {
       toast.error(error.message);
+      return;
+    }
+    navigate({ to: "/bookings", replace: true });
+  };
+
+  const signUpEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: window.location.origin },
+    });
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    if (!data.session) {
+      toast.success("Account created. Check your email to confirm, then sign in.");
+      setMode("signin");
       return;
     }
     navigate({ to: "/bookings", replace: true });
@@ -66,7 +89,7 @@ function AuthPage() {
             Booking history is private. Sign in to review appointment requests.
           </p>
 
-          <form onSubmit={signInEmail} className="space-y-4">
+          <form onSubmit={mode === "signin" ? signInEmail : signUpEmail} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
@@ -82,8 +105,15 @@ function AuthPage() {
               />
             </div>
             <Button type="submit" disabled={busy} className="w-full">
-              <LogIn className="mr-2 h-4 w-4" /> Sign in
+              <LogIn className="mr-2 h-4 w-4" /> {mode === "signin" ? "Sign in" : "Create account"}
             </Button>
+            <button
+              type="button"
+              onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+              className="w-full text-center text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            >
+              {mode === "signin" ? "Need an account? Sign up" : "Already have an account? Sign in"}
+            </button>
           </form>
         </div>
       </div>
