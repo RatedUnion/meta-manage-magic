@@ -16,7 +16,7 @@ import { listBookings, updateBookingStatus, updatePaymentStatus } from "@/lib/bo
 
 export const Route = createFileRoute("/_authenticated/bookings")({
   component: BookingsPage,
-  errorComponent: ({ error }) => (
+  errorComponent: ({ error }: { error: Error }) => (
     <main className="flex min-h-screen items-center justify-center p-8 text-center">
       <div>
         <h1 className="text-xl font-semibold">Could not load bookings</h1>
