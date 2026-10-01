@@ -105,8 +105,15 @@ function AuthPage() {
               />
             </div>
             <Button type="submit" disabled={busy} className="w-full">
-              <LogIn className="mr-2 h-4 w-4" /> Sign in
+              <LogIn className="mr-2 h-4 w-4" /> {mode === "signin" ? "Sign in" : "Create account"}
             </Button>
+            <button
+              type="button"
+              onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+              className="w-full text-center text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            >
+              {mode === "signin" ? "Need an account? Sign up" : "Already have an account? Sign in"}
+            </button>
           </form>
         </div>
       </div>
