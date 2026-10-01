@@ -42,6 +42,8 @@ function AuthPage() {
     return () => sub.subscription.unsubscribe();
   }, [navigate]);
 
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
+
   const signInEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
@@ -49,6 +51,27 @@ function AuthPage() {
     setBusy(false);
     if (error) {
       toast.error(error.message);
+      return;
+    }
+    navigate({ to: "/bookings", replace: true });
+  };
+
+  const signUpEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: window.location.origin },
+    });
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    if (!data.session) {
+      toast.success("Account created. Check your email to confirm, then sign in.");
+      setMode("signin");
       return;
     }
     navigate({ to: "/bookings", replace: true });
