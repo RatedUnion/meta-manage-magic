@@ -96,6 +96,37 @@ function BookingsPage() {
     return { all: list.length, awaiting, paid, unpaid: list.length - paid - awaiting };
   }, [data]);
 
+  const paymentSummary = useMemo(() => {
+    const list = data ?? [];
+    const approvedByCurrency = new Map<string, number>();
+    let awaiting = 0;
+    let awaitingAmount = new Map<string, number>();
+    let declined = 0;
+    for (const b of list) {
+      const cur = b.payment_currency ?? "TTD";
+      const amt = Number(b.payment_amount ?? 0);
+      if (b.payment_status === "paid") {
+        approvedByCurrency.set(cur, (approvedByCurrency.get(cur) ?? 0) + amt);
+      } else if (b.payment_status === "pending_review") {
+        awaiting += 1;
+        awaitingAmount.set(cur, (awaitingAmount.get(cur) ?? 0) + amt);
+      } else if (b.payment_status === "unpaid" || b.payment_status === "refunded") {
+        declined += 1;
+      }
+    }
+    const fmt = (m: Map<string, number>) =>
+      m.size === 0
+        ? "0"
+        : [...m.entries()].map(([c, a]) => `${a.toFixed(2)} ${c}`).join(" · ");
+    return {
+      approved: fmt(approvedByCurrency),
+      approvedCount: counts.paid,
+      awaiting,
+      awaitingTotal: fmt(awaitingAmount),
+      declined,
+    };
+  }, [data, counts.paid]);
+
   const rows = useMemo(() => {
     let list = data ?? [];
     if (payFilter === "paid") list = list.filter((b) => b.payment_status === "paid");
@@ -198,6 +229,28 @@ function BookingsPage() {
         </div>
 
 
+        <div className="mt-6 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">Approved payments</p>
+            <p className="mt-1 text-xl font-semibold text-emerald-700">{paymentSummary.approved}</p>
+            <p className="mt-1 text-xs text-emerald-700/80">
+              {paymentSummary.approvedCount} booking{paymentSummary.approvedCount === 1 ? "" : "s"} confirmed paid
+            </p>
+          </div>
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-amber-700">Awaiting your approval</p>
+            <p className="mt-1 text-xl font-semibold text-amber-700">{paymentSummary.awaiting}</p>
+            <p className="mt-1 text-xs text-amber-700/80">
+              {paymentSummary.awaiting > 0 ? `${paymentSummary.awaitingTotal} to verify in First Citizens Acc. 003108954` : "No payments waiting"}
+            </p>
+          </div>
+          <div className="rounded-xl border border-border bg-muted/50 p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Declined / unpaid</p>
+            <p className="mt-1 text-xl font-semibold">{paymentSummary.declined}</p>
+            <p className="mt-1 text-xs text-muted-foreground">Payments declined or not yet submitted</p>
+          </div>
+        </div>
+
         <div className="mt-6 space-y-4">
           {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
           {!isLoading && rows.length === 0 && (
@@ -293,10 +346,10 @@ function BookingsPage() {
                 {b.payment_status === "pending_review" && (
                   <>
                     <Button size="sm" onClick={() => onPayment(b.id, "paid")}>
-                      Confirm funds received
+                      Approve payment
                     </Button>
                     <Button size="sm" variant="ghost" onClick={() => onPayment(b.id, "unpaid")}>
-                      Reject payment
+                      Decline payment
                     </Button>
                   </>
                 )}
