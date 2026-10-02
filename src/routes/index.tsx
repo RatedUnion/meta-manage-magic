@@ -54,6 +54,7 @@ function Index() {
             <a href="#locations" className="hover:text-foreground">Locations</a>
             <Link to="/pay" className="hover:text-foreground">Pay</Link>
             <Link to="/bookings" className="hover:text-foreground">Bookings</Link>
+            <Link to="/feedback" className="hover:text-foreground">Reviews</Link>
             <a href="#contact" className="hover:text-foreground">Contact</a>
           </nav>
           <Link to="/pay">
@@ -270,6 +271,8 @@ function Index() {
           <p>© {new Date().getFullYear()} Dedicated Ultimatum Appointed Associates</p>
           <div className="flex items-center gap-6">
             <p>Virtual services · Trinidad & Tobago</p>
+            <Link to="/feedback" className="hover:text-primary">Reviews & complaints</Link>
+            <Link to="/staff-feedback" className="hover:text-primary">Staff feedback</Link>
             <Link to="/auth" className="font-medium text-foreground/80 underline-offset-4 hover:text-primary hover:underline">
               Owner sign in
             </Link>
