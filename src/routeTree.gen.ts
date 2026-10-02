@@ -19,6 +19,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ServicesIndexRouteImport } from './routes/services.index'
 import { Route as ServicesSlugRouteImport } from './routes/services.$slug'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as AuthenticatedStaffFeedbackRouteImport } from './routes/_authenticated/staff-feedback'
 import { Route as AuthenticatedBookingsRouteImport } from './routes/_authenticated/bookings'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -70,6 +71,12 @@ const ApiChatRoute = ApiChatRouteImport.update({
   path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedStaffFeedbackRoute =
+  AuthenticatedStaffFeedbackRouteImport.update({
+    id: '/staff-feedback',
+    path: '/staff-feedback',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedBookingsRoute = AuthenticatedBookingsRouteImport.update({
   id: '/bookings',
   path: '/bookings',
@@ -84,6 +91,7 @@ export interface FileRoutesByFullPath {
   '/pay': typeof PayRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/bookings': typeof AuthenticatedBookingsRoute
+  '/staff-feedback': typeof AuthenticatedStaffFeedbackRoute
   '/api/chat': typeof ApiChatRoute
   '/services/$slug': typeof ServicesSlugRoute
   '/services/': typeof ServicesIndexRoute
@@ -96,6 +104,7 @@ export interface FileRoutesByTo {
   '/pay': typeof PayRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/bookings': typeof AuthenticatedBookingsRoute
+  '/staff-feedback': typeof AuthenticatedStaffFeedbackRoute
   '/api/chat': typeof ApiChatRoute
   '/services/$slug': typeof ServicesSlugRoute
   '/services': typeof ServicesIndexRoute
@@ -110,6 +119,7 @@ export interface FileRoutesById {
   '/pay': typeof PayRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/bookings': typeof AuthenticatedBookingsRoute
+  '/_authenticated/staff-feedback': typeof AuthenticatedStaffFeedbackRoute
   '/api/chat': typeof ApiChatRoute
   '/services/$slug': typeof ServicesSlugRoute
   '/services/': typeof ServicesIndexRoute
@@ -124,6 +134,7 @@ export interface FileRouteTypes {
     | '/pay'
     | '/sitemap.xml'
     | '/bookings'
+    | '/staff-feedback'
     | '/api/chat'
     | '/services/$slug'
     | '/services/'
@@ -136,6 +147,7 @@ export interface FileRouteTypes {
     | '/pay'
     | '/sitemap.xml'
     | '/bookings'
+    | '/staff-feedback'
     | '/api/chat'
     | '/services/$slug'
     | '/services'
@@ -149,6 +161,7 @@ export interface FileRouteTypes {
     | '/pay'
     | '/sitemap.xml'
     | '/_authenticated/bookings'
+    | '/_authenticated/staff-feedback'
     | '/api/chat'
     | '/services/$slug'
     | '/services/'
@@ -239,6 +252,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/staff-feedback': {
+      id: '/_authenticated/staff-feedback'
+      path: '/staff-feedback'
+      fullPath: '/staff-feedback'
+      preLoaderRoute: typeof AuthenticatedStaffFeedbackRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/bookings': {
       id: '/_authenticated/bookings'
       path: '/bookings'
@@ -251,10 +271,12 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedBookingsRoute: typeof AuthenticatedBookingsRoute
+  AuthenticatedStaffFeedbackRoute: typeof AuthenticatedStaffFeedbackRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBookingsRoute: AuthenticatedBookingsRoute,
+  AuthenticatedStaffFeedbackRoute: AuthenticatedStaffFeedbackRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
