@@ -30,7 +30,7 @@ const services = [
   { icon: Calendar, slug: "online-booking", title: "Online Booking", desc: "Reserve your slot from anywhere, any time — confirmed in minutes." },
   { icon: GraduationCap, slug: "online-classes", title: "Online Classes", desc: "Live and on-demand sessions built around real learning outcomes." },
   { icon: Truck, slug: "delivery", title: "Delivery", desc: "Reliable, tracked delivery across the twin islands." },
-  { icon: ClipboardList, slug: "reservations", title: "Reservations", desc: "Effortless reservations with clear, honest communication." },
+  { icon: ClipboardList, slug: "reservations", title: "Reservations", desc: "Landscaping, exterior decor, garden & floral maintenance, and reserved slots." },
 ];
 
 

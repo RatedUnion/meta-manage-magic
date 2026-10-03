@@ -81,9 +81,9 @@ const SERVICES = [
   },
   {
     id: "reservation",
-    label: "Reservation",
+    label: "Reservation · Landscaping & Garden",
     duration: "30 min",
-    detail: "Hold a technician slot ahead of time for a planned project, inspection or site visit.",
+    detail: "Landscaping installs, exterior decor, garden and floral maintenance, plus venue or technician slot reservations for planned projects and site visits.",
     price: "Appointment fee TTD 110 · holds your slot",
   },
 ] as const;
