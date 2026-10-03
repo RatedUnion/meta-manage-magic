@@ -367,6 +367,11 @@ function BookPage() {
                 assessment and diagnosis. Parts and labour to finalize the project are quoted separately
                 and approved by you before any work starts.
               </p>
+              <p className="mt-2 text-sm text-foreground">
+                All services are valued by the volume or agenda — domestic, commercial or otherwise.
+                Domestic jobs run from TTD 250; commercial work in all areas starts at a minimum of
+                TTD 1,200, which includes 1 (no more than 2) people for the task.
+              </p>
             </div>
 
             <form onSubmit={onSubmit} className="space-y-10">

@@ -12,7 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SERVICES, serviceReference } from "@/data/services";
+import { SERVICES, serviceReference, PRICING_TIERS, PRICING_NOTE } from "@/data/services";
 
 const SITE = "https://meta-manage-magic.lovable.app";
 
