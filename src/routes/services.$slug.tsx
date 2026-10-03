@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { CodeTag } from "@/components/CodeTag";
 import { SpecSheet } from "@/components/SpecSheet";
-import { getService, serviceReference, SERVICES } from "@/data/services";
+import { getService, serviceReference, SERVICES, PRICING_TIERS, PRICING_NOTE } from "@/data/services";
 
 const SITE = "https://meta-manage-magic.lovable.app";
 
@@ -157,6 +157,20 @@ function ServicePage() {
             </ul>
           </div>
           <CodeTag value={`${SITE}/services/${service.slug}`} reference={reference} />
+        </section>
+
+        <section className="mt-10">
+          <h2 className="text-xl font-semibold tracking-tight">Pricing</h2>
+          <p className="mt-2 text-sm text-muted-foreground">{PRICING_NOTE}</p>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            {PRICING_TIERS.map((tier) => (
+              <div key={tier.label} className="rounded-2xl border border-accent/50 bg-accent/10 p-5">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">{tier.label}</p>
+                <p className="mt-1 text-xl font-semibold tracking-tight">{tier.headline}</p>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{tier.body}</p>
+              </div>
+            ))}
+          </div>
         </section>
 
         <section className="mt-10">

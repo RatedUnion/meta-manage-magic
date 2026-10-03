@@ -12,7 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SERVICES, serviceReference } from "@/data/services";
+import { SERVICES, serviceReference, PRICING_TIERS, PRICING_NOTE } from "@/data/services";
 
 const SITE = "https://meta-manage-magic.lovable.app";
 
@@ -154,6 +154,19 @@ function ServicesIndexPage() {
         <p className="mt-4 text-sm text-muted-foreground">
           {filteredServices.length} {filteredServices.length === 1 ? "result" : "results"}
           {activeSpecialty && ` for “${activeSpecialty.label}”`}
+        </p>
+
+        <section className="mt-10 grid gap-4 sm:grid-cols-2">
+          {PRICING_TIERS.map((tier) => (
+            <div key={tier.label} className="rounded-2xl border border-accent/50 bg-accent/10 p-5">
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">{tier.label}</p>
+              <p className="mt-1 text-2xl font-semibold tracking-tight">{tier.headline}</p>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{tier.body}</p>
+            </div>
+          ))}
+        </section>
+        <p className="mt-4 text-sm text-muted-foreground">
+          {PRICING_NOTE}
         </p>
 
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
