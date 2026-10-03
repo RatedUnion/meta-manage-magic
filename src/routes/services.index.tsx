@@ -156,6 +156,19 @@ function ServicesIndexPage() {
           {activeSpecialty && ` for “${activeSpecialty.label}”`}
         </p>
 
+        <section className="mt-10 grid gap-4 sm:grid-cols-2">
+          {PRICING_TIERS.map((tier) => (
+            <div key={tier.label} className="rounded-2xl border border-accent/50 bg-accent/10 p-5">
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">{tier.label}</p>
+              <p className="mt-1 text-2xl font-semibold tracking-tight">{tier.headline}</p>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{tier.body}</p>
+            </div>
+          ))}
+        </section>
+        <p className="mt-4 text-sm text-muted-foreground">
+          {PRICING_NOTE}
+        </p>
+
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {filteredServices.map((service) => {
             const Icon = ICONS[service.icon];

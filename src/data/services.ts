@@ -233,3 +233,20 @@ export function serviceReference(code: string) {
 
 export const FACEBOOK_URL = "https://facebook.com/org.tt";
 export const DISCORD_URL = "https://discord.gg/nCh28K3";
+
+/** Site-wide pricing tiers — every job is valued by volume or agenda. */
+export const PRICING_TIERS = [
+  {
+    label: "Domestic",
+    headline: "From TTD 250",
+    body: "Homes and small jobs — valued by the volume of work on your agenda, starting from TTD 250.",
+  },
+  {
+    label: "Commercial",
+    headline: "Minimum TTD 1,200",
+    body: "All commercial areas start at a minimum of TTD 1,200, which includes 1 — no more than 2 — people for the task.",
+  },
+] as const;
+
+export const PRICING_NOTE =
+  "All services are valued by the volume or agenda — domestic, commercial or otherwise.";
