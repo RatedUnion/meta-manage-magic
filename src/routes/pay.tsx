@@ -158,6 +158,161 @@ function CopyRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+const wireSchema = z.object({
+  bookingRef: z
+    .string()
+    .trim()
+    .min(3, "Enter the booking reference from your confirmation")
+    .max(40)
+    .regex(/^[A-Za-z0-9-]+$/, "Booking reference contains invalid characters")
+    .transform((v) => v.toUpperCase()),
+  email: z.string().trim().email("Enter a valid email").max(255),
+  amount: z.coerce.number().positive("Enter the transferred amount").max(1_000_000),
+});
+
+function WireForm() {
+  const payBooking = useServerFn(recordBookingPayment);
+  const [currency, setCurrency] = useState<string>("TTD");
+  const [reference, setReference] = useState("");
+  const [email, setEmail] = useState("");
+  const [amount, setAmount] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [confirmation, setConfirmation] = useState<string | null>(null);
+
+  const symbol = useMemo(
+    () => CURRENCIES.find((c) => c.code === currency)?.symbol ?? "",
+    [currency],
+  );
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const parsed = wireSchema.safeParse({ bookingRef: reference, email, amount });
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0]?.message ?? "Please check the transfer details");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const result = await payBooking({
+        data: {
+          reference: parsed.data.bookingRef,
+          email: parsed.data.email,
+          amount: parsed.data.amount,
+          currency: currency as "TTD" | "USD" | "GBP" | "EUR" | "CAD",
+          method: "Bank Transfer",
+        },
+      });
+      if (result.status === "throttled") {
+        toast.error("Too many attempts", {
+          description: "For security we've paused submissions from this device for a few minutes.",
+        });
+        return;
+      }
+      if (result.status === "not_found") {
+        toast.error("We couldn't find that booking", {
+          description: "Check the reference and use the same email you booked with.",
+        });
+        return;
+      }
+      if (result.status === "already_paid") {
+        toast.info("A payment is already on that booking", {
+          description: result.payment_reference
+            ? `Existing payment reference ${result.payment_reference}.`
+            : undefined,
+        });
+        return;
+      }
+      setConfirmation(result.payment_reference);
+      setReference("");
+      setEmail("");
+      setAmount("");
+      toast.success("Wire transfer submitted for approval", {
+        description: `Ref ${result.payment_reference} — we verify it against our First Citizens account.`,
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Transfer could not be recorded");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (confirmation) {
+    return (
+      <div className="rounded-xl border border-border/70 bg-card p-5">
+        <div className="flex items-center gap-2">
+          <Check className="h-4 w-4 text-primary" />
+          <h4 className="font-semibold tracking-tight">Transfer submitted for approval</h4>
+        </div>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Reference <span className="font-mono font-medium text-foreground">{confirmation}</span>.
+          We'll confirm the funds against First Citizens Bank Acc. 003108954 and mark your booking
+          paid — usually within one business day.
+        </p>
+        <Button variant="outline" size="sm" className="mt-4" onClick={() => setConfirmation(null)}>
+          Submit another transfer
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={onSubmit} className="space-y-4">
+      <div>
+        <h4 className="font-semibold tracking-tight">Already transferred? Confirm it here</h4>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Log your transfer so we can match it on our statement and approve your booking.
+        </p>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="wire-ref">Booking reference</Label>
+          <Input
+            id="wire-ref"
+            value={reference}
+            onChange={(e) => setReference(e.target.value.toUpperCase())}
+            placeholder="DUA-XXXXX"
+            className="font-mono"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="wire-email">Email on the booking</Label>
+          <Input
+            id="wire-email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="wire-currency">Currency transferred</Label>
+          <Select value={currency} onValueChange={setCurrency}>
+            <SelectTrigger id="wire-currency"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {CURRENCIES.map((c) => (
+                <SelectItem key={c.code} value={c.code}>{c.code} — {c.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="wire-amount">Amount transferred ({symbol})</Label>
+          <Input
+            id="wire-amount"
+            inputMode="decimal"
+            placeholder="0.00"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+          />
+        </div>
+      </div>
+      <Button type="submit" disabled={submitting}>
+        {submitting ? "Submitting…" : "Submit transfer for approval"}
+      </Button>
+    </form>
+  );
+}
+
 function BankCard({
   entry,
 }: {
@@ -172,7 +327,7 @@ function BankCard({
       <p className="mt-1 text-xs text-muted-foreground">{entry.country} · {entry.type}</p>
       <Separator className="my-3" />
       <CopyRow label="Account name" value={entry.account} />
-      <CopyRow label="Account / IBAN" value={entry.number} />
+      <CopyRow label="Account number (no IBAN)" value={entry.number} />
       <CopyRow label="SWIFT / BIC" value={entry.swift} />
       <p className="mt-2 text-xs text-muted-foreground">{entry.branch}</p>
     </div>
@@ -440,7 +595,27 @@ function PayPage() {
               <section className="space-y-4">
                 <h2 className="text-lg font-semibold tracking-tight">Bank transfer details</h2>
                 <BankCard entry={FCB_BANK} />
+                <div className="rounded-xl border border-border/70 bg-muted/40 p-5 text-sm text-muted-foreground">
+                  <p className="font-medium text-foreground">About the SWIFT code and IBAN</p>
+                  <ul className="mt-2 list-disc space-y-1 pl-5">
+                    <li>
+                      Our SWIFT / BIC code is <span className="font-mono font-medium text-foreground">FCTTTTPS</span> —
+                      your bank needs it for any international transfer.
+                    </li>
+                    <li>
+                      Trinidad &amp; Tobago banks, including First Citizens, do not issue IBANs. Use the
+                      account number <span className="font-mono font-medium text-foreground">003108954</span> with
+                      the SWIFT code instead — foreign banks accept this for T&amp;T accounts.
+                    </li>
+                    <li>
+                      Sending from the US? Your bank may also ask for First Citizens' US correspondent-bank
+                      routing details — ask First Citizens (or your own bank) for those before sending USD.
+                    </li>
+                  </ul>
+                </div>
               </section>
+
+              <WireForm />
 
               <div className="rounded-xl border border-border/70 bg-muted/40 p-5 text-sm text-muted-foreground">
                 <p className="font-medium text-foreground">Before you transfer</p>
