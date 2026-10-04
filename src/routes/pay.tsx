@@ -595,7 +595,27 @@ function PayPage() {
               <section className="space-y-4">
                 <h2 className="text-lg font-semibold tracking-tight">Bank transfer details</h2>
                 <BankCard entry={FCB_BANK} />
+                <div className="rounded-xl border border-border/70 bg-muted/40 p-5 text-sm text-muted-foreground">
+                  <p className="font-medium text-foreground">About the SWIFT code and IBAN</p>
+                  <ul className="mt-2 list-disc space-y-1 pl-5">
+                    <li>
+                      Our SWIFT / BIC code is <span className="font-mono font-medium text-foreground">FCTTTTPS</span> —
+                      your bank needs it for any international transfer.
+                    </li>
+                    <li>
+                      Trinidad &amp; Tobago banks, including First Citizens, do not issue IBANs. Use the
+                      account number <span className="font-mono font-medium text-foreground">003108954</span> with
+                      the SWIFT code instead — foreign banks accept this for T&amp;T accounts.
+                    </li>
+                    <li>
+                      Sending from the US? Your bank may also ask for First Citizens' US correspondent-bank
+                      routing details — ask First Citizens (or your own bank) for those before sending USD.
+                    </li>
+                  </ul>
+                </div>
               </section>
+
+              <WireForm />
 
               <div className="rounded-xl border border-border/70 bg-muted/40 p-5 text-sm text-muted-foreground">
                 <p className="font-medium text-foreground">Before you transfer</p>
