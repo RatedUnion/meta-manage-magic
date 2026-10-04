@@ -309,7 +309,28 @@ function WireForm() {
       <Button type="submit" disabled={submitting}>
         {submitting ? "Submitting…" : "Submit transfer for approval"}
       </Button>
-telling    </form>
+    </form>
+  );
+}
+
+function BankCard({
+  entry,
+}: {
+  entry: { bank: string; country: string; account: string; number: string; type: string; swift: string; branch: string };
+}) {
+  return (
+    <div className="rounded-xl border border-border/70 bg-card p-5">
+      <div className="flex items-center gap-2">
+        <Building2 className="h-4 w-4 text-primary" />
+        <h3 className="font-semibold tracking-tight">{entry.bank}</h3>
+      </div>
+      <p className="mt-1 text-xs text-muted-foreground">{entry.country} · {entry.type}</p>
+      <Separator className="my-3" />
+      <CopyRow label="Account name" value={entry.account} />
+      <CopyRow label="Account number (no IBAN)" value={entry.number} />
+      <CopyRow label="SWIFT / BIC" value={entry.swift} />
+      <p className="mt-2 text-xs text-muted-foreground">{entry.branch}</p>
+    </div>
   );
 }
 
