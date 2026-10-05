@@ -32,6 +32,7 @@ export type Database = {
           payment_status: string
           phone: string
           photo_count: number
+          photo_paths: string[]
           reference: string
           service: string
           status: string
@@ -54,6 +55,7 @@ export type Database = {
           payment_status?: string
           phone: string
           photo_count?: number
+          photo_paths?: string[]
           reference: string
           service: string
           status?: string
@@ -76,6 +78,7 @@ export type Database = {
           payment_status?: string
           phone?: string
           photo_count?: number
+          photo_paths?: string[]
           reference?: string
           service?: string
           status?: string
