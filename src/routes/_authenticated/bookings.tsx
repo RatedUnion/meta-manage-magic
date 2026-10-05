@@ -48,6 +48,49 @@ export const Route = createFileRoute("/_authenticated/bookings")({
 const STATUSES = ["pending", "confirmed", "completed", "cancelled"] as const;
 const PAY_FILTERS = ["all", "awaiting", "paid", "unpaid"] as const;
 
+/** Fetches short-lived signed URLs and shows a booking's uploaded photos. */
+function BookingPhotos({ paths }: { paths: string[] }) {
+  const fetchUrls = useServerFn(getBookingPhotoUrls);
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [urls, setUrls] = useState<string[]>([]);
+
+  const toggle = async () => {
+    if (open) { setOpen(false); return; }
+    setOpen(true);
+    if (urls.length > 0 || loading) return;
+    setLoading(true);
+    try {
+      const res = await fetchUrls({ data: { paths } });
+      setUrls(res.urls);
+      if (res.urls.length === 0) toast.error("No photos could be loaded for this booking.");
+    } catch {
+      toast.error("Could not load the attached photos.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="mt-3">
+      <Button type="button" variant="outline" size="sm" onClick={toggle}>
+        <Images className="mr-2 h-4 w-4" />
+        {open ? "Hide photos" : `View ${paths.length} photo${paths.length === 1 ? "" : "s"}`}
+      </Button>
+      {open && (
+        <div className="mt-3 flex flex-wrap gap-3">
+          {loading && <p className="text-sm text-muted-foreground">Loading photos…</p>}
+          {urls.map((url) => (
+            <a key={url} href={url} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-lg border border-border">
+              <img src={url} alt="Customer-submitted photo" className="h-28 w-28 object-cover" />
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const statusTone: Record<string, string> = {
   pending: "bg-amber-500/15 text-amber-600 border-amber-500/30",
   confirmed: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30",
