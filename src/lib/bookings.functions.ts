@@ -15,6 +15,7 @@ const saveSchema = z.object({
   phone: z.string().min(6),
   notes: z.string().optional(),
   photo_count: z.number().int().min(0).max(20).default(0),
+  photo_paths: z.array(z.string().min(1).max(300)).max(20).default([]),
   calendar_event_url: z.string().url().optional(),
 });
 
@@ -37,6 +38,7 @@ export const saveBooking = createServerFn({ method: "POST" })
       phone: data.phone,
       notes: data.notes ?? null,
       photo_count: data.photo_count,
+      photo_paths: data.photo_paths,
       calendar_event_url: data.calendar_event_url ?? null,
     });
     if (error) throw new Error(error.message);
@@ -90,6 +92,23 @@ export const updatePaymentStatus = createServerFn({ method: "POST" })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true as const };
+  });
+
+/** Owner only: short-lived signed URLs so staff can view a booking's uploaded photos. */
+export const getBookingPhotoUrls = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ paths: z.array(z.string().min(1).max(300)).max(20) }).parse(data),
+  )
+  .handler(async ({ context, data }) => {
+    const urls: string[] = [];
+    for (const path of data.paths) {
+      const { data: signed, error } = await context.supabase.storage
+        .from("booking-photos")
+        .createSignedUrl(path, 60 * 15);
+      if (!error && signed?.signedUrl) urls.push(signed.signedUrl);
+    }
+    return { urls };
   });
 
 const ALLOWED_CURRENCIES = ["TTD", "USD", "GBP", "EUR", "CAD"] as const;

@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
-import { ArrowLeft, CalendarDays, CreditCard, LogOut, Mail, Phone, RefreshCw, Search } from "lucide-react";
+import { ArrowLeft, CalendarDays, CreditCard, Images, LogOut, Mail, Phone, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { listBookings, updateBookingStatus, updatePaymentStatus } from "@/lib/bookings.functions";
+import { listBookings, updateBookingStatus, updatePaymentStatus, getBookingPhotoUrls } from "@/lib/bookings.functions";
 
 
 export const Route = createFileRoute("/_authenticated/bookings")({
@@ -47,6 +47,49 @@ export const Route = createFileRoute("/_authenticated/bookings")({
 
 const STATUSES = ["pending", "confirmed", "completed", "cancelled"] as const;
 const PAY_FILTERS = ["all", "awaiting", "paid", "unpaid"] as const;
+
+/** Fetches short-lived signed URLs and shows a booking's uploaded photos. */
+function BookingPhotos({ paths }: { paths: string[] }) {
+  const fetchUrls = useServerFn(getBookingPhotoUrls);
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [urls, setUrls] = useState<string[]>([]);
+
+  const toggle = async () => {
+    if (open) { setOpen(false); return; }
+    setOpen(true);
+    if (urls.length > 0 || loading) return;
+    setLoading(true);
+    try {
+      const res = await fetchUrls({ data: { paths } });
+      setUrls(res.urls);
+      if (res.urls.length === 0) toast.error("No photos could be loaded for this booking.");
+    } catch {
+      toast.error("Could not load the attached photos.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="mt-3">
+      <Button type="button" variant="outline" size="sm" onClick={toggle}>
+        <Images className="mr-2 h-4 w-4" />
+        {open ? "Hide photos" : `View ${paths.length} photo${paths.length === 1 ? "" : "s"}`}
+      </Button>
+      {open && (
+        <div className="mt-3 flex flex-wrap gap-3">
+          {loading && <p className="text-sm text-muted-foreground">Loading photos…</p>}
+          {urls.map((url) => (
+            <a key={url} href={url} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-lg border border-border">
+              <img src={url} alt="Customer-submitted photo" className="h-28 w-28 object-cover" />
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const statusTone: Record<string, string> = {
   pending: "bg-amber-500/15 text-amber-600 border-amber-500/30",
@@ -284,6 +327,9 @@ function BookingsPage() {
                     {format(parseISO(b.booking_date), "EEE d MMM yyyy")} · {b.booking_time}
                     {b.photo_count > 0 && ` · ${b.photo_count} photo${b.photo_count === 1 ? "" : "s"}`}
                   </p>
+                  {Array.isArray(b.photo_paths) && b.photo_paths.length > 0 && (
+                    <BookingPhotos paths={b.photo_paths} />
+                  )}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Received {format(new Date(b.created_at), "d MMM yyyy, HH:mm")}

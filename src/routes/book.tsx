@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { addBookingToCalendar } from "@/lib/calendar.functions";
 import { saveBooking } from "@/lib/bookings.functions";
+import { supabase } from "@/integrations/supabase/client";
 import { SERVICES as SERVICE_CATALOG } from "@/data/services";
 import { cn } from "@/lib/utils";
 
@@ -276,6 +277,22 @@ function BookPage() {
       calendar = { scheduled: false };
     }
 
+    // Upload attached photos so staff can view them on the dashboard.
+    const photoPaths: string[] = [];
+    for (const p of photos) {
+      const ext = p.file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+      const path = `${ref}/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from("booking-photos").upload(path, p.file, {
+        contentType: p.file.type,
+        upsert: false,
+      });
+      if (error) {
+        toast.error("A photo could not be uploaded — your booking will still go through.");
+        break;
+      }
+      photoPaths.push(path);
+    }
+
     const buildSheetSummary = selectedItems.length
       ? `\nBuild sheet: ${selectedItems.map((i) => i.item).join(", ")} — items ${fmtTTD(itemsTotal)} + fee ${fmtTTD(APPOINTMENT_FEE)} = ${fmtTTD(grandTotal)}`
       : "";
@@ -291,7 +308,8 @@ function BookPage() {
           email: parsed.data.email,
           phone: parsed.data.phone,
           notes: (parsed.data.notes ?? "") + buildSheetSummary || undefined,
-          photo_count: photos.length,
+          photo_count: photoPaths.length,
+          photo_paths: photoPaths,
           calendar_event_url: calendar.htmlLink,
         },
       });
