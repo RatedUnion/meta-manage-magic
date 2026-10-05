@@ -327,6 +327,9 @@ function BookingsPage() {
                     {format(parseISO(b.booking_date), "EEE d MMM yyyy")} · {b.booking_time}
                     {b.photo_count > 0 && ` · ${b.photo_count} photo${b.photo_count === 1 ? "" : "s"}`}
                   </p>
+                  {Array.isArray(b.photo_paths) && b.photo_paths.length > 0 && (
+                    <BookingPhotos paths={b.photo_paths} />
+                  )}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Received {format(new Date(b.created_at), "d MMM yyyy, HH:mm")}
