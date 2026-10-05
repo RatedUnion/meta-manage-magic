@@ -94,6 +94,23 @@ export const updatePaymentStatus = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+/** Owner only: short-lived signed URLs so staff can view a booking's uploaded photos. */
+export const getBookingPhotoUrls = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ paths: z.array(z.string().min(1).max(300)).max(20) }).parse(data),
+  )
+  .handler(async ({ context, data }) => {
+    const urls: string[] = [];
+    for (const path of data.paths) {
+      const { data: signed, error } = await context.supabase.storage
+        .from("booking-photos")
+        .createSignedUrl(path, 60 * 15);
+      if (!error && signed?.signedUrl) urls.push(signed.signedUrl);
+    }
+    return { urls };
+  });
+
 const ALLOWED_CURRENCIES = ["TTD", "USD", "GBP", "EUR", "CAD"] as const;
 const ALLOWED_METHODS = ["LINX", "Visa", "American Express", "Bank Transfer", "PayPal"] as const;
 

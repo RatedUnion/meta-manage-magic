@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { addBookingToCalendar } from "@/lib/calendar.functions";
 import { saveBooking } from "@/lib/bookings.functions";
+import { supabase } from "@/integrations/supabase/client";
 import { SERVICES as SERVICE_CATALOG } from "@/data/services";
 import { cn } from "@/lib/utils";
 
