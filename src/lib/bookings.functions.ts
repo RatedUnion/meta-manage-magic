@@ -15,6 +15,7 @@ const saveSchema = z.object({
   phone: z.string().min(6),
   notes: z.string().optional(),
   photo_count: z.number().int().min(0).max(20).default(0),
+  photo_paths: z.array(z.string().min(1).max(300)).max(20).default([]),
   calendar_event_url: z.string().url().optional(),
 });
 
@@ -37,6 +38,7 @@ export const saveBooking = createServerFn({ method: "POST" })
       phone: data.phone,
       notes: data.notes ?? null,
       photo_count: data.photo_count,
+      photo_paths: data.photo_paths,
       calendar_event_url: data.calendar_event_url ?? null,
     });
     if (error) throw new Error(error.message);
