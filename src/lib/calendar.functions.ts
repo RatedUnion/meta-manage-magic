@@ -15,6 +15,7 @@ const bookingInput = z.object({
   phone: z.string().trim().min(7).max(30),
   notes: z.string().trim().max(500).optional(),
   photos: z.number().int().min(0).max(20).default(0),
+  photoPaths: z.array(z.string().max(300)).max(5).default([]),
   ref: z.string().trim().min(3).max(32),
 });
 
@@ -42,6 +43,23 @@ export const addBookingToCalendar = createServerFn({ method: "POST" })
     ).padStart(2, "0")}`;
     const end = `${data.date}T${endTime}:00-04:00`;
 
+    // Signed photo links (30 days) — only for files inside this booking's own folder.
+    const photoLinks: string[] = [];
+    const safe = data.photoPaths.filter((p) =>
+      new RegExp(`^${data.ref.replace(/[^A-Z0-9-]/gi, "")}/[0-9a-f-]{36}\\.[a-z0-9]{1,5}$`, "i").test(p),
+    );
+    if (safe.length > 0) {
+      try {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data: signed } = await supabaseAdmin.storage
+          .from("booking-photos")
+          .createSignedUrls(safe, 60 * 60 * 24 * 30);
+        for (const s of signed ?? []) if (s.signedUrl) photoLinks.push(s.signedUrl);
+      } catch (err) {
+        console.error("Photo link signing failed", err);
+      }
+    }
+
     const body = {
       summary: `${data.service} — ${data.name} (${data.ref})`,
       description: [
@@ -51,6 +69,7 @@ export const addBookingToCalendar = createServerFn({ method: "POST" })
         `Phone: ${data.phone}`,
         `Email: ${data.email}`,
         data.photos > 0 ? `Photos attached: ${data.photos}` : null,
+        ...photoLinks.map((u, i) => `Photo ${i + 1}: ${u}`),
         data.notes ? `Notes: ${data.notes}` : null,
       ]
         .filter(Boolean)
