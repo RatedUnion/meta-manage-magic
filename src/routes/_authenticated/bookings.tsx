@@ -51,25 +51,13 @@ const PAY_FILTERS = ["all", "awaiting", "paid", "unpaid"] as const;
 /** Fetches short-lived signed URLs and shows a booking's uploaded photos. */
 function BookingPhotos({ paths }: { paths: string[] }) {
   const fetchUrls = useServerFn(getBookingPhotoUrls);
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [urls, setUrls] = useState<string[]>([]);
-
-  const toggle = async () => {
-    if (open) { setOpen(false); return; }
-    setOpen(true);
-    if (urls.length > 0 || loading) return;
-    setLoading(true);
-    try {
-      const res = await fetchUrls({ data: { paths } });
-      setUrls(res.urls);
-      if (res.urls.length === 0) toast.error("No photos could be loaded for this booking.");
-    } catch {
-      toast.error("Could not load the attached photos.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [open, setOpen] = useState(true);
+  const { data: urls = [], isLoading: loading } = useQuery({
+    queryKey: ["booking-photos", paths],
+    queryFn: async () => (await fetchUrls({ data: { paths } })).urls,
+    staleTime: 10 * 60 * 1000,
+  });
+  const toggle = () => setOpen((o) => !o);
 
   return (
     <div className="mt-3">
