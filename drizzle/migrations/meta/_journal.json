@@ -15,6 +15,20 @@
       "when": 1791254119311,
       "tag": "0001_tighten_public_insert_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791254200581,
+      "tag": "0002_bind_booking_photo_uploads",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791254219493,
+      "tag": "0003_fix_booking_photo_ref_pattern",
+      "breakpoints": true
     }
   ]
 }
