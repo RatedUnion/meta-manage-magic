@@ -257,27 +257,7 @@ function BookPage() {
     setSubmitting(true);
     const ref = "DUA-" + Math.random().toString(36).slice(2, 7).toUpperCase();
 
-    let calendar: { scheduled: boolean; htmlLink?: string } = { scheduled: false };
-    try {
-      calendar = await scheduleOnCalendar({
-        data: {
-          service: selectedService?.label ?? "Appointment",
-          date: format(parsed.data.date, "yyyy-MM-dd"),
-          time: parsed.data.time,
-          durationMinutes: parseInt(selectedService?.duration ?? "60", 10) || 60,
-          name: parsed.data.name,
-          email: parsed.data.email,
-          phone: parsed.data.phone,
-          notes: parsed.data.notes,
-          photos: photos.length,
-          ref,
-        },
-      });
-    } catch {
-      calendar = { scheduled: false };
-    }
-
-    // Upload attached photos so staff can view them on the dashboard.
+    // Upload attached photos so staff can view them on the dashboard and calendar.
     const photoPaths: string[] = [];
     for (const p of photos) {
       const ext = p.file.name.split(".").pop()?.toLowerCase() ?? "jpg";
@@ -291,6 +271,27 @@ function BookPage() {
         break;
       }
       photoPaths.push(path);
+    }
+
+    let calendar: { scheduled: boolean; htmlLink?: string } = { scheduled: false };
+    try {
+      calendar = await scheduleOnCalendar({
+        data: {
+          service: selectedService?.label ?? "Appointment",
+          date: format(parsed.data.date, "yyyy-MM-dd"),
+          time: parsed.data.time,
+          durationMinutes: parseInt(selectedService?.duration ?? "60", 10) || 60,
+          name: parsed.data.name,
+          email: parsed.data.email,
+          phone: parsed.data.phone,
+          notes: parsed.data.notes,
+          photos: photoPaths.length,
+          photoPaths,
+          ref,
+        },
+      });
+    } catch {
+      calendar = { scheduled: false };
     }
 
     const buildSheetSummary = selectedItems.length
