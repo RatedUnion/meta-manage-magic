@@ -51,21 +51,21 @@ const PAY_FILTERS = ["all", "awaiting", "paid", "unpaid"] as const;
 /** Fetches short-lived signed URLs and shows a booking's uploaded photos. */
 function BookingPhotos({ paths }: { paths: string[] }) {
   const fetchUrls = useServerFn(getBookingPhotoUrls);
-  const [open, setOpen] = useState(true);
+  
   const { data: urls = [], isLoading: loading } = useQuery({
     queryKey: ["booking-photos", paths],
     queryFn: async () => (await fetchUrls({ data: { paths } })).urls,
     staleTime: 10 * 60 * 1000,
   });
-  const toggle = () => setOpen((o) => !o);
+  
 
   return (
     <div className="mt-3">
-      <Button type="button" variant="outline" size="sm" onClick={toggle}>
-        <Images className="mr-2 h-4 w-4" />
-        {open ? "Hide photos" : `View ${paths.length} photo${paths.length === 1 ? "" : "s"}`}
-      </Button>
-      {open && (
+      
+        
+        
+      
+    
         <div className="mt-3 flex flex-wrap gap-3">
           {loading && <p className="text-sm text-muted-foreground">Loading photos…</p>}
           {urls.map((url) => (
@@ -74,7 +74,7 @@ function BookingPhotos({ paths }: { paths: string[] }) {
             </a>
           ))}
         </div>
-      )}
+      
     </div>
   );
 }
