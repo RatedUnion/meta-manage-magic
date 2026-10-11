@@ -52,16 +52,16 @@ const PAY_FILTERS = ["all", "awaiting", "paid", "unpaid"] as const;
 function BookingPhotos({ paths }: { paths: string[] }) {
   const fetchUrls = useServerFn(getBookingPhotoUrls);
   
-  const [open, setOpen] = useState(true);
+
   const { data: urls = [], isLoading: loading } = useQuery({
     queryKey: ["booking-photos", paths],
     queryFn: async () => (await fetchUrls({ data: { paths } })).urls,
     staleTime: 10 * 60 * 1000,
-  });
+  
   
 
   return (
-    <div className="mt-3">
+   <input type="file" className="mt-3" />
       
         
         
