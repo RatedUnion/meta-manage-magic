@@ -68,7 +68,7 @@ export const addBookingToCalendar = createServerFn({ method: "POST" })
         `Client: ${data.name}`,
         `Phone: ${data.phone}`,
         `Email: ${data.email}`,
-        data.photos > 0 ? `Photos attached: ${data.photos}` : null,
+        data.photos > 0 ? `Photos attached: ${photoLinks}` : null,
         ...photoLinks.map((u, i) => `Photo ${i + 1}: ${u}`),
         data.notes ? `Notes: ${data.notes}` : null,
       ]
