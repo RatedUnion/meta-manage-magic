@@ -61,7 +61,7 @@ function BookingPhotos({ paths }: { paths: string[] }) {
   
 
   return (
-   <input type="file" className="mt-3" />
+   <input type="file" className="mt-3"/>
       
         
         
