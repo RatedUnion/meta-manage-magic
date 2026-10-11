@@ -52,6 +52,7 @@ const PAY_FILTERS = ["all", "awaiting", "paid", "unpaid"] as const;
 function BookingPhotos({ paths }: { paths: string[] }) {
   const fetchUrls = useServerFn(getBookingPhotoUrls);
   
+  const [open, setOpen] = useState(true);
   const { data: urls = [], isLoading: loading } = useQuery({
     queryKey: ["booking-photos", paths],
     queryFn: async () => (await fetchUrls({ data: { paths } })).urls,
