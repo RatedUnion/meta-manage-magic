@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
-import { ArrowLeft, CalendarDays, CreditCard, Images, LogOut, Mail, Phone, RefreshCw, Search } from "lucide-react";
+import { ArrowLeft, CalendarDays, CreditCard, Images, LogOut, Mail, Phone, RefreshCw, Search, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,6 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { listBookings, updateBookingStatus, updatePaymentStatus, getBookingPhotoUrls } from "@/lib/bookings.functions";
-
 
 export const Route = createFileRoute("/_authenticated/bookings")({
   component: BookingsPage,
@@ -48,35 +47,87 @@ export const Route = createFileRoute("/_authenticated/bookings")({
 const STATUSES = ["pending", "confirmed", "completed", "cancelled"] as const;
 const PAY_FILTERS = ["all", "awaiting", "paid", "unpaid"] as const;
 
+/** Modal for viewing booking photos in fullscreen. */
+function PhotoModal({ urls, onClose }: { urls: string[]; onClose: () => void }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+      <div className="relative max-h-[90vh] max-w-2xl">
+        <button
+          onClick={onClose}
+          className="absolute -right-10 -top-10 p-2 text-white hover:text-gray-300"
+        >
+          <X className="h-6 w-6" />
+        </button>
+
+        <img
+          src={urls[currentIndex]}
+          alt={`Photo ${currentIndex + 1}`}
+          className="max-h-[80vh] w-auto rounded-lg object-contain"
+        />
+
+        {urls.length > 1 && (
+          <div className="mt-4 flex items-center justify-between">
+            <button
+              onClick={() => setCurrentIndex((i) => (i - 1 + urls.length) % urls.length)}
+              className="rounded-lg bg-white/20 px-4 py-2 text-sm font-medium text-white hover:bg-white/30"
+            >
+              ← Previous
+            </button>
+            <span className="text-sm text-gray-300">
+              {currentIndex + 1} / {urls.length}
+            </span>
+            <button
+              onClick={() => setCurrentIndex((i) => (i + 1) % urls.length)}
+              className="rounded-lg bg-white/20 px-4 py-2 text-sm font-medium text-white hover:bg-white/30"
+            >
+              Next →
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /** Fetches short-lived signed URLs and shows a booking's uploaded photos. */
 function BookingPhotos({ paths }: { paths: string[] }) {
   const fetchUrls = useServerFn(getBookingPhotoUrls);
-  
+  const [showModal, setShowModal] = useState(false);
 
   const { data: urls = [], isLoading: loading } = useQuery({
     queryKey: ["booking-photos", paths],
-    queryFn: async () => (await fetchUrls({ data: { paths } })).urls,
+    queryFn: async () => {
+      const response = await fetchUrls({ data: { paths } });
+      return response.urls;
+    },
     staleTime: 10 * 60 * 1000,
-  
-  
+    enabled: paths.length > 0,
+  });
+
+  if (!paths.length) return null;
 
   return (
-   <input type="file" className="mt-3"/>
-      
-        
-        
-      
-    
-        <div className="mt-3 flex flex-wrap gap-3">
-          {loading && <p className="text-sm text-muted-foreground">Loading photos…</p>}
-          {urls.map((url) => (
-            <a key={url} href={url} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-lg border border-border">
-              <img src={url} alt="Customer-submitted photo" className="h-28 w-28 object-cover" />
-            </a>
-          ))}
-        </div>
-      
-    </div>
+    <>
+      <div className="mt-3 flex items-center gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setShowModal(true)}
+          disabled={loading}
+          className="gap-2"
+        >
+          <Images className="h-4 w-4" />
+          View photos ({paths.length})
+        </Button>
+        {loading && <p className="text-xs text-muted-foreground">Loading…</p>}
+      </div>
+
+      {showModal && urls.length > 0 && (
+        <PhotoModal urls={urls} onClose={() => setShowModal(false)} />
+      )}
+    </>
   );
 }
 
@@ -105,7 +156,6 @@ function money(amount: number | null, currency: string | null) {
   if (amount == null) return null;
   return `${Number(amount).toFixed(2)} ${currency ?? ""}`.trim();
 }
-
 
 function BookingsPage() {
   const navigate = useNavigate();
@@ -198,7 +248,6 @@ function BookingsPage() {
     }
   };
 
-
   const signOut = async () => {
     await queryClient.cancelQueries();
     queryClient.clear();
@@ -220,7 +269,6 @@ function BookingsPage() {
                 ? `${counts.all} booking${counts.all === 1 ? "" : "s"} saved · ${counts.awaiting} awaiting confirmation · ${counts.paid} paid · ${counts.unpaid} unpaid`
                 : "Loading bookings…"}
             </p>
-
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
@@ -259,7 +307,6 @@ function BookingsPage() {
             </button>
           ))}
         </div>
-
 
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
           <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
@@ -300,7 +347,7 @@ function BookingsPage() {
           {rows.map((b) => (
             <article key={b.id} className="rounded-xl border border-border bg-card p-5 shadow-sm">
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
+                <div className="flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="text-lg font-semibold">{b.service}</h2>
                     <Badge variant="outline" className={statusTone[b.status] ?? ""}>
@@ -316,6 +363,7 @@ function BookingsPage() {
                     {format(parseISO(b.booking_date), "EEE d MMM yyyy")} · {b.booking_time}
                     {b.photo_count > 0 && ` · ${b.photo_count} photo${b.photo_count === 1 ? "" : "s"}`}
                   </p>
+                  
                   {Array.isArray(b.photo_paths) && b.photo_paths.length > 0 && (
                     <BookingPhotos paths={b.photo_paths} />
                   )}
@@ -346,7 +394,6 @@ function BookingsPage() {
               </div>
 
               {b.notes && <p className="mt-3 rounded-lg bg-muted/50 p-3 text-sm">{b.notes}</p>}
-
 
               {(b.payment_status === "paid" || b.payment_status === "pending_review") && (
                 <div
@@ -407,7 +454,6 @@ function BookingsPage() {
             </article>
           ))}
         </div>
-
       </div>
     </main>
   );
