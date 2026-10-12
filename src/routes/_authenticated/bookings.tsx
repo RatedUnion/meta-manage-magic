@@ -47,7 +47,6 @@ export const Route = createFileRoute("/_authenticated/bookings")({
 const STATUSES = ["pending", "confirmed", "completed", "cancelled"] as const;
 const PAY_FILTERS = ["all", "awaiting", "paid", "unpaid"] as const;
 
-/** Modal for viewing booking photos in fullscreen. */
 function PhotoModal({ urls, onClose }: { urls: string[]; onClose: () => void }) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -55,8 +54,10 @@ function PhotoModal({ urls, onClose }: { urls: string[]; onClose: () => void }) 
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
       <div className="relative max-h-[90vh] max-w-2xl">
         <button
+          type="button"
           onClick={onClose}
           className="absolute -right-10 -top-10 p-2 text-white hover:text-gray-300"
+          aria-label="Close gallery"
         >
           <X className="h-6 w-6" />
         </button>
@@ -70,6 +71,7 @@ function PhotoModal({ urls, onClose }: { urls: string[]; onClose: () => void }) 
         {urls.length > 1 && (
           <div className="mt-4 flex items-center justify-between gap-2">
             <button
+              type="button"
               onClick={() => setCurrentIndex((i) => (i - 1 + urls.length) % urls.length)}
               className="rounded-lg bg-white/20 px-4 py-2 text-sm font-medium text-white hover:bg-white/30"
             >
@@ -79,6 +81,7 @@ function PhotoModal({ urls, onClose }: { urls: string[]; onClose: () => void }) 
               {currentIndex + 1} / {urls.length}
             </span>
             <button
+              type="button"
               onClick={() => setCurrentIndex((i) => (i + 1) % urls.length)}
               className="rounded-lg bg-white/20 px-4 py-2 text-sm font-medium text-white hover:bg-white/30"
             >
@@ -91,7 +94,6 @@ function PhotoModal({ urls, onClose }: { urls: string[]; onClose: () => void }) 
   );
 }
 
-/** Fetches short-lived signed URLs and shows a booking's uploaded photos. */
 function BookingPhotos({ paths }: { paths: string[] }) {
   const fetchUrls = useServerFn(getBookingPhotoUrls);
   const [showModal, setShowModal] = useState(false);
@@ -175,32 +177,6 @@ function BookingsPage() {
     queryFn: () => fetchBookings(),
   });
 
-  const rows = useMemo(() => {
-    let list = data ?? [];
-    if (payFilter === "paid") list = list.filter((b) => b.payment_status === "paid");
-    if (payFilter === "awaiting") list = list.filter((b) => b.payment_status === "pending_review");
-    if (payFilter === "unpaid")
-      list = list.filter((b) => b.payment_status !== "paid" && b.payment_status !== "pending_review");
-    const needle = q.trim().toLowerCase();
-    if (!needle) return list;
-    return list.filter((b) =>
-      [b.reference, b.name, b.email, b.phone, b.service, b.status, b.payment_status, b.payment_reference ?? ""]
-        .join(" ")
-        .toLowerCase()
-        .includes(needle),
-    );
-  }, [data, q, payFilter]);
-
-  const totalImageCount = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          rows.flatMap((b) => (Array.isArray(b.photo_paths) ? b.photo_paths : [])),
-        ),
-      ).length,
-    [rows],
-  );
-
   const counts = useMemo(() => {
     const list = data ?? [];
     const paid = list.filter((b) => b.payment_status === "paid").length;
@@ -239,6 +215,28 @@ function BookingsPage() {
     };
   }, [data, counts.paid]);
 
+  const rows = useMemo(() => {
+    let list = data ?? [];
+    if (payFilter === "paid") list = list.filter((b) => b.payment_status === "paid");
+    if (payFilter === "awaiting") list = list.filter((b) => b.payment_status === "pending_review");
+    if (payFilter === "unpaid") {
+      list = list.filter((b) => b.payment_status !== "paid" && b.payment_status !== "pending_review");
+    }
+    const needle = q.trim().toLowerCase();
+    if (!needle) return list;
+    return list.filter((b) =>
+      [b.reference, b.name, b.email, b.phone, b.service, b.status, b.payment_status, b.payment_reference ?? ""]
+        .join(" ")
+        .toLowerCase()
+        .includes(needle),
+    );
+  }, [data, q, payFilter]);
+
+  const allPhotoPaths = useMemo(
+    () => Array.from(new Set(rows.flatMap((b) => (Array.isArray(b.photo_paths) ? b.photo_paths : [])))),
+    [rows],
+  );
+
   const onStatus = async (id: string, status: (typeof STATUSES)[number]) => {
     try {
       await setStatus({ data: { id, status } });
@@ -263,27 +261,24 @@ function BookingsPage() {
   };
 
   const openAllImages = async () => {
-    const paths = Array.from(
-      new Set(rows.flatMap((b) => (Array.isArray(b.photo_paths) ? b.photo_paths : []))),
-    );
-
-    if (!paths.length) {
-      toast.info("No photos are available to show.");
+    if (!allPhotoPaths.length) {
+      toast.info("No photos available to display.");
       return;
     }
 
     setLoadingAllImages(true);
     try {
       const urls: string[] = [];
-      for (let i = 0; i < paths.length; i += 20) {
-        const chunk = paths.slice(i, i + 20);
+      // Fetch in chunks of 20 to stay within API limits
+      for (let i = 0; i < allPhotoPaths.length; i += 20) {
+        const chunk = allPhotoPaths.slice(i, i + 20);
         const response = await fetchPhotoUrls({ data: { paths: chunk } });
         urls.push(...response.urls);
       }
       setAllImageUrls(urls);
       setShowAllImageModal(true);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not load the photos");
+      toast.error(e instanceof Error ? e.message : "Could not load photos");
     } finally {
       setLoadingAllImages(false);
     }
@@ -315,12 +310,13 @@ function BookingsPage() {
                 : "Loading bookings…"}
             </p>
           </div>
+
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={openAllImages}
-              disabled={loadingAllImages || totalImageCount === 0}
+              disabled={loadingAllImages || allPhotoPaths.length === 0}
             >
               <Images className="mr-2 h-4 w-4" />
               Show all images
