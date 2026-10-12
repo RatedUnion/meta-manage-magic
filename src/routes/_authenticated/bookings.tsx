@@ -112,19 +112,17 @@ function BookingPhotos({ paths }: { paths: string[] }) {
 
   return (
     <>
-      <div className="mt-3">
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => setShowModal(true)}
-          disabled={loading}
-          className="gap-2"
-        >
-          <Images className="h-4 w-4" />
-          Show images ({paths.length})
-        </Button>
-        {loading && <p className="text-xs text-muted-foreground">Loading…</p>}
-      </div>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => setShowModal(true)}
+        disabled={loading}
+        className="mt-3 gap-2"
+      >
+        <Images className="h-4 w-4" />
+        Show images ({paths.length})
+      </Button>
+      {loading && <p className="mt-2 text-xs text-muted-foreground">Loading…</p>}
 
       {showModal && urls.length > 0 && (
         <PhotoModal urls={urls} onClose={() => setShowModal(false)} />
