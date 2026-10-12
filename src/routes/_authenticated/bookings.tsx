@@ -112,7 +112,7 @@ function BookingPhotos({ paths }: { paths: string[] }) {
 
   return (
     <>
-      <div className="mt-3 flex items-center gap-2">
+      <div className="mt-3">
         <Button
           size="sm"
           variant="outline"
@@ -121,7 +121,7 @@ function BookingPhotos({ paths }: { paths: string[] }) {
           className="gap-2"
         >
           <Images className="h-4 w-4" />
-          View photos ({paths.length})
+          Show images ({paths.length})
         </Button>
         {loading && <p className="text-xs text-muted-foreground">Loading…</p>}
       </div>
