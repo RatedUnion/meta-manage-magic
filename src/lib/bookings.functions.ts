@@ -137,7 +137,7 @@ const ATTEMPT_WINDOW_MS = 10 * 60 * 1000;
  *
  * Security notes:
  * - No card data ever reaches this function; only the payment outcome is recorded.
- * - The caller must know both the booking reference and the email on that booking.
+const executeCustomAction = useServerFn(runCustomDashboardAction);
  * - Failed attempts are logged per IP and throttled to stop reference guessing.
  * - The payment reference is generated server-side, never accepted from the client.
  * - A booking that is already paid is never silently overwritten.
