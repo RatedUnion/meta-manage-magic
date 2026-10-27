@@ -226,4 +226,25 @@ export const recordBookingPayment = createServerFn({ method: "POST" })
     };
   });
 
+// ==========================================
+// Custom Dashboard Action
+// ==========================================
+const customActionSchema = z.object({
+  bookingId: z.string().uuid(),
+  notes: z.string().optional(),
+});
+
+export const runCustomDashboardAction = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => customActionSchema.parse(data))
+  .handler(async ({ context, data }) => {
+    // context.supabase is automatically authenticated with the staff/owner session
+    const { error } = await context.supabase
+      .from("bookings")
+      .update({ notes: data.notes ?? null })
+      .eq("id", data.bookingId);
+
+    if (error) throw new Error(error.message);
+    return { success: true as const };
+  });
 
