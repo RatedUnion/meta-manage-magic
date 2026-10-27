@@ -11,8 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { listBookings, updateBookingStatus, updatePaymentStatus, getBookingPhotoUrls } from "@/lib/bookings.functions";
-
+import { listBookings, updateBookingStatus, updatePaymentStatus, getBookingPhotoUrls, runCustomDashboardAction } from "@/lib/bookings.functions";
 export const Route = createFileRoute("/_authenticated/bookings")({
   component: BookingsPage,
   errorComponent: ({ error }: ErrorComponentProps) => (
