@@ -321,20 +321,21 @@ function BookingsPage() {
             <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
               <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? "animate-spin" : ""}`} /> Refresh
             </Button>
-           <div className="flex flex-wrap gap-2">
-  <Button variant="outline" size="sm" asChild>
-    <Link to="/assistants">AI Bots</Link>
-  </Button>
-  <Button variant="outline" size="sm" asChild>
-    <Link to="/monitoring">Monitoring</Link>
-  </Button>
-  <Button variant="outline" size="sm" asChild>
-    <Link to="/campaigns">Campaigns</Link>
-  </Button>
-  <Button variant="outline" size="sm" asChild>
-    <Link to="/roster">Roster</Link>
-  </Button>
-</div>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/assistants">AI Bots</Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/monitoring">Monitoring</Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/campaigns">Campaigns</Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/roster">Roster</Link>
+              </Button>
+            </div>
+            <Button variant="ghost" size="sm" onClick={signOut}>
               <LogOut className="mr-2 h-4 w-4" /> Sign out
             </Button>
           </div>
