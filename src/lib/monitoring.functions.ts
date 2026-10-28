@@ -1,40 +1,29 @@
-import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-
-export interface MonitorCheckResult {
-  url: string;
-  statusCode: number;
-  responseTimeMs: number;
-  sslValid: boolean;
-  dnsResolved: boolean;
-  checkedAt: string;
+function isSafePublicUrl(targetUrl: string): boolean {
+  try {
+    const parsed = new URL(targetUrl);
+    if (!["http:", "https:"].includes(parsed.protocol)) return false;
+    
+    const host = parsed.hostname.toLowerCase();
+    // Block loopback, RFC 1918 private subnets, and cloud metadata (169.254.x)
+    if (
+      host === "localhost" ||
+      host.endsWith(".local") ||
+      host === "127.0.0.1" ||
+      host === "::1" ||
+      host.startsWith("10.") ||
+      host.startsWith("192.168.") ||
+      host.startsWith("169.254.") ||
+      /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(host)
+    ) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
 }
 
-export const runSiteDiagnostics = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => z.object({ url: z.string().url() }).parse(data))
-  .handler(async ({ data }): Promise<MonitorCheckResult> => {
-    const start = Date.now();
-    try {
-      const response = await fetch(data.url, { method: "HEAD" });
-      const duration = Date.now() - start;
-      return {
-        url: data.url,
-        statusCode: response.status,
-        responseTimeMs: duration,
-        sslValid: data.url.startsWith("https://"),
-        dnsResolved: true,
-        checkedAt: new Date().toISOString(),
-      };
-    } catch {
-      return {
-        url: data.url,
-        statusCode: 0,
-        responseTimeMs: Date.now() - start,
-        sslValid: false,
-        dnsResolved: false,
-        checkedAt: new Date().toISOString(),
-      };
-    }
-  });
+// In runSiteDiagnostics handler:
+if (!isSafePublicUrl(data.url)) {
+  throw new Error("Invalid destination: Private, local, and metadata endpoints are prohibited.");
+}
