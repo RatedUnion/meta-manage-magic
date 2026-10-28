@@ -46,15 +46,19 @@ function CampaignsPage() {
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
       <div className="max-w-5xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Button variant="outline" size="sm" asChild>
-             <Link to="/bookings">← Back to Bookings</Link>
+              <Link to="/bookings" className="inline-flex items-center">
                 <ArrowLeft className="h-4 w-4 mr-1" />
-                Dashboard
+                Back to Bookings
               </Link>
             </Button>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Megaphone className="h-6 w-6 text-primary" />
+              Seasonal & Location Campaigns
+            </h1>
+          </div>
               Seasonal & Location Campaigns
             </h1>
           </div>
