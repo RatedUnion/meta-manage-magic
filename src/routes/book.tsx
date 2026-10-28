@@ -2,10 +2,27 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
-import { ArrowLeft, BadgeDollarSign, CalendarIcon, CheckCircle2, Clock, ImagePlus, Images, ListChecks, Mail, Phone, SquareCheckBig, User, X } from "lucide-react";
+import {
+  ArrowLeft,
+  BadgePercent,
+  CalendarIcon,
+  CheckCircle2,
+  Clock,
+  Gift,
+  Handshake,
+  ImagePlus,
+  Images,
+  ListChecks,
+  Mail,
+  Phone,
+  Sparkles,
+  SquareCheckBig,
+  Truck,
+  User,
+  X,
+} from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
-
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -13,10 +30,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { addBookingToCalendar } from "@/lib/calendar.functions";
 import { saveBooking } from "@/lib/bookings.functions";
 import { supabase } from "@/integrations/supabase/client";
-import { SERVICES as SERVICE_CATALOG } from "@/data/services";
+import {
+  SERVICES as SERVICE_CATALOG,
+  SERVICE_COMBOS,
+  OPTIONAL_PERKS,
+  type ServiceCombo,
+  type ServicePerk,
+} from "@/data/services";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/book")({
@@ -27,13 +53,12 @@ export const Route = createFileRoute("/book")({
       {
         name: "description",
         content:
-          "Reserve your slot with Dedicated Ultimatum Appointed Associates — mobile mechanic, electrician, classes, delivery, and reservations across Trinidad & Tobago.",
+          "Reserve your slot with Dedicated Ultimatum Appointed Associates — mobile mechanic, electrician, transport & towing, classes, and landscaping across Trinidad & Tobago.",
       },
       { property: "og:title", content: "Book an appointment — Dedicated Ultimatum" },
       {
         property: "og:description",
-        content:
-          "Choose a service, pick a date and time, and we'll confirm your appointment within one business day.",
+        content: "Select combos, customize perks, or choose itemised services. Non-negotiable appointment fee TTD 110.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -47,48 +72,53 @@ const APPOINTMENT_FEE = 110;
 const SERVICES = [
   {
     id: "mechanic",
+    slug: "mobile-mechanic",
     label: "Mobile Mechanic",
     duration: "60 min",
-    detail: "On-site diagnostics, OEM parts fitting, brakes, battery and oil service. Written report and job reference included.",
-    price: "Appointment fee TTD 110 · repairs quoted on inspection",
+    detail: "On-site diagnostics, OEM parts fitting, brakes, battery and oil service. Written report included.",
+    price: "Domestic from TTD 400 · Appointment fee TTD 110",
   },
   {
     id: "electrician",
+    slug: "electrician",
     label: "Electrician",
     duration: "60 min",
-    detail: "Building and automotive electrical: fault finding, safe isolation, circuit installs, testing and certification.",
-    price: "Appointment fee TTD 110 · works quoted after assessment",
+    detail: "Building and automotive electrical: fault finding, safe isolation, circuit installs and surge protection.",
+    price: "Domestic from TTD 400 · Appointment fee TTD 110",
   },
   {
     id: "booking",
+    slug: "online-booking",
     label: "Online Booking Consultation",
     duration: "30 min",
-    detail: "A guided call to scope your project, confirm parts and lead times, and lock in the right technician.",
-    price: "Appointment fee TTD 110 · credited to the job",
+    detail: "A guided scoping session to plan project milestones, equipment, and crew allocations.",
+    price: "Appointment fee TTD 110 (credited to the job)",
   },
   {
     id: "class",
-    label: "Online Class",
+    slug: "online-classes",
+    label: "Online Technical Class",
     duration: "60 min",
-    detail: "One-to-one virtual session on diagnostics, wiring basics or maintenance, with notes sent afterwards.",
-    price: "Appointment fee TTD 110 per session",
+    detail: "One-to-one virtual masterclasses on auto diagnostics, electrical wiring or workshop safety.",
+    price: "From TTD 350 · Appointment fee TTD 110",
   },
   {
     id: "delivery",
-    label: "Delivery Scheduling",
-    duration: "20 min",
-    detail: "Book a parts or package run across Trinidad, with pickup window, handling and proof of delivery.",
-    price: "Appointment fee TTD 110 · mileage quoted per route",
+    slug: "delivery",
+    label: "Transport & Towing (Sold Separately)",
+    duration: "45 min slot",
+    detail: "Dedicated flatbed wrecker towing, heavy machinery transport, and priority parts haulage.",
+    price: "From TTD 450 · Appointment fee TTD 110",
   },
   {
     id: "reservation",
-    label: "Reservation · Landscaping & Garden",
-    duration: "30 min",
-    detail: "Landscaping installs, exterior decor, garden and floral maintenance, plus venue or technician slot reservations for planned projects and site visits.",
-    price: "Appointment fee TTD 110 · holds your slot",
+    slug: "reservations",
+    label: "Landscaping & Garden Decor",
+    duration: "60 min",
+    detail: "Lawn cutting, plant pruning, arrangements, plant rentals, grounds maintenance, and green waste haulage.",
+    price: "Domestic from TTD 400 · Appointment fee TTD 110",
   },
 ] as const;
-
 
 type BuildItem = {
   key: string;
@@ -100,13 +130,11 @@ type BuildItem = {
   price: number | null;
 };
 
-/** Pull a TTD amount out of rate strings like "From TTD 250"; null when quote-only. */
 function parsePrice(rate: string): number | null {
   const m = rate.match(/TTD\s*([\d,]+(?:\.\d+)?)/i);
   return m ? Number(m[1].replace(/,/g, "")) : null;
 }
 
-/** Flatten every service's spec sheet into selectable build-sheet lines. */
 const BUILD_ITEMS: BuildItem[] = SERVICE_CATALOG.flatMap((svc) =>
   svc.specs.map((spec) => ({
     key: `${svc.slug}::${spec.item}`,
@@ -116,7 +144,7 @@ const BUILD_ITEMS: BuildItem[] = SERVICE_CATALOG.flatMap((svc) =>
     turnaround: spec.turnaround,
     rate: spec.rate,
     price: parsePrice(spec.rate),
-  })),
+  }))
 );
 
 const fmtTTD = (n: number) => `TTD ${n.toLocaleString("en-TT", { maximumFractionDigits: 2 })}`;
@@ -134,12 +162,8 @@ const bookingSchema = z.object({
   name: z.string().trim().min(2, "Name is required").max(100),
   email: z.string().trim().email("Enter a valid email").max(255),
   phone: z.string().trim().min(7, "Enter a valid phone").max(30),
-  notes: z.string().trim().max(500).optional(),
+  notes: z.string().trim().max(1000).optional(),
 });
-
-const MAX_PHOTOS = 5;
-const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
-const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
 
 type PhotoItem = { id: string; file: File; url: string };
 
@@ -152,379 +176,466 @@ type Confirmation = {
   email: string;
   photos: number;
   items: BuildItem[];
+  combo?: ServiceCombo;
+  perks: ServicePerk[];
+  negotiatePreferred: boolean;
   total: number;
   calendarLink?: string;
   calendarScheduled?: boolean;
 };
 
-
 function BookPage() {
-  const scheduleOnCalendar = useServerFn(addBookingToCalendar);
-  const persistBooking = useServerFn(saveBooking);
-  const [serviceId, setServiceId] = useState<string>("");
+  const [service, setService] = useState<string>("mechanic");
   const [date, setDate] = useState<Date | undefined>();
   const [time, setTime] = useState<string>("");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [notes, setNotes] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
+  const [name, setName] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [phone, setPhone] = useState<string>("");
+  const [notes, setNotes] = useState<string>("");
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
+  const [selectedComboId, setSelectedComboId] = useState<string | null>(null);
+  const [selectedPerkIds, setSelectedPerkIds] = useState<Set<string>>(new Set());
+  const [negotiateRequested, setNegotiateRequested] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const toggleItem = (key: string) =>
+  const currentServiceObj = SERVICES.find((s) => s.id === service);
+  const currentServiceSlug = currentServiceObj?.slug;
+
+  const relevantCombos = useMemo(() => {
+    return SERVICE_COMBOS.filter((c) => !currentServiceSlug || c.serviceSlug === currentServiceSlug);
+  }, [currentServiceSlug]);
+
+  const selectedCombo = useMemo(() => {
+    return SERVICE_COMBOS.find((c) => c.id === selectedComboId) || null;
+  }, [selectedComboId]);
+
+  const selectedPerksList = useMemo(() => {
+    return OPTIONAL_PERKS.filter((p) => selectedPerkIds.has(p.id));
+  }, [selectedPerkIds]);
+
+  const toggleItem = (key: string) => {
     setSelectedKeys((prev) => {
       const next = new Set(prev);
       if (next.has(key)) next.delete(key);
       else next.add(key);
       return next;
     });
+  };
 
-  const selectedItems = useMemo(
+  const togglePerk = (id: string) => {
+    setSelectedPerkIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const chosenItems = useMemo(
     () => BUILD_ITEMS.filter((i) => selectedKeys.has(i.key)),
-    [selectedKeys],
+    [selectedKeys]
   );
-  const itemsTotal = selectedItems.reduce((sum, i) => sum + (i.price ?? 0), 0);
-  const grandTotal = itemsTotal + APPOINTMENT_FEE;
 
-  useEffect(() => {
-    return () => {
-      photos.forEach((p) => URL.revokeObjectURL(p.url));
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const buildItemsSubtotal = useMemo(
+    () => chosenItems.reduce((acc, i) => acc + (i.price ?? 0), 0),
+    [chosenItems]
+  );
 
-  const addPhotos = (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    const incoming = Array.from(files);
-    const accepted: PhotoItem[] = [];
-    let rejectedType = 0;
-    let rejectedSize = 0;
+  const perksSubtotal = useMemo(
+    () => selectedPerksList.reduce((acc, p) => acc + p.valueTTD, 0),
+    [selectedPerksList]
+  );
 
-    for (const file of incoming) {
-      if (photos.length + accepted.length >= MAX_PHOTOS) {
-        toast.error(`You can attach up to ${MAX_PHOTOS} photos`);
-        break;
-      }
-      if (!ACCEPTED_TYPES.includes(file.type)) { rejectedType++; continue; }
-      if (file.size > MAX_PHOTO_BYTES) { rejectedSize++; continue; }
-      accepted.push({
-        id: `${file.name}-${file.size}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        file,
-        url: URL.createObjectURL(file),
-      });
+  const comboTotal = selectedCombo ? selectedCombo.discountedPriceTTD : 0;
+
+  const grandTotal = useMemo(() => {
+    return APPOINTMENT_FEE + comboTotal + buildItemsSubtotal + perksSubtotal;
+  }, [comboTotal, buildItemsSubtotal, perksSubtotal]);
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    if (photos.length + files.length > 5) {
+      toast.error("Maximum of 5 photos allowed per booking.");
+      return;
     }
-
-    if (rejectedType) toast.error("Only JPG, PNG, WEBP or HEIC images are supported");
-    if (rejectedSize) toast.error("Each photo must be under 10 MB");
-    if (accepted.length) setPhotos((prev) => [...prev, ...accepted]);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    const newItems: PhotoItem[] = files.map((file) => ({
+      id: Math.random().toString(36).substring(7),
+      file,
+      url: URL.createObjectURL(file),
+    }));
+    setPhotos((prev) => [...prev, ...newItems]);
   };
 
   const removePhoto = (id: string) => {
-    setPhotos((prev) => {
-      const target = prev.find((p) => p.id === id);
-      if (target) URL.revokeObjectURL(target.url);
-      return prev.filter((p) => p.id !== id);
-    });
+    setPhotos((prev) => prev.filter((p) => p.id !== id));
   };
 
-  const selectedService = useMemo(
-    () => SERVICES.find((s) => s.id === serviceId),
-    [serviceId],
-  );
-
-  const disabledDays = (day: Date) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (day < today) return true;
-    const dow = day.getDay();
-    return dow === 0; // closed Sundays
-  };
-
-  const onSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const parsed = bookingSchema.safeParse({
-      service: serviceId, date, time, name, email, phone,
-      notes: notes || undefined,
-    });
-    if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? "Please check your details");
+    if (!date) {
+      toast.error("Please pick a date for your appointment.");
       return;
     }
-    setSubmitting(true);
-    const ref = "DUA-" + Math.random().toString(36).slice(2, 7).toUpperCase();
+    if (!time) {
+      toast.error("Please choose a time slot.");
+      return;
+    }
 
-    // Upload attached photos so staff can view them on the dashboard and calendar.
-    const photoPaths: string[] = [];
-    for (const p of photos) {
-      const ext = p.file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-      const path = `${ref}/${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage.from("booking-photos").upload(path, p.file, {
-        contentType: p.file.type,
-        upsert: false,
-      });
-      if (error) {
-        toast.error("A photo could not be uploaded — your booking will still go through.");
-        break;
+    const parseRes = bookingSchema.safeParse({ service, date, time, name, email, phone, notes });
+    if (!parseRes.success) {
+      toast.error(parseRes.error.errors[0]?.message || "Validation error");
+      return;
+    }
+
+    setIsSubmitting(true);
+    const bookingRef = `DUA-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+
+    try {
+      const photoPaths: string[] = [];
+      for (const p of photos) {
+        const ext = p.file.name.split(".").pop() || "jpg";
+        const path = `${bookingRef}/${Math.random().toString(36).substring(2, 9)}.${ext}`;
+        const { error: upErr } = await supabase.storage.from("booking-photos").upload(path, p.file);
+        if (!upErr) photoPaths.push(path);
       }
-      photoPaths.push(path);
-    }
 
-    let calendar: { scheduled: boolean; htmlLink?: string } = { scheduled: false };
-    try {
-      calendar = await scheduleOnCalendar({
-        data: {
-          service: selectedService?.label ?? "Appointment",
-          date: format(parsed.data.date, "yyyy-MM-dd"),
-          time: parsed.data.time,
-          durationMinutes: parseInt(selectedService?.duration ?? "60", 10) || 60,
-          name: parsed.data.name,
-          email: parsed.data.email,
-          phone: parsed.data.phone,
-          notes: parsed.data.notes,
-          photos: photoPaths.length,
+      const notesPayload = [
+        notes ? `Client Notes: ${notes}` : null,
+        selectedCombo ? `SELECTED COMBO: ${selectedCombo.name} (TTD $${selectedCombo.discountedPriceTTD})` : null,
+        selectedPerksList.length ? `PERKS: ${selectedPerksList.map((p) => p.name).join(", ")}` : null,
+        chosenItems.length ? `BUILD ITEMS: ${chosenItems.map((i) => `${i.item} (${i.rate})`).join("; ")}` : null,
+        negotiateRequested ? "⚠️ CLIENT WELCOMES NEGOTIATIONS / FEWER PERKS FOR LOWER PRICE" : null,
+        `ESTIMATED TOTAL: TTD $${grandTotal}`,
+      ]
+        .filter(Boolean)
+        .join("\n\n");
+
+      await saveBooking({
+        reference: bookingRef,
+        service: currentServiceObj?.label || service,
+        customer_name: name,
+        customer_email: email,
+        customer_phone: phone,
+        booking_date: format(date, "yyyy-MM-dd"),
+        booking_time: time,
+        notes: notesPayload,
+        photo_paths: photoPaths,
+      });
+
+      try {
+        await addBookingToCalendar({
+          reference: bookingRef,
+          service: currentServiceObj?.label || service,
+          customerName: name,
+          customerEmail: email,
+          customerPhone: phone,
+          date: format(date, "yyyy-MM-dd"),
+          time,
+          notes: notesPayload,
           photoPaths,
-          ref,
-        },
+        });
+      } catch (calErr) {
+        console.warn("Calendar sync failed:", calErr);
+      }
+
+      setConfirmation({
+        ref: bookingRef,
+        service: currentServiceObj?.label || service,
+        date,
+        time,
+        name,
+        email,
+        photos: photoPaths.length,
+        items: chosenItems,
+        combo: selectedCombo || undefined,
+        perks: selectedPerksList,
+        negotiatePreferred: negotiateRequested,
+        total: grandTotal,
       });
-    } catch {
-      calendar = { scheduled: false };
+
+      toast.success("Appointment reserved successfully!");
+    } catch (err: any) {
+      toast.error(err.message || "Could not complete booking. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    const buildSheetSummary = selectedItems.length
-      ? `\nBuild sheet: ${selectedItems.map((i) => i.item).join(", ")} — items ${fmtTTD(itemsTotal)} + fee ${fmtTTD(APPOINTMENT_FEE)} = ${fmtTTD(grandTotal)}`
-      : "";
-
-    try {
-      await persistBooking({
-        data: {
-          reference: ref,
-          service: selectedService?.label ?? "Appointment",
-          booking_date: format(parsed.data.date, "yyyy-MM-dd"),
-          booking_time: parsed.data.time,
-          name: parsed.data.name,
-          email: parsed.data.email,
-          phone: parsed.data.phone,
-          notes: (parsed.data.notes ?? "") + buildSheetSummary || undefined,
-          photo_count: photoPaths.length,
-          photo_paths: photoPaths,
-          calendar_event_url: calendar.htmlLink,
-        },
-      });
-    } catch {
-      toast.error("We couldn't save your booking to our records — please call us to confirm.");
-    }
-
-    setConfirmation({
-      ref,
-      service: selectedService?.label ?? "",
-      date: parsed.data.date,
-      time: parsed.data.time,
-      name: parsed.data.name,
-      email: parsed.data.email,
-      photos: photos.length,
-      items: selectedItems,
-      total: grandTotal,
-      calendarLink: calendar.htmlLink,
-      calendarScheduled: calendar.scheduled,
-    });
-    toast.success("Appointment requested", {
-      description: `Ref ${ref} — appointment fee TTD ${APPOINTMENT_FEE} (non-negotiable) is due to confirm.${
-        calendar.scheduled ? " Added to our Google Calendar with mobile reminders." : ""
-      }`,
-    });
-
-    setSubmitting(false);
   };
 
+  if (confirmation) {
+    return (
+      <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-2xl mx-auto space-y-6">
+          <Card className="border-primary/20 bg-card shadow-lg">
+            <CardHeader className="text-center pb-2">
+              <CheckCircle2 className="w-12 h-12 text-primary mx-auto mb-2" />
+              <CardTitle className="text-2xl font-bold">Booking Request Confirmed</CardTitle>
+              <CardDescription>Reference: <span className="font-mono font-bold text-foreground">{confirmation.ref}</span></CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4 pt-4 text-sm">
+              <div className="grid grid-cols-2 gap-3 bg-muted p-4 rounded-lg">
+                <div><span className="text-muted-foreground">Service:</span> <p className="font-semibold">{confirmation.service}</p></div>
+                <div><span className="text-muted-foreground">Date & Time:</span> <p className="font-semibold">{format(confirmation.date, "PPP")} at {confirmation.time}</p></div>
+                <div><span className="text-muted-foreground">Client:</span> <p className="font-semibold">{confirmation.name}</p></div>
+                <div><span className="text-muted-foreground">Photos Attached:</span> <p className="font-semibold">{confirmation.photos}</p></div>
+              </div>
 
-  const reset = () => {
-    setConfirmation(null);
-    setServiceId(""); setDate(undefined); setTime("");
-    setSelectedKeys(new Set());
-    setName(""); setEmail(""); setPhone(""); setNotes("");
-    setPhotos((prev) => { prev.forEach((p) => URL.revokeObjectURL(p.url)); return []; });
-  };
+              {confirmation.combo && (
+                <div className="p-3 bg-primary/10 rounded border border-primary/30">
+                  <p className="font-semibold text-primary text-xs uppercase tracking-wide">Selected Combo Package</p>
+                  <p className="font-bold text-base">{confirmation.combo.name} — {fmtTTD(confirmation.combo.discountedPriceTTD)}</p>
+                  <ul className="text-xs list-disc list-inside mt-1 text-muted-foreground">
+                    {confirmation.combo.perksIncluded.map((p, idx) => (
+                      <li key={idx}>{p}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
+              {confirmation.perks.length > 0 && (
+                <div>
+                  <p className="font-semibold text-xs text-muted-foreground uppercase">Selected Privilege Perks</p>
+                  <ul className="text-xs space-y-1 mt-1">
+                    {confirmation.perks.map((p) => (
+                      <li key={p.id} className="flex justify-between">
+                        <span>• {p.name}</span>
+                        <span className="font-mono">{fmtTTD(p.valueTTD)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {confirmation.negotiatePreferred && (
+                <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded text-xs text-amber-600 dark:text-amber-400">
+                  <Handshake className="w-4 h-4 inline mr-1" />
+                  You indicated openness to negotiate customized scope or fewer perks for budget flexibility. Our technician will review this during confirmation.
+                </div>
+              )}
+
+              <div className="border-t border-border pt-4 flex justify-between items-baseline text-base font-bold">
+                <span>Calculated Initial Total:</span>
+                <span className="text-xl text-primary font-mono">{fmtTTD(confirmation.total)}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">Includes non-negotiable appointment deposit fee of TTD $110.</p>
+
+              <div className="pt-4 flex flex-col sm:flex-row gap-3">
+                <Button className="w-full" asChild>
+                  <Link to="/pay" search={{ ref: confirmation.ref, amount: String(confirmation.total) }}>
+                    Proceed to Payment / Approve Handshake
+                  </Link>
+                </Button>
+                <Button variant="outline" className="w-full" onClick={() => setConfirmation(null)}>
+                  Book Another Service
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border/60 bg-background/80 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-6">
-          <Link to="/" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-4 w-4" /> Back to home
+    <div className="min-h-screen bg-background py-10 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto space-y-8">
+        <div>
+          <Link to="/" className="inline-flex items-center text-xs text-muted-foreground hover:text-foreground mb-4">
+            <ArrowLeft className="w-3.5 h-3.5 mr-1" /> Return Home
           </Link>
-          <span className="text-sm font-medium">Book an appointment</span>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-extrabold tracking-tight">Appointment Booking & Custom Packages</h1>
+              <p className="text-muted-foreground text-sm mt-1">
+                Domestic from TTD $400 · Commercial min $1,200 · Non-negotiable appointment deposit TTD $110.
+              </p>
+            </div>
+            <Badge variant="outline" className="text-xs py-1 px-3 border-primary/40 text-primary w-fit">
+              <Sparkles className="w-3.5 h-3.5 mr-1 inline" /> Suggestive Combos & Perks Available
+            </Badge>
+          </div>
         </div>
-      </header>
 
-      <div className="mx-auto max-w-3xl px-6 py-12">
-        {confirmation ? (
-          <ConfirmationCard confirmation={confirmation} onReset={reset} />
-        ) : (
-          <>
-            <div className="mb-10">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground">Booking</p>
-              <h1 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">
-                Reserve your slot
-              </h1>
-              <p className="mt-3 text-muted-foreground">
-                Pick a service, choose a date and time, and share your contact details.
-                We'll confirm within one business day.
-              </p>
-            </div>
-
-            <div className="mb-8 rounded-xl border border-accent/50 bg-accent/10 p-4">
-              <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                <BadgeDollarSign className="h-4 w-4" /> Appointment fee TTD {APPOINTMENT_FEE} — non-negotiable
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Every booking carries a flat TTD {APPOINTMENT_FEE} appointment fee covering call-out,
-                assessment and diagnosis. Parts and labour to finalize the project are quoted separately
-                and approved by you before any work starts.
-              </p>
-              <p className="mt-2 text-sm text-foreground">
-                All services are valued by the volume or agenda — domestic, commercial or otherwise.
-                Domestic jobs run from TTD 250; commercial work in all areas starts at a minimum of
-                TTD 1,200, which includes 1 (no more than 2) people for the task.
-              </p>
-            </div>
-
-            <form onSubmit={onSubmit} className="space-y-10">
-              {/* Service */}
-              <section className="space-y-3">
-                <Label>Service</Label>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {SERVICES.map((s) => {
-                    const active = serviceId === s.id;
-                    return (
-                      <button
-                        type="button"
-                        key={s.id}
-                        onClick={() => setServiceId(s.id)}
-                        className={cn(
-                          "flex h-full flex-col rounded-xl border p-4 text-left transition",
-                          active
-                            ? "border-accent bg-accent/10 shadow-sm"
-                            : "border-border bg-card hover:border-accent/60",
-                        )}
-                      >
-                        <div className="font-medium">{s.label}</div>
-                        <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{s.detail}</p>
-                        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1.5">
-                            <Clock className="h-3.5 w-3.5" /> {s.duration}
-                          </span>
-                          <span className="flex items-center gap-1.5 font-medium text-foreground">
-                            <BadgeDollarSign className="h-3.5 w-3.5" /> {s.price}
-                          </span>
-                        </div>
-                      </button>
-                    );
-                  })}
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Step 1: Choose Service */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <span className="grid h-6 w-6 place-items-center rounded-full bg-primary text-primary-foreground text-xs font-bold">1</span>
+                Select Service Category
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              {SERVICES.map((s) => (
+                <div
+                  key={s.id}
+                  onClick={() => {
+                    setService(s.id);
+                    setSelectedComboId(null);
+                  }}
+                  className={cn(
+                    "cursor-pointer rounded-lg border p-3 transition-all",
+                    service === s.id
+                      ? "border-primary bg-primary/5 ring-1 ring-primary"
+                      : "border-border hover:border-muted-foreground/40 bg-card"
+                  )}
+                >
+                  <p className="font-semibold text-sm">{s.label}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{s.detail}</p>
+                  <p className="text-xs font-semibold text-primary mt-2">{s.price}</p>
                 </div>
-              </section>
+              ))}
+            </CardContent>
+          </Card>
 
-              {/* Build sheet */}
-              <section className="space-y-3">
+          {/* Step 2: Suggestive Selling Combos & Packages */}
+          {relevantCombos.length > 0 && (
+            <Card className="border-primary/30 bg-primary/[0.02]">
+              <CardHeader>
                 <div className="flex items-center justify-between">
-                  <Label className="flex items-center gap-2">
-                    <ListChecks className="h-4 w-4" /> Build sheet — add items to your booking
-                  </Label>
-                  <span className="text-xs text-muted-foreground">
-                    {selectedItems.length} selected
-                  </span>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <BadgePercent className="w-5 h-5 text-primary" />
+                    Special Combo Deals & Privilege Packages
+                  </CardTitle>
+                  <Badge variant="secondary" className="text-xs">Save up to 20%</Badge>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Tick the work items you need from our spec sheets. Each line shows the exact scope;
-                  priced items total up below and items marked “Quoted” are priced on inspection.
-                </p>
-                <div className="overflow-hidden rounded-xl border border-border">
-                  {BUILD_ITEMS.map((i) => {
-                    const active = selectedKeys.has(i.key);
-                    const selectable = i.price != null;
-                    return (
-                      <button
-                        type="button"
-                        key={i.key}
-                        disabled={!selectable}
-                        onClick={() => toggleItem(i.key)}
-                        className={cn(
-                          "flex w-full items-start gap-3 border-b border-border/60 px-4 py-3 text-left text-sm transition last:border-b-0",
-                          active ? "bg-accent/10" : "bg-card hover:bg-secondary/40",
-                          !selectable && "cursor-not-allowed opacity-60",
-                        )}
-                      >
-                        <SquareCheckBig
-                          className={cn(
-                            "mt-0.5 h-4 w-4 shrink-0",
-                            active ? "text-accent" : "text-muted-foreground/50",
-                          )}
-                        />
-                        <span className="min-w-0 flex-1">
-                          <span className="flex flex-wrap items-baseline gap-x-2">
-                            <span className="font-medium">{i.item}</span>
-                            <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                              {i.service}
+                <CardDescription>
+                  Bundle diagnostics, transport/towing, or haulage into a single turnkey package.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {relevantCombos.map((combo) => {
+                  const isSelected = selectedComboId === combo.id;
+                  return (
+                    <div
+                      key={combo.id}
+                      onClick={() => setSelectedComboId(isSelected ? null : combo.id)}
+                      className={cn(
+                        "relative cursor-pointer rounded-xl border p-4 transition-all flex flex-col justify-between",
+                        isSelected
+                          ? "border-primary bg-primary/10 shadow-sm ring-2 ring-primary"
+                          : "border-border hover:border-primary/40 bg-card"
+                      )}
+                    >
+                      <div>
+                        <div className="flex justify-between items-start gap-2">
+                          <h4 className="font-bold text-sm text-foreground">{combo.name}</h4>
+                          <div className="text-right">
+                            <span className="text-xs line-through text-muted-foreground font-mono">
+                              {fmtTTD(combo.basePriceTTD)}
                             </span>
-                          </span>
-                          <span className="mt-0.5 block text-xs text-muted-foreground">
-                            {i.scope} · {i.turnaround}
-                          </span>
+                            <p className="text-base font-bold text-primary font-mono">
+                              {fmtTTD(combo.discountedPriceTTD)}
+                            </p>
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2">{combo.description}</p>
+                        <div className="mt-3 space-y-1">
+                          <p className="text-[11px] font-semibold text-foreground uppercase tracking-wider">Included Perks:</p>
+                          {combo.perksIncluded.map((p, idx) => (
+                            <p key={idx} className="text-xs text-muted-foreground flex items-center gap-1.5">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                              {p}
+                            </p>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="mt-4 pt-3 border-t border-border/60 flex items-center justify-between">
+                        <span className="text-xs font-medium text-primary">
+                          {isSelected ? "Selected ✓" : "Click to bundle"}
                         </span>
-                        <span
-                          className={cn(
-                            "shrink-0 text-xs font-medium",
-                            active ? "text-foreground" : "text-muted-foreground",
-                          )}
-                        >
-                          {i.price != null ? fmtTTD(i.price) : i.rate}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
+                        {combo.suggestedAddon && (
+                          <span className="text-[11px] text-muted-foreground italic">
+                            Pairs with: {combo.suggestedAddon}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
 
-                <div className="rounded-xl border border-accent/50 bg-accent/10 p-4 text-sm">
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Selected items ({selectedItems.length})</span>
-                    <span>{fmtTTD(itemsTotal)}</span>
+          {/* Step 3: Privilege Perks Addons */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Gift className="w-5 h-5 text-primary" />
+                Select Additional Perks & Privileges
+              </CardTitle>
+              <CardDescription>
+                Customize your service with priority response, extended guarantees, or disposal privileges.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {OPTIONAL_PERKS.map((perk) => {
+                const isChecked = selectedPerkIds.has(perk.id);
+                return (
+                  <div
+                    key={perk.id}
+                    onClick={() => togglePerk(perk.id)}
+                    className={cn(
+                      "cursor-pointer rounded-lg border p-3 flex items-start gap-3 transition-colors",
+                      isChecked ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/40 bg-card"
+                    )}
+                  >
+                    <Checkbox checked={isChecked} onCheckedChange={() => togglePerk(perk.id)} className="mt-0.5" />
+                    <div className="flex-1">
+                      <div className="flex justify-between items-baseline">
+                        <p className="font-semibold text-xs text-foreground">{perk.name}</p>
+                        <span className="text-xs font-mono font-semibold text-primary">+{fmtTTD(perk.valueTTD)}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">{perk.description}</p>
+                    </div>
                   </div>
-                  <div className="mt-1 flex justify-between text-muted-foreground">
-                    <span>Appointment fee (non-negotiable)</span>
-                    <span>{fmtTTD(APPOINTMENT_FEE)}</span>
-                  </div>
-                  <div className="mt-2 flex justify-between border-t border-accent/40 pt-2 font-semibold text-foreground">
-                    <span>Total due to confirm</span>
-                    <span>{fmtTTD(grandTotal)}</span>
-                  </div>
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    Items marked “Quoted” are assessed on site and approved by you before work starts.
-                  </p>
-                </div>
-              </section>
+                );
+              })}
+            </CardContent>
+          </Card>
 
+          {/* Negotiation Toggle */}
+          <Card className="border-dashed border-amber-500/40 bg-amber-500/[0.03]">
+            <CardContent className="pt-6 flex items-start gap-3">
+              <Checkbox
+                id="negotiate"
+                checked={negotiateRequested}
+                onCheckedChange={(c) => setNegotiateRequested(Boolean(c))}
+                className="mt-1"
+              />
+              <div>
+                <Label htmlFor="negotiate" className="font-semibold text-sm cursor-pointer flex items-center gap-1.5">
+                  <Handshake className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  Welcoming Negotiations (Flexible Budget / Fewer Perks)
+                </Label>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Have a specific budget or want to waive non-essential perks? Check this box and our technician will adjust the quotation accordingly during consultation.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
-
-              {/* Date + Time */}
-              <section className="grid gap-6 md:grid-cols-2">
-                <div className="space-y-3">
-                  <Label>Date</Label>
+          {/* Step 4: Date, Time & Details */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <span className="grid h-6 w-6 place-items-center rounded-full bg-primary text-primary-foreground text-xs font-bold">2</span>
+                Schedule & Client Info
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs mb-1 block">Appointment Date (Mon–Sat)</Label>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !date && "text-muted-foreground",
-                        )}
-                      >
+                      <Button variant="outline" className="w-full justify-start text-left font-normal text-xs h-10">
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {date ? format(date, "EEE, MMM d, yyyy") : "Pick a date"}
+                        {date ? format(date, "PPP") : "Select date"}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
@@ -532,266 +643,136 @@ function BookPage() {
                         mode="single"
                         selected={date}
                         onSelect={setDate}
-                        disabled={disabledDays}
-                        initialFocus
-                        className={cn("p-3 pointer-events-auto")}
+                        disabled={(d) => d < new Date() || d.getDay() === 0}
                       />
                     </PopoverContent>
                   </Popover>
-                  <p className="text-xs text-muted-foreground">Closed Sundays.</p>
                 </div>
 
-                <div className="space-y-3">
-                  <Label>Time</Label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {TIME_SLOTS.map((t) => {
-                      const active = time === t;
-                      return (
-                        <button
-                          type="button"
-                          key={t}
-                          onClick={() => setTime(t)}
-                          disabled={!date}
-                          className={cn(
-                            "rounded-md border px-2 py-2 text-sm transition disabled:opacity-40 disabled:cursor-not-allowed",
-                            active
-                              ? "border-accent bg-accent text-accent-foreground"
-                              : "border-border bg-card hover:border-accent/60",
-                          )}
-                        >
-                          {t}
-                        </button>
-                      );
-                    })}
-                  </div>
+                <div>
+                  <Label className="text-xs mb-1 block">Preferred Time Slot</Label>
+                  <select
+                    value={time}
+                    onChange={(e) => setTime(e.target.value)}
+                    className="w-full h-10 rounded-md border border-input bg-background px-3 text-xs focus:ring-1 focus:ring-ring"
+                  >
+                    <option value="">Select a time</option>
+                    {TIME_SLOTS.map((slot) => (
+                      <option key={slot} value={slot}>{slot}</option>
+                    ))}
+                  </select>
                 </div>
-              </section>
+              </div>
 
-              {/* Contact */}
-              <section className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Full name</Label>
-                  <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Jane Doe" maxLength={100} />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <Label className="text-xs">Full Name</Label>
+                  <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Jane Doe" className="text-xs mt-1" required />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jane@example.com" maxLength={255} />
+                <div>
+                  <Label className="text-xs">Email Address</Label>
+                  <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jane@example.com" className="text-xs mt-1" required />
                 </div>
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="phone">Phone</Label>
-                  <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 868 555 0100" maxLength={30} />
+                <div>
+                  <Label className="text-xs">Mobile / WhatsApp</Label>
+                  <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 868-XXX-XXXX" className="text-xs mt-1" required />
                 </div>
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="notes">Notes (optional)</Label>
-                  <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={4} maxLength={500} placeholder="Anything we should know ahead of time?" />
-                </div>
-              </section>
+              </div>
 
-              {/* Photos */}
-              <section className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="photos">Photos (optional)</Label>
-                  <span className="text-xs text-muted-foreground">{photos.length}/{MAX_PHOTOS}</span>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Share photos of the fault — engine bay, error codes, panel, wiring or the area to be worked on.
-                  It helps us bring the right parts and tools.
-                </p>
-
-                <input
-                  ref={fileInputRef}
-                  id="photos"
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="sr-only"
-                  onChange={(e) => addPhotos(e.target.files)}
+              <div>
+                <Label className="text-xs">Work Agenda or Location Details</Label>
+                <Textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Detail your vehicle make, electrical issue, transport pickup point, or garden size..."
+                  className="text-xs mt-1"
+                  rows={3}
                 />
+              </div>
 
-                <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+              {/* Photos upload */}
+              <div>
+                <Label className="text-xs block mb-1">Attach Photos (Up to 5 images, max 10MB each)</Label>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handlePhotoUpload}
+                  accept="image/jpeg,image/png,image/webp,image/heic"
+                  multiple
+                  className="hidden"
+                />
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={photos.length >= 5}
+                    className="text-xs"
+                  >
+                    <ImagePlus className="w-3.5 h-3.5 mr-1" /> Add Photos ({photos.length}/5)
+                  </Button>
                   {photos.map((p) => (
-                    <div key={p.id} className="group relative aspect-square overflow-hidden rounded-lg border border-border bg-secondary/40">
-                      <img src={p.url} alt={`Attached issue photo: ${p.file.name}`} className="h-full w-full object-cover" />
+                    <div key={p.id} className="relative w-12 h-12 rounded border overflow-hidden">
+                      <img src={p.url} alt="upload preview" className="w-full h-full object-cover" />
                       <button
                         type="button"
                         onClick={() => removePhoto(p.id)}
-                        aria-label={`Remove ${p.file.name}`}
-                        className="absolute right-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-full bg-background/85 text-foreground shadow-sm transition hover:bg-background"
+                        className="absolute top-0 right-0 bg-black/70 text-white p-0.5 rounded-bl"
                       >
-                        <X className="h-3.5 w-3.5" />
+                        <X className="w-3 h-3" />
                       </button>
                     </div>
                   ))}
-
-                  {photos.length < MAX_PHOTOS && (
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-border bg-card text-muted-foreground transition hover:border-accent hover:text-foreground"
-                    >
-                      <ImagePlus className="h-5 w-5" />
-                      <span className="text-xs">Add photo</span>
-                    </button>
-                  )}
                 </div>
-                <p className="text-xs text-muted-foreground">JPG, PNG, WEBP or HEIC · up to 10 MB each.</p>
-              </section>
-
-
-              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-6">
-                <div className="text-sm text-muted-foreground">
-                  {selectedService && date && time ? (
-                    <span>
-                      {selectedService.label} · {format(date, "MMM d")} · {time}
-                      <span className="ml-1 font-medium text-foreground">
-                        · Total due {fmtTTD(grandTotal)}
-                        {selectedItems.length > 0 && ` (${selectedItems.length} items + fee)`}
-                      </span>
-                    </span>
-                  ) : (
-                    <span>Complete all fields to book. Appointment fee {fmtTTD(APPOINTMENT_FEE)}, non-negotiable.</span>
-                  )}
-                </div>
-
-                <Button type="submit" size="lg" disabled={submitting}>
-                  {submitting ? "Booking…" : "Confirm booking"}
-                </Button>
               </div>
-            </form>
-          </>
-        )}
+            </CardContent>
+          </Card>
+
+          {/* Pricing Summary & Submit */}
+          <Card className="bg-muted/40 border-primary/20">
+            <CardContent className="pt-6 space-y-3">
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Non-negotiable Appointment Fee:</span>
+                <span className="font-mono">{fmtTTD(APPOINTMENT_FEE)}</span>
+              </div>
+
+              {selectedCombo && (
+                <div className="flex justify-between text-xs text-foreground">
+                  <span>Combo Package ({selectedCombo.name}):</span>
+                  <span className="font-mono font-semibold">{fmtTTD(selectedCombo.discountedPriceTTD)}</span>
+                </div>
+              )}
+
+              {perksSubtotal > 0 && (
+                <div className="flex justify-between text-xs text-foreground">
+                  <span>Selected Privilege Perks:</span>
+                  <span className="font-mono font-semibold">+{fmtTTD(perksSubtotal)}</span>
+                </div>
+              )}
+
+              {buildItemsSubtotal > 0 && (
+                <div className="flex justify-between text-xs text-foreground">
+                  <span>Itemised Build Specs:</span>
+                  <span className="font-mono font-semibold">+{fmtTTD(buildItemsSubtotal)}</span>
+                </div>
+              )}
+
+              <div className="border-t border-border pt-3 flex justify-between items-baseline font-bold text-base text-foreground">
+                <span>Calculated Initial Amount:</span>
+                <span className="text-xl text-primary font-mono">{fmtTTD(grandTotal)}</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Domestic jobs start at $400 TTD. Commercial minimum $1,200 TTD. Final scope is verified with you before work starts.
+              </p>
+
+              <Button type="submit" size="lg" className="w-full text-sm font-semibold mt-4" disabled={isSubmitting}>
+                {isSubmitting ? "Locking in Slot & Uploading..." : "Confirm Booking & Proceed to Handshake"}
+              </Button>
+            </CardContent>
+          </Card>
+        </form>
       </div>
-    </main>
-  );
-}
-
-function ConfirmationCard({ confirmation, onReset }: { confirmation: Confirmation; onReset: () => void }) {
-  return (
-    <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
-      <div className="flex items-center gap-3">
-        <div className="grid h-11 w-11 place-items-center rounded-full bg-accent/15 text-accent">
-          <CheckCircle2 className="h-6 w-6" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">You're booked in</h1>
-          <p className="text-sm text-muted-foreground">
-            Confirmation reference <span className="font-mono text-foreground">{confirmation.ref}</span>
-          </p>
-        </div>
-      </div>
-
-      <dl className="mt-8 grid gap-4 border-t border-border pt-6 sm:grid-cols-2">
-        <Detail icon={<CalendarIcon className="h-4 w-4" />} label="Service" value={confirmation.service} />
-        <Detail
-          icon={<Clock className="h-4 w-4" />}
-          label="When"
-          value={`${format(confirmation.date, "EEE, MMM d, yyyy")} · ${confirmation.time}`}
-        />
-        <Detail icon={<User className="h-4 w-4" />} label="Name" value={confirmation.name} />
-        <Detail icon={<Mail className="h-4 w-4" />} label="Email" value={confirmation.email} />
-        {confirmation.photos > 0 && (
-          <Detail
-            icon={<Images className="h-4 w-4" />}
-            label="Photos attached"
-            value={`${confirmation.photos} ${confirmation.photos === 1 ? "photo" : "photos"}`}
-          />
-        )}
-        <Detail
-          icon={<BadgeDollarSign className="h-4 w-4" />}
-          label="Total due"
-          value={`${fmtTTD(confirmation.total)} — includes ${fmtTTD(APPOINTMENT_FEE)} non-negotiable appointment fee`}
-        />
-      </dl>
-
-      {confirmation.items.length > 0 && (
-        <div className="mt-6 rounded-lg border border-border bg-secondary/40 p-4 text-sm">
-          <p className="flex items-center gap-1.5 font-medium text-foreground">
-            <ListChecks className="h-4 w-4" /> Build sheet ({confirmation.items.length} items)
-          </p>
-          <ul className="mt-2 space-y-1.5">
-            {confirmation.items.map((i) => (
-              <li key={i.key} className="flex items-baseline justify-between gap-3">
-                <span className="min-w-0">
-                  <span className="font-medium">{i.item}</span>
-                  <span className="ml-2 text-xs text-muted-foreground">{i.scope}</span>
-                </span>
-                <span className="shrink-0 text-xs text-muted-foreground">{i.rate}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      <div className="mt-6 rounded-lg border border-accent/50 bg-accent/10 p-4 text-sm">
-        <p className="font-medium text-foreground">
-          {fmtTTD(confirmation.total)} is due to confirm your booking
-        </p>
-        <p className="mt-1 text-muted-foreground">
-          This includes the non-negotiable appointment fee of {fmtTTD(APPOINTMENT_FEE)} covering
-          call-out, assessment and diagnosis. Anything marked “Quoted” on the build sheet is priced
-          after inspection and only starts once you approve it. Pay securely now with your
-          reference <span className="font-mono text-foreground">{confirmation.ref}</span>.
-        </p>
-        <Link
-          to="/pay"
-          search={{ ref: confirmation.ref, amount: confirmation.total }}
-          className="mt-3 inline-block"
-        >
-          <Button size="sm">Pay {fmtTTD(confirmation.total)} securely</Button>
-        </Link>
-      </div>
-
-
-
-      {confirmation.calendarScheduled && (
-        <div className="mt-6 rounded-lg border border-accent/40 bg-accent/10 p-4 text-sm">
-          <p className="font-medium text-foreground">Added to our Google Calendar</p>
-          <p className="mt-1 text-muted-foreground">
-            Mobile reminders fire 24 hours, 1 hour and 15 minutes before your slot, and your phone
-            number is on the event so the technician can reach you.
-          </p>
-
-          {confirmation.calendarLink && (
-            <a
-              href={confirmation.calendarLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-2 inline-block text-foreground underline underline-offset-4"
-            >
-              View calendar event
-            </a>
-          )}
-        </div>
-      )}
-
-      <div className="mt-8 rounded-lg border border-border bg-secondary/50 p-4 text-sm text-muted-foreground">
-        Keep your reference number handy — we'll contact you at{" "}
-        <span className="text-foreground">{confirmation.email}</span> to confirm the appointment.
-        Need to reschedule? Call{" "}
-        <a href="tel:+18687631106" className="text-foreground underline underline-offset-4">
-          <Phone className="mr-1 inline h-3.5 w-3.5" />+1 868-763-1106
-        </a>
-        .
-      </div>
-
-
-      <div className="mt-6 flex flex-wrap gap-3">
-        <Button onClick={onReset} variant="outline">Book another</Button>
-        <Link to="/">
-          <Button>Back to home</Button>
-        </Link>
-      </div>
-    </div>
-  );
-}
-
-function Detail({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <div>
-      <dt className="flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground">
-        {icon} {label}
-      </dt>
-      <dd className="mt-1 text-sm font-medium">{value}</dd>
     </div>
   );
 }
