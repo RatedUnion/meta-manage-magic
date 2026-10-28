@@ -13,6 +13,24 @@ export type SpecRow = {
   notes: string;
 };
 
+export type ServicePerk = {
+  id: string;
+  name: string;
+  description: string;
+  valueTTD: number;
+};
+
+export type ServiceCombo = {
+  id: string;
+  name: string;
+  serviceSlug: string;
+  description: string;
+  basePriceTTD: number;
+  discountedPriceTTD: number;
+  perksIncluded: string[];
+  suggestedAddon?: string;
+};
+
 export type ServiceDetail = {
   slug: string;
   code: string;
@@ -33,7 +51,7 @@ export const SERVICES: ServiceDetail[] = [
     code: "MEC",
     title: "Mobile Mechanic",
     icon: "wrench",
-    tagline: "Repairs, OEM parts, diagnostics — at your location.",
+    tagline: "Repairs, OEM parts, diagnostics & on-site recovery — at your location.",
     desc: "Repairs, OEM parts installation, diagnostics and maintenance — we come to you.",
     image: mechanicImg,
     intro:
@@ -52,11 +70,11 @@ export const SERVICES: ServiceDetail[] = [
       "Photos of any leak, warning light or damaged component",
     ],
     specs: [
-      { item: "OBD-II diagnostic scan", scope: "Fault code read, clear and live data", turnaround: "45 min", rate: "From TTD 250", notes: "Credited against repair" },
-      { item: "Brake service", scope: "Pads, rotors, fluid bleed", turnaround: "2-3 hrs", rate: "Quote on inspection", notes: "OEM or OE-equivalent" },
-      { item: "Battery & charging", scope: "Load test, alternator output, replace", turnaround: "60 min", rate: "From TTD 300", notes: "Old battery removed" },
-      { item: "Oil & filter service", scope: "Engine oil, filter, fluid top-up", turnaround: "60 min", rate: "From TTD 400", notes: "Grade per manufacturer" },
-      { item: "Suspension inspection", scope: "Bushings, shocks, alignment check", turnaround: "90 min", rate: "From TTD 350", notes: "Report included" },
+      { item: "OBD-II diagnostic scan", scope: "Fault code read, clear and live data", turnaround: "45 min", rate: "From TTD 400", notes: "Credited against repair" },
+      { item: "Brake service", scope: "Pads, rotors, fluid bleed", turnaround: "2-3 hrs", rate: "From TTD 450", notes: "OEM or OE-equivalent" },
+      { item: "Battery & charging", scope: "Load test, alternator output, replace", turnaround: "60 min", rate: "From TTD 450", notes: "Old battery removed" },
+      { item: "Oil & filter service", scope: "Engine oil, filter, fluid top-up", turnaround: "60 min", rate: "From TTD 550", notes: "Grade per manufacturer" },
+      { item: "Suspension inspection", scope: "Bushings, shocks, alignment check", turnaround: "90 min", rate: "From TTD 500", notes: "Report included" },
       { item: "OEM parts sourcing", scope: "Part number match & supply", turnaround: "1-7 days", rate: "Cost + handling", notes: "Lead time confirmed at quote" },
     ],
   },
@@ -84,20 +102,20 @@ export const SERVICES: ServiceDetail[] = [
       "Confirmation of supply: 115V / 230V, single or three phase",
     ],
     specs: [
-      { item: "Fault finding", scope: "Trace and isolate circuit fault", turnaround: "1-2 hrs", rate: "From TTD 400", notes: "Report included" },
-      { item: "Outlet / switch install", scope: "New point, cable run, test", turnaround: "1-2 hrs", rate: "From TTD 300", notes: "Per point" },
+      { item: "Fault finding", scope: "Trace and isolate circuit fault", turnaround: "1-2 hrs", rate: "From TTD 550", notes: "Report included" },
+      { item: "Outlet / switch install", scope: "New point, cable run, test", turnaround: "1-2 hrs", rate: "From TTD 450", notes: "Per point" },
       { item: "Panel upgrade", scope: "Breakers, busbar, labelling", turnaround: "1 day", rate: "Quote on survey", notes: "Survey required" },
-      { item: "Lighting installation", scope: "Fixtures, dimmers, exterior", turnaround: "2-4 hrs", rate: "From TTD 350", notes: "Fixtures client-supplied" },
-      { item: "Automotive electrical", scope: "Wiring, alternators, accessories", turnaround: "2-5 hrs", rate: "From TTD 450", notes: "Fused and loomed" },
-      { item: "Safety inspection", scope: "Bonding, earthing, RCD test", turnaround: "2 hrs", rate: "From TTD 500", notes: "Written results" },
+      { item: "Lighting installation", scope: "Fixtures, dimmers, exterior", turnaround: "2-4 hrs", rate: "From TTD 500", notes: "Fixtures client-supplied" },
+      { item: "Automotive electrical", scope: "Wiring, alternators, accessories", turnaround: "2-5 hrs", rate: "From TTD 600", notes: "Fused and loomed" },
+      { item: "Safety inspection", scope: "Bonding, earthing, RCD test", turnaround: "2 hrs", rate: "From TTD 650", notes: "Written results" },
     ],
   },
   {
     slug: "online-booking",
     code: "BKG",
-    title: "Online Booking",
+    title: "Online Booking Consultation",
     icon: "calendar",
-    tagline: "Reserve a slot in under two minutes.",
+    tagline: "Reserve a slot and scope your project in under two minutes.",
     desc: "Reserve your slot from anywhere, any time — confirmed in minutes.",
     image: bookingImg,
     intro:
@@ -147,42 +165,42 @@ export const SERVICES: ServiceDetail[] = [
       "For teams: headcount and time zone",
     ],
     specs: [
-      { item: "Single live class", scope: "One 90-minute session", turnaround: "Scheduled", rate: "From TTD 200", notes: "Recording included" },
-      { item: "Four-week track", scope: "Four live sessions + notes", turnaround: "4 weeks", rate: "From TTD 700", notes: "Small group" },
-      { item: "Private tuition", scope: "One-to-one, tailored", turnaround: "By arrangement", rate: "From TTD 400/hr", notes: "Flexible hours" },
+      { item: "Single live class", scope: "One 90-minute session", turnaround: "Scheduled", rate: "From TTD 350", notes: "Recording included" },
+      { item: "Four-week track", scope: "Four live sessions + notes", turnaround: "4 weeks", rate: "From TTD 850", notes: "Small group" },
+      { item: "Private tuition", scope: "One-to-one, tailored", turnaround: "By arrangement", rate: "From TTD 550/hr", notes: "Flexible hours" },
       { item: "Team workshop", scope: "Up to 12 participants", turnaround: "Half or full day", rate: "Quoted", notes: "Certificates issued" },
-      { item: "On-demand library", scope: "Recorded modules", turnaround: "Instant access", rate: "From TTD 150", notes: "12-month access" },
+      { item: "On-demand library", scope: "Recorded modules", turnaround: "Instant access", rate: "From TTD 300", notes: "12-month access" },
     ],
   },
   {
     slug: "delivery",
     code: "DEL",
-    title: "Delivery",
+    title: "Transport & Towing",
     icon: "truck",
-    tagline: "Tracked delivery across the twin islands.",
-    desc: "Reliable, tracked delivery across the twin islands.",
+    tagline: "Dedicated equipment transport, flatbed towing & parcel logistics.",
+    desc: "Sold separately: vehicle towing, plant & equipment transport, and tracked twin-island deliveries.",
     image: deliveryImg,
     intro:
-      "Parts, documents and parcels moved with a tracked reference from pickup to signature. Same-day options across the north-west corridor.",
+      "Dedicated transport and towing sold separately from repair services. Whether you require flatbed towing for a breakdown, parts haulage from suppliers, or scheduled cargo moves across Trinidad & Tobago, our logistics fleet operates with strict chain-of-custody logging.",
     structure: [
-      { heading: "1. Book the run", body: "Pickup and drop-off addresses, contact names, and the window that suits you." },
-      { heading: "2. Collection", body: "Item checked, photographed and labelled with its reference and barcode." },
-      { heading: "3. In transit", body: "Status updates by message at collection, en route and on arrival." },
-      { heading: "4. Delivery", body: "Handed to the named recipient with a signature and photo confirmation." },
-      { heading: "5. Proof", body: "Delivery record retained and sent to you against the same reference." },
+      { heading: "1. Dispatch request", body: "Pickup and destination points, vehicle or cargo specs, and urgency level." },
+      { heading: "2. Fleet assignment", body: "Flatbed wrecker, cargo van, or dispatch runner allocated with equipment suited to the load." },
+      { heading: "3. Rigging & load check", body: "Condition recorded with high-res photos and safe winching or tie-down before moving." },
+      { heading: "4. Live tracking", body: "Continuous status alerts from pickup through arrival." },
+      { heading: "5. Destination handover", body: "Signature confirmation, offload inspection, and reference documentation provided." },
     ],
     requirements: [
-      "Pickup and delivery address with contact numbers",
-      "Parcel dimensions and approximate weight",
-      "Declared value for anything fragile or high value",
-      "Preferred collection window",
+      "Exact pickup and delivery/drop-off coordinates",
+      "Vehicle make/model or cargo dimensions and tonnage",
+      "Operational status (e.g. rolling, steering, locked wheels)",
+      "Contact names and active numbers at both ends",
     ],
     specs: [
-      { item: "Standard parcel", scope: "Up to 10 kg, within POS", turnaround: "Same day", rate: "From TTD 60", notes: "Tracked" },
-      { item: "Islandwide", scope: "Up to 10 kg, T&T", turnaround: "1-2 days", rate: "From TTD 120", notes: "Zone dependent" },
-      { item: "Express run", scope: "Direct, no consolidation", turnaround: "Under 3 hrs", rate: "From TTD 200", notes: "Subject to traffic" },
-      { item: "Parts collection", scope: "Supplier pickup on your behalf", turnaround: "Same day", rate: "From TTD 100", notes: "Invoice matched" },
-      { item: "Documents", scope: "Sealed envelope, signature", turnaround: "Same day", rate: "From TTD 50", notes: "Chain of custody logged" },
+      { item: "Flatbed wrecker towing (local)", scope: "Within Port of Spain & environs", turnaround: "Under 90 min", rate: "From TTD 450", notes: "Winching included" },
+      { item: "Long-distance vehicle transport", scope: "Cross-island (POS to San Fernando / Mayaro)", turnaround: "Scheduled", rate: "From TTD 750", notes: "Secured wheel straps" },
+      { item: "Heavy equipment & machinery transport", scope: "Skid steers, generators, tillers", turnaround: "Same/next day", rate: "From TTD 900", notes: "Ramped flatbed" },
+      { item: "Express parts haulage", scope: "Direct supplier-to-site courier", turnaround: "Under 2 hrs", rate: "From TTD 300", notes: "Invoice matching" },
+      { item: "Standard parcel courier", scope: "Up to 10 kg doorstep delivery", turnaround: "Same day", rate: "From TTD 210", notes: "Barcode tracking" },
     ],
   },
   {
@@ -210,13 +228,100 @@ export const SERVICES: ServiceDetail[] = [
       "Access details, watering or sunlight constraints, and preferred schedule",
     ],
     specs: [
-      { item: "Lawn cutting & edging", scope: "Grass trimming, borders and finishing", turnaround: "2-4 hrs", rate: "From TTD 250", notes: "Per visit" },
-      { item: "Plant pruning & shaping", scope: "Shrubs, hedges, stems and foliage", turnaround: "1-3 hrs", rate: "From TTD 200", notes: "Seasonal plans available" },
-      { item: "Plant arrangement & decor setup", scope: "Planters, floral styling, placement", turnaround: "2-6 hrs", rate: "From TTD 300", notes: "Event or permanent styling" },
+      { item: "Lawn cutting & edging", scope: "Grass trimming, borders and finishing", turnaround: "2-4 hrs", rate: "From TTD 400", notes: "Per visit" },
+      { item: "Plant pruning & shaping", scope: "Shrubs, hedges, stems and foliage", turnaround: "1-3 hrs", rate: "From TTD 350", notes: "Seasonal plans available" },
+      { item: "Plant arrangement & decor setup", scope: "Planters, floral styling, placement", turnaround: "2-6 hrs", rate: "From TTD 450", notes: "Event or permanent styling" },
       { item: "Plant rental & seasonal display", scope: "Decor plants, feature pots, temporary styling", turnaround: "1-3 days", rate: "Quoted", notes: "Rental and setup included" },
-      { item: "Garden maintenance", scope: "Weeding, trimming, cleaning and upkeep", turnaround: "2-4 hrs", rate: "From TTD 250", notes: "Monthly plans available" },
-      { item: "Waste removal & cleanup", scope: "Debris, green waste and tidy-up", turnaround: "Same day", rate: "From TTD 180", notes: "Disposal included" },
+      { item: "Garden maintenance", scope: "Weeding, trimming, cleaning and upkeep", turnaround: "2-4 hrs", rate: "From TTD 400", notes: "Monthly plans available" },
+      { item: "Waste removal & cleanup", scope: "Debris, green waste and tidy-up", turnaround: "Same day", rate: "From TTD 330", notes: "Disposal included" },
     ],
+  },
+];
+
+/** Suggestive selling combo bundles with bundled perks */
+export const SERVICE_COMBOS: ServiceCombo[] = [
+  {
+    id: "combo-mechanic-towing",
+    name: "Roadside Rescue & Diagnostic Combo",
+    serviceSlug: "mobile-mechanic",
+    description: "Full OBD-II diagnostic scan + flatbed transport/towing to your garage or our workshop.",
+    basePriceTTD: 850,
+    discountedPriceTTD: 720,
+    perksIncluded: [
+      "Complimentary battery load & alternator test",
+      "Priority same-day dispatch window",
+      "Written digital fault report",
+    ],
+    suggestedAddon: "Brake service or battery replacement",
+  },
+  {
+    id: "combo-electrical-surge",
+    name: "Complete Home Surge & Circuit Safety Bundle",
+    serviceSlug: "electrician",
+    description: "Whole-home panel safety inspection + surge arrestor installation and earthing audit.",
+    basePriceTTD: 1100,
+    discountedPriceTTD: 950,
+    perksIncluded: [
+      "Free thermal scan of main panel breakers",
+      "Complimentary testing of all bathroom/kitchen GFCI outlets",
+      "Official certificate of electrical compliance",
+    ],
+    suggestedAddon: "Generator transfer switch prep",
+  },
+  {
+    id: "combo-garden-curb-appeal",
+    name: "Total Grounds Restoration & Green Waste Haul",
+    serviceSlug: "reservations",
+    description: "Lawn cutting, precision edge trimming, hedge pruning, plus complete debris removal.",
+    basePriceTTD: 1080,
+    discountedPriceTTD: 890,
+    perksIncluded: [
+      "Complimentary organic weed barrier treatment",
+      "Zero green-waste disposal fees",
+      "Free follow-up inspection within 30 days",
+    ],
+    suggestedAddon: "Decorative planter installation",
+  },
+  {
+    id: "combo-fleet-transport",
+    name: "Fleet Transport & Multi-Vehicle Inspection Pack",
+    serviceSlug: "delivery",
+    description: "Dedicated flatbed towing run + multi-point roadworthiness check for commercial clients.",
+    basePriceTTD: 1450,
+    discountedPriceTTD: 1250,
+    perksIncluded: [
+      "Dedicated two-technician crew",
+      "Direct supplier parts pickup voucher included",
+      "Priority 24/7 emergency dispatch line",
+    ],
+  },
+];
+
+/** Selectable individual perks & privileges for customers */
+export const OPTIONAL_PERKS: ServicePerk[] = [
+  {
+    id: "perk-priority-dispatch",
+    name: "Priority Dispatch Privilege",
+    description: "Guarantees technician arrival within an expedited 90-minute arrival window.",
+    valueTTD: 150,
+  },
+  {
+    id: "perk-extended-warranty",
+    name: "90-Day Extended Labor Warranty",
+    description: "Triples our standard 30-day labor guarantee on installations and electrical/mechanic repairs.",
+    valueTTD: 180,
+  },
+  {
+    id: "perk-digital-logbook",
+    name: "Archived Inspection Certificate & Video Log",
+    description: "High-definition recorded video walk-through of the repair/site with cloud storage access.",
+    valueTTD: 120,
+  },
+  {
+    id: "perk-green-waste-waiver",
+    name: "Unlimited Debris & Heavy Waste Haulage",
+    description: "Full disposal and tipping fee coverage for heavy garden clippings or discarded parts.",
+    valueTTD: 140,
   },
 ];
 
@@ -224,7 +329,6 @@ export function getService(slug: string) {
   return SERVICES.find((s) => s.slug === slug);
 }
 
-/** Deterministic, SSR-safe reference number for a service pane. */
 export function serviceReference(code: string) {
   let hash = 7;
   for (const ch of code) hash = (hash * 31 + ch.charCodeAt(0)) % 9973;
@@ -234,19 +338,19 @@ export function serviceReference(code: string) {
 export const FACEBOOK_URL = "https://facebook.com/org.tt";
 export const DISCORD_URL = "https://discord.gg/nCh28K3";
 
-/** Site-wide pricing tiers — every job is valued by volume or agenda. */
+/** Site-wide pricing tiers — updated with $150 base price increase */
 export const PRICING_TIERS = [
   {
     label: "Domestic",
-    headline: "From TTD 250",
-    body: "Homes and small jobs — valued by the volume of work on your agenda, starting from TTD 250.",
+    headline: "From TTD 400",
+    body: "Homes and private residences — valued by the volume of work on your agenda, with base tasks starting from TTD 400.",
   },
   {
     label: "Commercial",
     headline: "Minimum TTD 1,200",
-    body: "All commercial areas start at a minimum of TTD 1,200, which includes 1 — no more than 2 — people for the task.",
+    body: "All commercial locations start at a minimum of TTD 1,200, which includes 1 — no more than 2 — people for the task.",
   },
 ] as const;
 
 export const PRICING_NOTE =
-  "All services are valued by the volume or agenda — domestic, commercial or otherwise.";
+  "All services are valued by the volume or agenda. Negotiations are welcomed for tailored budgets or fewer perks.";
