@@ -426,9 +426,7 @@ function BookPage() {
               <div className="pt-4 flex flex-col sm:flex-row gap-3">
                 <Button className="w-full" asChild>
                   <Link to="/pay" search={{ ref: confirmation.ref, amount: confirmation.total }}>
-  Proceed to Payment / Approve Handshake
-</Link>
-                  Proceed to Payment / Approve Handshake
+                    Proceed to Payment / Approve Handshake
                   </Link>
                 </Button>
                 <Button variant="outline" className="w-full" onClick={() => setConfirmation(null)}>
