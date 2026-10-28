@@ -48,7 +48,7 @@ function CampaignsPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Button variant="outline" size="sm" asChild>
-              <Link to="/_authenticated/bookings">
+             <Link to="/bookings">← Back to Bookings</Link>
                 <ArrowLeft className="h-4 w-4 mr-1" />
                 Dashboard
               </Link>
