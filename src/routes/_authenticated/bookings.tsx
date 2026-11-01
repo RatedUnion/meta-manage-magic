@@ -510,13 +510,20 @@ function BookingsPage() {
                 {(b.payment_status === "unpaid" || b.payment_status === "refunded") && (
                   <Button size="sm" variant="secondary" onClick={() => onPayment(b.id, "paid")}>
                     Mark paid
-                  </Button>
-                )}
-              </div>
-            </article>
-          ))}
-        </div>
-      </div>
-    </main>
-  );
-}
+               <Button
+  size="sm"
+  variant="outline"
+  onClick={async () => {
+    try {
+      await executeCustomAction({
+        data: { bookingId: b.id, notes: "Audited by staff" },
+      });
+      toast.success("Task audited");
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Audit action failed");
+    }
+  }}
+>
+  Audit Task
+</Button>
