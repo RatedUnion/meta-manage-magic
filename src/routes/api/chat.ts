@@ -46,6 +46,16 @@ export const Route = createFileRoute("/api/chat")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        // Require a signed-in user before invoking the paid AI service.
+        const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+        const sbUrl = process.env["SUPABASE_URL"];
+        const sbKey = process.env["SUPABASE_PUBLISHABLE_KEY"];
+        if (!token || !sbUrl || !sbKey) return new Response("Sign in required", { status: 401 });
+        const { createClient } = await import("@supabase/supabase-js");
+        const sb = createClient(sbUrl, sbKey, { auth: { persistSession: false, autoRefreshToken: false } });
+        const { data: claims, error: authError } = await sb.auth.getClaims(token);
+        if (authError || !claims?.claims?.sub) return new Response("Sign in required", { status: 401 });
+
         const body = (await request.json()) as ChatRequestBody;
         if (!Array.isArray(body.messages)) {
           return new Response("Messages are required", { status: 400 });
