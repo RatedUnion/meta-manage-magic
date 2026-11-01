@@ -1,22 +1,3 @@
-// Replace the message conversion block in src/routes/api/chat.ts:
-const incomingMessages = (body.messages as UIMessage[]) || [];
-
-// 1. Enforce that clients cannot inject 'system', 'developer', or tool roles
-const sanitizedMessages = incomingMessages
-  .filter((m) => m.role === "user" || m.role === "assistant")
-  .slice(-10) // Limit conversation memory window to curb token abuse
-  .map((m) => ({
-    role: m.role,
-    content: typeof m.content === "string" ? m.content.slice(0, 2000) : m.content,
-  }));
-
-const result = streamText({
-  model: openai.responses("openai/gpt-5.6-sol"),
-  system: SYSTEM_PROMPT,
-  messages: await convertToModelMessages(sanitizedMessages as UIMessage[]),
-  tools: { web_search: openai.tools.webSearch({}) },
-  abortSignal: request.signal,
-});
 import { createFileRoute } from "@tanstack/react-router";
 import { createOpenAI } from "@ai-sdk/openai";
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
@@ -90,7 +71,11 @@ export const Route = createFileRoute("/api/chat")({
         const result = streamText({
           model: openai.responses("openai/gpt-5.6-sol"),
           system: SYSTEM_PROMPT,
-          messages: await convertToModelMessages(body.messages as UIMessage[]),
+          messages: await convertToModelMessages(
+            (body.messages as UIMessage[])
+              .filter((m) => m.role === "user" || m.role === "assistant")
+              .slice(-10),
+          ),
           tools: { web_search: openai.tools.webSearch({}) },
           abortSignal: request.signal,
           providerOptions: {
