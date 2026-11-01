@@ -165,6 +165,7 @@ function BookingsPage() {
   const setPayment = useServerFn(updatePaymentStatus);
   const fetchPhotoUrls = useServerFn(getBookingPhotoUrls);
   const executeCustomAction = useServerFn(runCustomDashboardAction);
+  const executeCustomAction = useServerFn(runCustomDashboardAction);
   const [payFilter, setPayFilter] = useState<(typeof PAY_FILTERS)[number]>("all");
   const [showAllImageModal, setShowAllImageModal] = useState(false);
   const [allImageUrls, setAllImageUrls] = useState<string[]>([]);
@@ -508,9 +509,7 @@ function BookingsPage() {
                   </>
                 )}
                 {(b.payment_status === "unpaid" || b.payment_status === "refunded") && (
-                  <Button size="sm" variant="secondary" onClick={() => onPayment(b.id, "paid")}>
-                    Mark paid
-               <Button
+<Button
   size="sm"
   variant="outline"
   onClick={async () => {
