@@ -11,7 +11,14 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { listBookings, updateBookingStatus, updatePaymentStatus, getBookingPhotoUrls, runCustomDashboardAction } from "@/lib/bookings.functions";
+import {
+  listBookings,
+  updateBookingStatus,
+  updatePaymentStatus,
+  getBookingPhotoUrls,
+  runCustomDashboardAction,
+} from "@/lib/bookings.functions";
+
 export const Route = createFileRoute("/_authenticated/bookings")({
   component: BookingsPage,
   errorComponent: ({ error }: ErrorComponentProps) => (
@@ -123,9 +130,7 @@ function BookingPhotos({ paths }: { paths: string[] }) {
       </Button>
       {loading && <p className="mt-2 text-xs text-muted-foreground">Loading…</p>}
 
-      {showModal && urls.length > 0 && (
-        <PhotoModal urls={urls} onClose={() => setShowModal(false)} />
-      )}
+      {showModal && urls.length > 0 && <PhotoModal urls={urls} onClose={() => setShowModal(false)} />}
     </>
   );
 }
@@ -157,7 +162,6 @@ function money(amount: number | null, currency: string | null) {
 }
 
 function BookingsPage() {
-function BookingsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const fetchBookings = useServerFn(listBookings);
@@ -165,7 +169,8 @@ function BookingsPage() {
   const setPayment = useServerFn(updatePaymentStatus);
   const fetchPhotoUrls = useServerFn(getBookingPhotoUrls);
   const executeCustomAction = useServerFn(runCustomDashboardAction);
-  const executeCustomAction = useServerFn(runCustomDashboardAction);
+
+  const [q, setQ] = useState("");
   const [payFilter, setPayFilter] = useState<(typeof PAY_FILTERS)[number]>("all");
   const [showAllImageModal, setShowAllImageModal] = useState(false);
   const [allImageUrls, setAllImageUrls] = useState<string[]>([]);
@@ -187,8 +192,9 @@ function BookingsPage() {
     const list = data ?? [];
     const approvedByCurrency = new Map<string, number>();
     let awaiting = 0;
-    let awaitingAmount = new Map<string, number>();
+    const awaitingAmount = new Map<string, number>();
     let declined = 0;
+
     for (const b of list) {
       const cur = b.payment_currency ?? "TTD";
       const amt = Number(b.payment_amount ?? 0);
@@ -201,10 +207,10 @@ function BookingsPage() {
         declined += 1;
       }
     }
+
     const fmt = (m: Map<string, number>) =>
-      m.size === 0
-        ? "0"
-        : [...m.entries()].map(([c, a]) => `${a.toFixed(2)} ${c}`).join(" · ");
+      m.size === 0 ? "0" : [...m.entries()].map(([c, a]) => `${a.toFixed(2)} ${c}`).join(" · ");
+
     return {
       approved: fmt(approvedByCurrency),
       approvedCount: counts.paid,
@@ -221,8 +227,10 @@ function BookingsPage() {
     if (payFilter === "unpaid") {
       list = list.filter((b) => b.payment_status !== "paid" && b.payment_status !== "pending_review");
     }
+
     const needle = q.trim().toLowerCase();
     if (!needle) return list;
+
     return list.filter((b) =>
       [b.reference, b.name, b.email, b.phone, b.service, b.status, b.payment_status, b.payment_reference ?? ""]
         .join(" ")
@@ -246,10 +254,7 @@ function BookingsPage() {
     }
   };
 
-  const onPayment = async (
-    id: string,
-    payment_status: "unpaid" | "pending_review" | "paid" | "refunded",
-  ) => {
+  const onPayment = async (id: string, payment_status: "unpaid" | "pending_review" | "paid" | "refunded") => {
     try {
       await setPayment({ data: { id, payment_status } });
       toast.success(`Marked ${payment_status}`);
@@ -268,7 +273,6 @@ function BookingsPage() {
     setLoadingAllImages(true);
     try {
       const urls: string[] = [];
-      // Fetch in chunks of 20 to stay within API limits
       for (let i = 0; i < allPhotoPaths.length; i += 20) {
         const chunk = allPhotoPaths.slice(i, i + 20);
         const response = await fetchPhotoUrls({ data: { paths: chunk } });
@@ -361,9 +365,7 @@ function BookingsPage() {
               onClick={() => setPayFilter(f)}
               className={cn(
                 "rounded-full border px-4 py-1.5 text-sm capitalize transition-colors",
-                payFilter === f
-                  ? "border-primary bg-primary/10 text-foreground"
-                  : "border-border text-muted-foreground hover:border-primary/50",
+                payFilter === f ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground hover:border-primary/50",
               )}
             >
               {f === "all" ? "All" : f} ({counts[f]})
@@ -383,7 +385,9 @@ function BookingsPage() {
             <p className="text-xs font-medium uppercase tracking-wide text-amber-700">Awaiting your approval</p>
             <p className="mt-1 text-xl font-semibold text-amber-700">{paymentSummary.awaiting}</p>
             <p className="mt-1 text-xs text-amber-700/80">
-              {paymentSummary.awaiting > 0 ? `${paymentSummary.awaitingTotal} to verify in First Citizens Acc. 003108954` : "No payments waiting"}
+              {paymentSummary.awaiting > 0
+                ? `${paymentSummary.awaitingTotal} to verify in First Citizens Acc. 003108954`
+                : "No payments waiting"}
             </p>
           </div>
           <div className="rounded-xl border border-border bg-muted/50 p-4">
@@ -427,9 +431,7 @@ function BookingsPage() {
                     {b.photo_count > 0 && ` · ${b.photo_count} photo${b.photo_count === 1 ? "" : "s"}`}
                   </p>
 
-                  {Array.isArray(b.photo_paths) && b.photo_paths.length > 0 && (
-                    <BookingPhotos paths={b.photo_paths} />
-                  )}
+                  {Array.isArray(b.photo_paths) && b.photo_paths.length > 0 && <BookingPhotos paths={b.photo_paths} />}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Received {format(new Date(b.created_at), "d MMM yyyy, HH:mm")}
@@ -462,9 +464,7 @@ function BookingsPage() {
                 <div
                   className={cn(
                     "mt-3 rounded-lg px-3 py-2 text-sm",
-                    b.payment_status === "paid"
-                      ? "bg-emerald-500/10 text-emerald-700"
-                      : "bg-amber-500/10 text-amber-700",
+                    b.payment_status === "paid" ? "bg-emerald-500/10 text-emerald-700" : "bg-amber-500/10 text-amber-700",
                   )}
                 >
                   <p className="inline-flex flex-wrap items-center gap-2">
@@ -509,20 +509,30 @@ function BookingsPage() {
                   </>
                 )}
                 {(b.payment_status === "unpaid" || b.payment_status === "refunded") && (
-<Button
-  size="sm"
-  variant="outline"
-  onClick={async () => {
-    try {
-      await executeCustomAction({
-        data: { bookingId: b.id, notes: "Audited by staff" },
-      });
-      toast.success("Task audited");
-      queryClient.invalidateQueries({ queryKey: ["bookings"] });
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Audit action failed");
-    }
-  }}
->
-  Audit Task
-</Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={async () => {
+                      try {
+                        await executeCustomAction({
+                          data: { bookingId: b.id, notes: "Audited by staff" },
+                        });
+                        toast.success("Task audited");
+                        queryClient.invalidateQueries({ queryKey: ["bookings"] });
+                      } catch (e) {
+                        toast.error(e instanceof Error ? e.message : "Audit action failed");
+                      }
+                    }}
+                  >
+                    Audit Task
+                  </Button>
+                )}
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </main>
+  );
+}
+
