@@ -316,28 +316,35 @@ function BookPage() {
         .join("\n\n");
 
       await saveBooking({
-        reference: bookingRef,
-        service: currentServiceObj?.label || service,
-        customer_name: name,
-        customer_email: email,
-        customer_phone: phone,
-        booking_date: format(date, "yyyy-MM-dd"),
-        booking_time: time,
-        notes: notesPayload,
-        photo_paths: photoPaths,
+        data: {
+          reference: bookingRef,
+          service: currentServiceObj?.label || service,
+          name,
+          email,
+          phone,
+          booking_date: format(date, "yyyy-MM-dd"),
+          booking_time: time,
+          notes: notesPayload,
+          photo_count: photoPaths.length,
+          photo_paths: photoPaths,
+        },
       });
 
       try {
         await addBookingToCalendar({
-          reference: bookingRef,
-          service: currentServiceObj?.label || service,
-          customerName: name,
-          customerEmail: email,
-          customerPhone: phone,
-          date: format(date, "yyyy-MM-dd"),
-          time,
-          notes: notesPayload,
-          photoPaths,
+          data: {
+            ref: bookingRef,
+            service: currentServiceObj?.label || service,
+            name,
+            email,
+            phone,
+            date: format(date, "yyyy-MM-dd"),
+            time,
+            durationMinutes: 60,
+            notes: notesPayload,
+            photos: photoPaths.length,
+            photoPaths,
+          },
         });
       } catch (calErr) {
         console.warn("Calendar sync failed:", calErr);
