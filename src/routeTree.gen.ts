@@ -14,9 +14,14 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BookRouteImport } from './routes/book'
 import { Route as FeedbackRouteImport } from './routes/feedback'
+import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as PayRouteImport } from './routes/pay'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as AuthenticatedAssistantsRouteImport } from './routes/_authenticated/assistants'
 import { Route as AuthenticatedBookingsRouteImport } from './routes/_authenticated/bookings'
+import { Route as AuthenticatedCampaignsRouteImport } from './routes/_authenticated/campaigns'
+import { Route as AuthenticatedMonitoringRouteImport } from './routes/_authenticated/monitoring'
+import { Route as AuthenticatedRosterRouteImport } from './routes/_authenticated/roster'
 import { Route as AuthenticatedStaffFeedbackRouteImport } from './routes/_authenticated/staff-feedback'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ServicesIndexRouteImport } from './routes/services.index'
@@ -46,6 +51,11 @@ const FeedbackRoute = FeedbackRouteImport.update({
   path: '/feedback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MarketplaceRoute = MarketplaceRouteImport.update({
+  id: '/marketplace',
+  path: '/marketplace',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PayRoute = PayRouteImport.update({
   id: '/pay',
   path: '/pay',
@@ -56,9 +66,29 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAssistantsRoute = AuthenticatedAssistantsRouteImport.update({
+  id: '/assistants',
+  path: '/assistants',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedBookingsRoute = AuthenticatedBookingsRouteImport.update({
   id: '/bookings',
   path: '/bookings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCampaignsRoute = AuthenticatedCampaignsRouteImport.update({
+  id: '/campaigns',
+  path: '/campaigns',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMonitoringRoute = AuthenticatedMonitoringRouteImport.update({
+  id: '/monitoring',
+  path: '/monitoring',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRosterRoute = AuthenticatedRosterRouteImport.update({
+  id: '/roster',
+  path: '/roster',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedStaffFeedbackRoute =
@@ -88,9 +118,14 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/book': typeof BookRoute
   '/feedback': typeof FeedbackRoute
+  '/marketplace': typeof MarketplaceRoute
   '/pay': typeof PayRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/assistants': typeof AuthenticatedAssistantsRoute
   '/bookings': typeof AuthenticatedBookingsRoute
+  '/campaigns': typeof AuthenticatedCampaignsRoute
+  '/monitoring': typeof AuthenticatedMonitoringRoute
+  '/roster': typeof AuthenticatedRosterRoute
   '/staff-feedback': typeof AuthenticatedStaffFeedbackRoute
   '/api/chat': typeof ApiChatRoute
   '/services/$slug': typeof ServicesSlugRoute
@@ -101,9 +136,14 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/book': typeof BookRoute
   '/feedback': typeof FeedbackRoute
+  '/marketplace': typeof MarketplaceRoute
   '/pay': typeof PayRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/assistants': typeof AuthenticatedAssistantsRoute
   '/bookings': typeof AuthenticatedBookingsRoute
+  '/campaigns': typeof AuthenticatedCampaignsRoute
+  '/monitoring': typeof AuthenticatedMonitoringRoute
+  '/roster': typeof AuthenticatedRosterRoute
   '/staff-feedback': typeof AuthenticatedStaffFeedbackRoute
   '/api/chat': typeof ApiChatRoute
   '/services/$slug': typeof ServicesSlugRoute
@@ -116,9 +156,14 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/book': typeof BookRoute
   '/feedback': typeof FeedbackRoute
+  '/marketplace': typeof MarketplaceRoute
   '/pay': typeof PayRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/_authenticated/assistants': typeof AuthenticatedAssistantsRoute
   '/_authenticated/bookings': typeof AuthenticatedBookingsRoute
+  '/_authenticated/campaigns': typeof AuthenticatedCampaignsRoute
+  '/_authenticated/monitoring': typeof AuthenticatedMonitoringRoute
+  '/_authenticated/roster': typeof AuthenticatedRosterRoute
   '/_authenticated/staff-feedback': typeof AuthenticatedStaffFeedbackRoute
   '/api/chat': typeof ApiChatRoute
   '/services/$slug': typeof ServicesSlugRoute
@@ -131,9 +176,14 @@ export interface FileRouteTypes {
     | '/auth'
     | '/book'
     | '/feedback'
+    | '/marketplace'
     | '/pay'
     | '/sitemap.xml'
+    | '/assistants'
     | '/bookings'
+    | '/campaigns'
+    | '/monitoring'
+    | '/roster'
     | '/staff-feedback'
     | '/api/chat'
     | '/services/$slug'
@@ -144,9 +194,14 @@ export interface FileRouteTypes {
     | '/auth'
     | '/book'
     | '/feedback'
+    | '/marketplace'
     | '/pay'
     | '/sitemap.xml'
+    | '/assistants'
     | '/bookings'
+    | '/campaigns'
+    | '/monitoring'
+    | '/roster'
     | '/staff-feedback'
     | '/api/chat'
     | '/services/$slug'
@@ -158,9 +213,14 @@ export interface FileRouteTypes {
     | '/auth'
     | '/book'
     | '/feedback'
+    | '/marketplace'
     | '/pay'
     | '/sitemap.xml'
+    | '/_authenticated/assistants'
     | '/_authenticated/bookings'
+    | '/_authenticated/campaigns'
+    | '/_authenticated/monitoring'
+    | '/_authenticated/roster'
     | '/_authenticated/staff-feedback'
     | '/api/chat'
     | '/services/$slug'
@@ -173,6 +233,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   BookRoute: typeof BookRoute
   FeedbackRoute: typeof FeedbackRoute
+  MarketplaceRoute: typeof MarketplaceRoute
   PayRoute: typeof PayRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiChatRoute: typeof ApiChatRoute
@@ -217,6 +278,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FeedbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/marketplace': {
+      id: '/marketplace'
+      path: '/marketplace'
+      fullPath: '/marketplace'
+      preLoaderRoute: typeof MarketplaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pay': {
       id: '/pay'
       path: '/pay'
@@ -231,11 +299,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/assistants': {
+      id: '/_authenticated/assistants'
+      path: '/assistants'
+      fullPath: '/assistants'
+      preLoaderRoute: typeof AuthenticatedAssistantsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/bookings': {
       id: '/_authenticated/bookings'
       path: '/bookings'
       fullPath: '/bookings'
       preLoaderRoute: typeof AuthenticatedBookingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/campaigns': {
+      id: '/_authenticated/campaigns'
+      path: '/campaigns'
+      fullPath: '/campaigns'
+      preLoaderRoute: typeof AuthenticatedCampaignsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/monitoring': {
+      id: '/_authenticated/monitoring'
+      path: '/monitoring'
+      fullPath: '/monitoring'
+      preLoaderRoute: typeof AuthenticatedMonitoringRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/roster': {
+      id: '/_authenticated/roster'
+      path: '/roster'
+      fullPath: '/roster'
+      preLoaderRoute: typeof AuthenticatedRosterRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/staff-feedback': {
@@ -270,12 +366,20 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAssistantsRoute: typeof AuthenticatedAssistantsRoute
   AuthenticatedBookingsRoute: typeof AuthenticatedBookingsRoute
+  AuthenticatedCampaignsRoute: typeof AuthenticatedCampaignsRoute
+  AuthenticatedMonitoringRoute: typeof AuthenticatedMonitoringRoute
+  AuthenticatedRosterRoute: typeof AuthenticatedRosterRoute
   AuthenticatedStaffFeedbackRoute: typeof AuthenticatedStaffFeedbackRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAssistantsRoute: AuthenticatedAssistantsRoute,
   AuthenticatedBookingsRoute: AuthenticatedBookingsRoute,
+  AuthenticatedCampaignsRoute: AuthenticatedCampaignsRoute,
+  AuthenticatedMonitoringRoute: AuthenticatedMonitoringRoute,
+  AuthenticatedRosterRoute: AuthenticatedRosterRoute,
   AuthenticatedStaffFeedbackRoute: AuthenticatedStaffFeedbackRoute,
 }
 
@@ -288,6 +392,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   BookRoute: BookRoute,
   FeedbackRoute: FeedbackRoute,
+  MarketplaceRoute: MarketplaceRoute,
   PayRoute: PayRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiChatRoute: ApiChatRoute,

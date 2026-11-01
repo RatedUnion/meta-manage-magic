@@ -1,3 +1,16 @@
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+
+export type MonitorCheckResult = {
+  url: string;
+  statusCode: number;
+  responseTimeMs: number;
+  sslValid: boolean;
+  dnsResolved: boolean;
+  checkedAt: string;
+};
+
 function isSafePublicUrl(targetUrl: string): boolean {
   try {
     const parsed = new URL(targetUrl);
@@ -23,7 +36,30 @@ function isSafePublicUrl(targetUrl: string): boolean {
   }
 }
 
-// In runSiteDiagnostics handler:
-if (!isSafePublicUrl(data.url)) {
-  throw new Error("Invalid destination: Private, local, and metadata endpoints are prohibited.");
-}
+
+export const runSiteDiagnostics = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ url: z.string().url().max(500) }).parse(input))
+  .handler(async ({ data }): Promise<MonitorCheckResult> => {
+    if (!isSafePublicUrl(data.url)) {
+      throw new Error("Invalid destination: Private, local, and metadata endpoints are prohibited.");
+    }
+    const start = Date.now();
+    let statusCode = 0;
+    let dnsResolved = false;
+    try {
+      const res = await fetch(data.url, { method: "HEAD", redirect: "follow", signal: AbortSignal.timeout(10000) });
+      statusCode = res.status;
+      dnsResolved = true;
+    } catch {
+      statusCode = 0;
+    }
+    return {
+      url: data.url,
+      statusCode,
+      responseTimeMs: Date.now() - start,
+      sslValid: dnsResolved && data.url.startsWith("https://"),
+      dnsResolved,
+      checkedAt: new Date().toISOString(),
+    };
+  });
