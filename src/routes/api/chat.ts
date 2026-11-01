@@ -51,6 +51,29 @@ export const Route = createFileRoute("/api/chat")({
           return new Response("Messages are required", { status: 400 });
         }
 
+        // Only plain user/assistant text is accepted; any system/developer/tool
+        // messages or non-text parts from the browser are discarded.
+        const safeMessages: UIMessage[] = (body.messages as unknown[])
+          .filter((m): m is UIMessage => {
+            const r = (m as { role?: unknown })?.role;
+            return r === "user" || r === "assistant";
+          })
+          .slice(-10)
+          .map((m, i) => ({
+            id: typeof m.id === "string" ? m.id.slice(0, 64) : `m${i}`,
+            role: m.role,
+            parts: (Array.isArray(m.parts) ? m.parts : [])
+              .filter((p): p is { type: "text"; text: string } =>
+                (p as { type?: unknown }).type === "text" &&
+                typeof (p as { text?: unknown }).text === "string",
+              )
+              .map((p) => ({ type: "text" as const, text: p.text.slice(0, 2000) })),
+          }))
+          .filter((m) => m.parts.length > 0);
+        if (safeMessages.length === 0 || safeMessages[safeMessages.length - 1]?.role !== "user") {
+          return new Response("Invalid messages", { status: 400 });
+        }
+
         const apiKey = process.env["LOVABLE_API_KEY"];
         if (!apiKey) {
           return new Response("Missing LOVABLE_API_KEY", { status: 500 });
@@ -71,11 +94,7 @@ export const Route = createFileRoute("/api/chat")({
         const result = streamText({
           model: openai.responses("openai/gpt-5.6-sol"),
           system: SYSTEM_PROMPT,
-          messages: await convertToModelMessages(
-            (body.messages as UIMessage[])
-              .filter((m) => m.role === "user" || m.role === "assistant")
-              .slice(-10),
-          ),
+          messages: await convertToModelMessages(safeMessages),
           tools: { web_search: openai.tools.webSearch({}) },
           abortSignal: request.signal,
           providerOptions: {
@@ -90,7 +109,7 @@ export const Route = createFileRoute("/api/chat")({
         });
 
         const response = result.toUIMessageStreamResponse({
-          originalMessages: body.messages as UIMessage[],
+          originalMessages: safeMessages,
           sendReasoning: false,
           headers: getLovableAiGatewayResponseHeaders(undefined, {
             ...(initialRunId ? { "X-Lovable-AIG-Run-ID": initialRunId } : {}),

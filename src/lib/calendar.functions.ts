@@ -3,21 +3,14 @@ import { z } from "zod";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/google_calendar/calendar/v3";
 
+// Only the booking reference is accepted from the browser. Every other detail
+// (attendee email, notes, photos) is loaded from the saved booking row, and each
+// booking can trigger at most one invitation shortly after it was created.
 const bookingInput = z.object({
-  service: z.string().trim().min(1).max(100),
-  /** ISO date, e.g. 2026-08-20 */
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  /** 24h time, e.g. 14:30 */
-  time: z.string().regex(/^\d{2}:\d{2}$/),
-  durationMinutes: z.number().int().min(10).max(480).default(60),
-  name: z.string().trim().min(2).max(100),
-  email: z.string().trim().email().max(255),
-  phone: z.string().trim().min(7).max(30),
-  notes: z.string().trim().max(500).optional(),
-  photos: z.number().int().min(0).max(20).default(0),
-  photoPaths: z.array(z.string().max(300)).max(5).default([]),
-  ref: z.string().trim().min(3).max(32),
+  ref: z.string().trim().regex(/^DUA-[A-Z0-9]{5}$/),
 });
+const INVITE_WINDOW_MS = 15 * 60 * 1000;
+const DURATION_MINUTES = 60;
 
 export type CalendarResult = {
   scheduled: boolean;
@@ -34,23 +27,56 @@ export const addBookingToCalendar = createServerFn({ method: "POST" })
       return { scheduled: false, error: "Calendar is not connected." };
     }
 
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: booking } = await supabaseAdmin
+      .from("bookings")
+      .select("id, reference, service, booking_date, booking_time, name, email, phone, notes, photo_paths, calendar_event_url, created_at")
+      .eq("reference", data.ref)
+      .maybeSingle();
+    if (
+      !booking ||
+      booking.calendar_event_url ||
+      Date.now() - new Date(booking.created_at).getTime() > INVITE_WINDOW_MS
+    ) {
+      return { scheduled: false, error: "Booking not eligible for calendar sync." };
+    }
+    // Claim the booking first so the invitation can only be sent once.
+    const { data: claimed } = await supabaseAdmin
+      .from("bookings")
+      .update({ calendar_event_url: "pending" })
+      .eq("id", booking.id)
+      .is("calendar_event_url", null)
+      .select("id");
+    if (!claimed?.length) return { scheduled: false, error: "Already scheduled." };
+
+    const ev = {
+      ref: booking.reference,
+      service: booking.service,
+      date: booking.booking_date,
+      time: booking.booking_time.slice(0, 5),
+      name: booking.name,
+      email: booking.email,
+      phone: booking.phone,
+      notes: booking.notes ? booking.notes.slice(0, 500) : undefined,
+      photoPaths: booking.photo_paths ?? [],
+    };
+
     // Trinidad & Tobago has no DST — fixed UTC-04:00 offset.
-    const start = `${data.date}T${data.time}:00-04:00`;
-    const [h, m] = data.time.split(":").map(Number);
-    const endMinutes = (h ?? 0) * 60 + (m ?? 0) + data.durationMinutes;
+    const start = `${ev.date}T${ev.time}:00-04:00`;
+    const [h, m] = ev.time.split(":").map(Number);
+    const endMinutes = (h ?? 0) * 60 + (m ?? 0) + DURATION_MINUTES;
     const endTime = `${String(Math.floor(endMinutes / 60) % 24).padStart(2, "0")}:${String(
       endMinutes % 60,
     ).padStart(2, "0")}`;
-    const end = `${data.date}T${endTime}:00-04:00`;
+    const end = `${ev.date}T${endTime}:00-04:00`;
 
     // Signed photo links (30 days) — only for files inside this booking's own folder.
     const photoLinks: string[] = [];
-    const safe = data.photoPaths.filter((p) =>
-      new RegExp(`^${data.ref.replace(/[^A-Z0-9-]/gi, "")}/[0-9a-f-]{36}\\.[a-z0-9]{1,5}$`, "i").test(p),
+    const safe = ev.photoPaths.filter((p) =>
+      new RegExp(`^${ev.ref.replace(/[^A-Z0-9-]/gi, "")}/[0-9a-f-]{36}\\.[a-z0-9]{1,5}$`, "i").test(p),
     );
     if (safe.length > 0) {
       try {
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { data: signed } = await supabaseAdmin.storage
           .from("booking-photos")
           .createSignedUrls(safe, 60 * 60 * 24 * 30);
@@ -61,23 +87,23 @@ export const addBookingToCalendar = createServerFn({ method: "POST" })
     }
 
     const body = {
-      summary: `${data.service} — ${data.name} (${data.ref})`,
+      summary: `${ev.service} — ${ev.name} (${ev.ref})`,
       description: [
-        `Reference: ${data.ref}`,
-        `Service: ${data.service}`,
-        `Client: ${data.name}`,
-        `Phone: ${data.phone}`,
-        `Email: ${data.email}`,
-        data.photos > 0 ? `Photos attached: ${photoLinks}` : null,
+        `Reference: ${ev.ref}`,
+        `Service: ${ev.service}`,
+        `Client: ${ev.name}`,
+        `Phone: ${ev.phone}`,
+        `Email: ${ev.email}`,
+        photoLinks.length > 0 ? `Photos attached: ${photoLinks.length}` : null,
         ...photoLinks.map((u, i) => `Photo ${i + 1}: ${u}`),
-        data.notes ? `Notes: ${data.notes}` : null,
+        ev.notes ? `Notes: ${ev.notes}` : null,
       ]
         .filter(Boolean)
         .join("\n"),
       location: "Trinidad and Tobago",
       start: { dateTime: start, timeZone: "America/Port_of_Spain" },
       end: { dateTime: end, timeZone: "America/Port_of_Spain" },
-      attendees: [{ email: data.email, displayName: data.name }],
+      attendees: [{ email: ev.email, displayName: ev.name }],
 
       reminders: {
         useDefault: false,
@@ -112,6 +138,10 @@ export const addBookingToCalendar = createServerFn({ method: "POST" })
       }
 
       const event = (await res.json()) as { htmlLink?: string };
+      await supabaseAdmin
+        .from("bookings")
+        .update({ calendar_event_url: event.htmlLink ?? "scheduled" })
+        .eq("id", booking.id);
       return { scheduled: true, htmlLink: event.htmlLink ?? undefined };
     } catch (err) {
       console.error("Calendar insert threw", err);
