@@ -157,13 +157,14 @@ function money(amount: number | null, currency: string | null) {
 }
 
 function BookingsPage() {
+function BookingsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const fetchBookings = useServerFn(listBookings);
   const setStatus = useServerFn(updateBookingStatus);
   const setPayment = useServerFn(updatePaymentStatus);
   const fetchPhotoUrls = useServerFn(getBookingPhotoUrls);
-  const [q, setQ] = useState("");
+  const executeCustomAction = useServerFn(runCustomDashboardAction);
   const [payFilter, setPayFilter] = useState<(typeof PAY_FILTERS)[number]>("all");
   const [showAllImageModal, setShowAllImageModal] = useState(false);
   const [allImageUrls, setAllImageUrls] = useState<string[]>([]);
