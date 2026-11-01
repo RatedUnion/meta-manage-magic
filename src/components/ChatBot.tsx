@@ -21,6 +21,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { Link } from "@tanstack/react-router";
 
 const SUGGESTIONS = [
   "My car won't start — what will you check?",
@@ -43,7 +45,25 @@ export function ChatBot() {
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat" }), []);
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  useEffect(() => {
+    void supabase.auth.getSession().then(({ data }) => setSignedIn(!!data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => setSignedIn(!!session));
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: "/api/chat",
+        headers: async (): Promise<Record<string, string>> => {
+          const { data } = await supabase.auth.getSession();
+          const t = data.session?.access_token;
+          return t ? { Authorization: `Bearer ${t}` } : {};
+        },
+      }),
+    [],
+  );
   const { messages, sendMessage, status, setMessages } = useChat({
     transport,
     onError: (error) =>
@@ -67,6 +87,10 @@ export function ChatBot() {
   const send = (text: string) => {
     const value = text.trim();
     if (!value || busy) return;
+    if (!signedIn) {
+      toast.info("Please sign in to chat with Dee.");
+      return;
+    }
     setInput("");
     setShowCorrectionMenu(false);
     void sendMessage({ text: value });
@@ -300,6 +324,15 @@ export function ChatBot() {
             )}
           </div>
 
+          {signedIn === false && (
+            <div className="border-t border-border bg-secondary/40 px-4 py-2 text-xs text-muted-foreground">
+              Please{" "}
+              <Link to="/auth" className="font-medium text-primary underline">
+                sign in
+              </Link>{" "}
+              to chat with Dee, or call/WhatsApp +1 868-763-1106.
+            </div>
+          )}
           {/* Input Footer */}
           <form
             onSubmit={(e) => {
