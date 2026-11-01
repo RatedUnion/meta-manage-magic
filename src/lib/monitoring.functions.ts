@@ -37,18 +37,30 @@ function isSafePublicUrl(targetUrl: string): boolean {
 }
 
 
+const ALLOWED_MONITOR_HOSTS = [
+  "meta-manage-magic.lovable.app",
+  "project--ec505fba-f8b5-455f-aa0d-4a8ee19005e2.lovable.app",
+];
+
 export const runSiteDiagnostics = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ url: z.string().url().max(500) }).parse(input))
-  .handler(async ({ data }): Promise<MonitorCheckResult> => {
-    if (!isSafePublicUrl(data.url)) {
+  .handler(async ({ data, context }): Promise<MonitorCheckResult> => {
+    // Only signed-in owners/admins may run checks, and only against this business's own sites.
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Not authorized.");
+    const host = new URL(data.url).hostname.toLowerCase();
+    if (!ALLOWED_MONITOR_HOSTS.includes(host) || !isSafePublicUrl(data.url)) {
       throw new Error("Invalid destination: Private, local, and metadata endpoints are prohibited.");
     }
     const start = Date.now();
     let statusCode = 0;
     let dnsResolved = false;
     try {
-      const res = await fetch(data.url, { method: "HEAD", redirect: "follow", signal: AbortSignal.timeout(10000) });
+      const res = await fetch(data.url, { method: "HEAD", redirect: "manual", signal: AbortSignal.timeout(10000) });
       statusCode = res.status;
       dnsResolved = true;
     } catch {
