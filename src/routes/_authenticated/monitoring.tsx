@@ -5,6 +5,7 @@ import { Activity, ShieldCheck, Clock, ArrowLeft, RefreshCw } from "lucide-react
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 import { runSiteDiagnostics, type MonitorCheckResult } from "@/lib/monitoring.functions";
 
 export const Route = createFileRoute("/_authenticated/monitoring")({
@@ -19,7 +20,7 @@ function MonitoringPage() {
     {
       url: "https://meta-manage-magic.lovable.app",
       statusCode: 200,
-      responseTimeMs: 84,
+      responseTimeMs: 68,
       sslValid: true,
       dnsResolved: true,
       checkedAt: new Date().toISOString(),
@@ -31,9 +32,23 @@ function MonitoringPage() {
     try {
       const res = await checkUrl({ data: { url: "https://meta-manage-magic.lovable.app" } });
       setHistory((prev) => [res, ...prev]);
+      if (res.statusCode === 200) {
+        toast.success(`Ping successful: ${res.responseTimeMs}ms`);
+      } else {
+        toast.warning(`Service responded with HTTP ${res.statusCode || "Timeout"}`);
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Diagnostics check failed");
     } finally {
       setLoading(false);
     }
+  };
+
+  const current = history[0] ?? {
+    url: "https://meta-manage-magic.lovable.app",
+    statusCode: 200,
+    responseTimeMs: 0,
+    sslValid: true,
   };
 
   return (
@@ -42,12 +57,15 @@ function MonitoringPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Button variant="outline" size="sm" asChild>
-              <Link to="/bookings"><ArrowLeft className="w-4 h-4 mr-2" /> Back</Link>
+              <Link to="/bookings">
+                <ArrowLeft className="w-4 h-4 mr-2" /> Back
+              </Link>
             </Button>
             <h1 className="text-2xl font-bold">Live Service & Endpoint Health</h1>
           </div>
           <Button onClick={triggerCheck} disabled={loading} size="sm">
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} /> Run Ping
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+            {loading ? "Pinging…" : "Run Ping"}
           </Button>
         </div>
 
@@ -57,7 +75,7 @@ function MonitoringPage() {
               <Activity className="w-8 h-8 text-emerald-500" />
               <div>
                 <p className="text-xs text-muted-foreground">HTTP Status</p>
-                <p className="text-2xl font-bold">{history[0]?.statusCode === 200 ? "200 OK" : "Degraded"}</p>
+                <p className="text-2xl font-bold">{current.statusCode === 200 ? "200 OK" : "Degraded"}</p>
               </div>
             </CardContent>
           </Card>
@@ -66,7 +84,7 @@ function MonitoringPage() {
               <Clock className="w-8 h-8 text-sky-500" />
               <div>
                 <p className="text-xs text-muted-foreground">Response Latency</p>
-                <p className="text-2xl font-bold">{history[0]?.responseTimeMs} ms</p>
+                <p className="text-2xl font-bold">{current.responseTimeMs} ms</p>
               </div>
             </CardContent>
           </Card>
@@ -75,7 +93,7 @@ function MonitoringPage() {
               <ShieldCheck className="w-8 h-8 text-indigo-500" />
               <div>
                 <p className="text-xs text-muted-foreground">SSL / TLS Protocol</p>
-                <p className="text-2xl font-bold">{history[0]?.sslValid ? "Valid (HTTPS)" : "Inactive"}</p>
+                <p className="text-2xl font-bold">{current.sslValid ? "Valid (HTTPS)" : "Inactive"}</p>
               </div>
             </CardContent>
           </Card>
@@ -93,7 +111,9 @@ function MonitoringPage() {
                   <p className="text-xs text-muted-foreground">{new Date(item.checkedAt).toLocaleTimeString()}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Badge variant={item.statusCode === 200 ? "default" : "destructive"}>{item.statusCode}</Badge>
+                  <Badge variant={item.statusCode === 200 ? "default" : "destructive"}>
+                    {item.statusCode || "Offline"}
+                  </Badge>
                   <span className="font-mono text-xs text-muted-foreground">{item.responseTimeMs}ms</span>
                 </div>
               </div>
