@@ -34,8 +34,15 @@ export function json(request: Request, body: unknown, status = 200) {
 }
 
 export function handleOptions(request: Request) {
-  return new Response("ok", { headers: corsHeaders(request) });
+export function adminClient(): SupabaseClient<any, any, any> {
+  const url = Deno.env.get("SUPABASE_URL");
+  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !key) throw new Error("Server configuration unavailable");
+  return createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
 }
+
 
 export async function requireAdmin(request: Request): Promise<AuthContext> {
   const authorization = request.headers.get("authorization");
