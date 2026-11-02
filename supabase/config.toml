@@ -1,1 +1,5 @@
 project_id = "egfahkzbnqikmjvmwrgn"
+project_id = "egfahkzbnqikmjvmwrgn"
+
+[functions.meta-oauth-callback]
+verify_jwt = false
