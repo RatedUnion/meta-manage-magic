@@ -317,12 +317,30 @@ function BookingsPage() {
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
-<Link to="/voice-sms">
-  <Button variant="outline" size="sm" className="gap-1.5 text-xs">
-    <Phone className="h-3.5 w-3.5 text-primary" />
-    Voice & SMS
-  </Button>
-</Link>
+              size="sm"
+              onClick={openAllImages}
+              disabled={loadingAllImages || allPhotoPaths.length === 0}
+            >
+              <Images className="mr-2 h-4 w-4" />
+              Show all images
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
+              <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? "animate-spin" : ""}`} /> Refresh
+            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/assistants">AI Bots</Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/monitoring">Monitoring</Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/campaigns">Campaigns</Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/voice-sms">Voice & SMS</Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
                 <Link to="/roster">Roster</Link>
               </Button>
             </div>
