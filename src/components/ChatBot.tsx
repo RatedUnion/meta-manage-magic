@@ -6,8 +6,10 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
+  FileText,
   History,
   MessageCircle,
+  Paperclip,
   RefreshCw,
   Send,
   ShieldAlert,
@@ -42,8 +44,11 @@ export function ChatBot() {
   const [input, setInput] = useState("");
   const [showLedger, setShowLedger] = useState(false);
   const [showCorrectionMenu, setShowCorrectionMenu] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   useEffect(() => {
@@ -84,16 +89,42 @@ export function ChatBot() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, status]);
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File is too large (max 10MB allowed)");
+      return;
+    }
+
+    setSelectedFile(file);
+    toast.success(`Attached: ${file.name}`);
+  };
+
+  const removeFile = () => {
+    setSelectedFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const send = (text: string) => {
     const value = text.trim();
-    if (!value || busy) return;
+    if ((!value && !selectedFile) || busy) return;
     if (!signedIn) {
       toast.info("Please sign in to chat with Dee.");
       return;
     }
+
+    let outgoing = value;
+    if (selectedFile) {
+      outgoing = `[Attached File: ${selectedFile.name} (${Math.round(selectedFile.size / 1024)} KB)]\n${value || "Please inspect this file and assist me with service options."}`;
+    }
+
     setInput("");
+    setSelectedFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
     setShowCorrectionMenu(false);
-    void sendMessage({ text: value });
+    void sendMessage({ text: outgoing });
   };
 
   // Roll back the latest assistant + user turn
@@ -203,7 +234,7 @@ export function ChatBot() {
                 <div className="rounded-xl border border-border/60 bg-secondary/30 p-3.5 text-xs text-muted-foreground">
                   <p className="font-medium text-foreground">Greetings from Dee at DUAA</p>
                   <p className="mt-1 leading-relaxed">
-                    I am trained on our full technical scope and active policies. If I ever state an outdated rate or mistake from recent updates, click <strong>"Verify & Correct"</strong> to trigger an instant self-correction.
+                    I am trained on our full technical scope and active policies. You can attach photos or spec sheets using the <strong>paperclip</strong> icon below.
                   </p>
                 </div>
 
@@ -333,25 +364,69 @@ export function ChatBot() {
               to chat with Dee, or call/WhatsApp +1 868-763-1106.
             </div>
           )}
+
+          {/* File Attachment Chip */}
+          {selectedFile && (
+            <div className="flex items-center justify-between border-t border-border bg-secondary/60 px-3 py-1.5 text-xs">
+              <span className="flex items-center gap-1.5 truncate text-foreground">
+                <FileText className="h-3.5 w-3.5 text-primary shrink-0" />
+                <span className="truncate">{selectedFile.name}</span>
+                <span className="text-[10px] text-muted-foreground">
+                  ({Math.round(selectedFile.size / 1024)} KB)
+                </span>
+              </span>
+              <button
+                type="button"
+                onClick={removeFile}
+                className="text-muted-foreground hover:text-foreground ml-2 p-0.5"
+                title="Remove attachment"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+
           {/* Input Footer */}
           <form
             onSubmit={(e) => {
               e.preventDefault();
               send(input);
             }}
-            className="flex items-center gap-2 border-t border-border bg-card px-3 py-2.5"
+            className="flex items-center gap-1.5 border-t border-border bg-card px-2.5 py-2"
           >
+            {/* Hidden File Input */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept="image/*,application/pdf"
+              onChange={handleFileChange}
+            />
+
+            {/* Paperclip Button */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={busy}
+              title="Attach photo or document for Dee"
+              className="h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground"
+            >
+              <Paperclip className="h-4 w-4" />
+            </Button>
+
             <Input
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask a question or state a correction..."
+              placeholder={selectedFile ? "Add note about file..." : "Ask a question..."}
               className="h-9 text-xs sm:text-sm"
             />
             <Button
               type="submit"
               size="icon"
-              disabled={busy || !input.trim()}
+              disabled={busy || (!input.trim() && !selectedFile)}
               className="h-9 w-9 shrink-0"
             >
               <Send className="h-4 w-4" />
