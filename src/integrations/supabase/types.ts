@@ -86,6 +86,62 @@ export type Database = {
         }
         Relationships: []
       }
+      call_records: {
+        Row: {
+          booking_id: string | null
+          contact_name: string | null
+          created_at: string
+          direction: string
+          duration_seconds: number
+          from_number: string
+          id: string
+          recording_path: string | null
+          sentiment: string | null
+          status: string
+          summary: string | null
+          to_number: string
+          transcript: Json
+        }
+        Insert: {
+          booking_id?: string | null
+          contact_name?: string | null
+          created_at?: string
+          direction: string
+          duration_seconds?: number
+          from_number: string
+          id?: string
+          recording_path?: string | null
+          sentiment?: string | null
+          status?: string
+          summary?: string | null
+          to_number: string
+          transcript?: Json
+        }
+        Update: {
+          booking_id?: string | null
+          contact_name?: string | null
+          created_at?: string
+          direction?: string
+          duration_seconds?: number
+          from_number?: string
+          id?: string
+          recording_path?: string | null
+          sentiment?: string | null
+          status?: string
+          summary?: string | null
+          to_number?: string
+          transcript?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_records_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       feedback: {
         Row: {
           booking_reference: string | null
