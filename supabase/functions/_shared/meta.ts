@@ -1,10 +1,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+
 export type AuthContext = {
   userId: string;
-  admin: ReturnType<typeof createClient>;
-};
-
+  admin: SupabaseClient<any, any, any>;
 export function adminClient() {
   const url = Deno.env.get("SUPABASE_URL");
   const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
