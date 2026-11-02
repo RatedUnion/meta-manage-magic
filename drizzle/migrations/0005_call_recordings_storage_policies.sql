@@ -1,0 +1,3 @@
+CREATE POLICY "Staff read call recordings" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'call-recordings' AND public.has_role(auth.uid(), 'admin'));
+CREATE POLICY "Staff upload call recordings" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'call-recordings' AND public.has_role(auth.uid(), 'admin') AND lower(storage.extension(name)) IN ('mp3','wav','m4a','ogg','webm'));
+CREATE POLICY "Staff delete call recordings" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'call-recordings' AND public.has_role(auth.uid(), 'admin'));
