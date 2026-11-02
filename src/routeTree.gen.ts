@@ -23,6 +23,7 @@ import { Route as AuthenticatedCampaignsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedMonitoringRouteImport } from './routes/_authenticated/monitoring'
 import { Route as AuthenticatedRosterRouteImport } from './routes/_authenticated/roster'
 import { Route as AuthenticatedStaffFeedbackRouteImport } from './routes/_authenticated/staff-feedback'
+import { Route as AuthenticatedVoiceSmsRouteImport } from './routes/_authenticated/voice-sms'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ServicesIndexRouteImport } from './routes/services.index'
 import { Route as ServicesSlugRouteImport } from './routes/services.$slug'
@@ -97,6 +98,11 @@ const AuthenticatedStaffFeedbackRoute =
     path: '/staff-feedback',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedVoiceSmsRoute = AuthenticatedVoiceSmsRouteImport.update({
+  id: '/voice-sms',
+  path: '/voice-sms',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
@@ -127,6 +133,7 @@ export interface FileRoutesByFullPath {
   '/monitoring': typeof AuthenticatedMonitoringRoute
   '/roster': typeof AuthenticatedRosterRoute
   '/staff-feedback': typeof AuthenticatedStaffFeedbackRoute
+  '/voice-sms': typeof AuthenticatedVoiceSmsRoute
   '/api/chat': typeof ApiChatRoute
   '/services/$slug': typeof ServicesSlugRoute
   '/services/': typeof ServicesIndexRoute
@@ -145,6 +152,7 @@ export interface FileRoutesByTo {
   '/monitoring': typeof AuthenticatedMonitoringRoute
   '/roster': typeof AuthenticatedRosterRoute
   '/staff-feedback': typeof AuthenticatedStaffFeedbackRoute
+  '/voice-sms': typeof AuthenticatedVoiceSmsRoute
   '/api/chat': typeof ApiChatRoute
   '/services/$slug': typeof ServicesSlugRoute
   '/services': typeof ServicesIndexRoute
@@ -165,6 +173,7 @@ export interface FileRoutesById {
   '/_authenticated/monitoring': typeof AuthenticatedMonitoringRoute
   '/_authenticated/roster': typeof AuthenticatedRosterRoute
   '/_authenticated/staff-feedback': typeof AuthenticatedStaffFeedbackRoute
+  '/_authenticated/voice-sms': typeof AuthenticatedVoiceSmsRoute
   '/api/chat': typeof ApiChatRoute
   '/services/$slug': typeof ServicesSlugRoute
   '/services/': typeof ServicesIndexRoute
@@ -185,6 +194,7 @@ export interface FileRouteTypes {
     | '/monitoring'
     | '/roster'
     | '/staff-feedback'
+    | '/voice-sms'
     | '/api/chat'
     | '/services/$slug'
     | '/services/'
@@ -203,6 +213,7 @@ export interface FileRouteTypes {
     | '/monitoring'
     | '/roster'
     | '/staff-feedback'
+    | '/voice-sms'
     | '/api/chat'
     | '/services/$slug'
     | '/services'
@@ -222,6 +233,7 @@ export interface FileRouteTypes {
     | '/_authenticated/monitoring'
     | '/_authenticated/roster'
     | '/_authenticated/staff-feedback'
+    | '/_authenticated/voice-sms'
     | '/api/chat'
     | '/services/$slug'
     | '/services/'
@@ -341,6 +353,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStaffFeedbackRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/voice-sms': {
+      id: '/_authenticated/voice-sms'
+      path: '/voice-sms'
+      fullPath: '/voice-sms'
+      preLoaderRoute: typeof AuthenticatedVoiceSmsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/chat': {
       id: '/api/chat'
       path: '/api/chat'
@@ -372,6 +391,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMonitoringRoute: typeof AuthenticatedMonitoringRoute
   AuthenticatedRosterRoute: typeof AuthenticatedRosterRoute
   AuthenticatedStaffFeedbackRoute: typeof AuthenticatedStaffFeedbackRoute
+  AuthenticatedVoiceSmsRoute: typeof AuthenticatedVoiceSmsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -381,6 +401,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMonitoringRoute: AuthenticatedMonitoringRoute,
   AuthenticatedRosterRoute: AuthenticatedRosterRoute,
   AuthenticatedStaffFeedbackRoute: AuthenticatedStaffFeedbackRoute,
+  AuthenticatedVoiceSmsRoute: AuthenticatedVoiceSmsRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
