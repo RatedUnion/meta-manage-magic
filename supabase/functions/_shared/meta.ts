@@ -4,8 +4,12 @@ import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 export type AuthContext = {
   userId: string;
+  // deno-lint-ignore no-explicit-any
   admin: SupabaseClient<any, any, any>;
-export function adminClient() {
+};
+
+// deno-lint-ignore no-explicit-any
+export function adminClient(): SupabaseClient<any, any, any> {
   const url = Deno.env.get("SUPABASE_URL");
   const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (!url || !key) throw new Error("Server configuration unavailable");
@@ -34,14 +38,9 @@ export function json(request: Request, body: unknown, status = 200) {
 }
 
 export function handleOptions(request: Request) {
-export function adminClient(): SupabaseClient<any, any, any> {
-  const url = Deno.env.get("SUPABASE_URL");
-  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  if (!url || !key) throw new Error("Server configuration unavailable");
-  return createClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  return new Response(null, { status: 204, headers: corsHeaders(request) });
 }
+
 
 
 export async function requireAdmin(request: Request): Promise<AuthContext> {
