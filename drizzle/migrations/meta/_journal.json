@@ -43,6 +43,13 @@
       "when": 1793604193101,
       "tag": "0005_call_recordings_storage_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793664235298,
+      "tag": "0006_meta_social_integrations",
+      "breakpoints": true
     }
   ]
 }

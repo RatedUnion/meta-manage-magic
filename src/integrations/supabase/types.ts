@@ -208,6 +208,104 @@ export type Database = {
         }
         Relationships: []
       }
+      meta_connections: {
+        Row: {
+          created_at: string
+          id: string
+          page_id: string
+          page_name: string
+          status: string
+          token_ciphertext: string
+          token_expires_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          page_id: string
+          page_name: string
+          status?: string
+          token_ciphertext: string
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          page_id?: string
+          page_name?: string
+          status?: string
+          token_ciphertext?: string
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      meta_oauth_states: {
+        Row: {
+          created_at: string
+          expires_at: string
+          state_hash: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          state_hash: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          state_hash?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      meta_publish_events: {
+        Row: {
+          connection_id: string | null
+          created_at: string
+          id: string
+          provider_error_code: number | null
+          provider_post_id: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          connection_id?: string | null
+          created_at?: string
+          id?: string
+          provider_error_code?: number | null
+          provider_post_id?: string | null
+          status: string
+          user_id: string
+        }
+        Update: {
+          connection_id?: string | null
+          created_at?: string
+          id?: string
+          provider_error_code?: number | null
+          provider_post_id?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_publish_events_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "meta_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_attempts: {
         Row: {
           created_at: string
