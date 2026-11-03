@@ -146,7 +146,7 @@ export function FacebookPublisher() {
                 value=""
                 onChange={(e) => {
                   const s = MARKETPLACE_SCRIPTS.find((x) => x.id === e.target.value);
-                  if (s) setMessage(s.content);
+                  if (s) setMessage(s.fullScript);
                 }}
               >
                 <option value="">Use a promo script…</option>

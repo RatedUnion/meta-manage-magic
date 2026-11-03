@@ -85,7 +85,7 @@ export function metaConfig() {
 
 export function appRedirect(result: "connected" | "error", reason?: string) {
   const base = Deno.env.get("META_APP_URL") ?? "https://meta-manage-magic.lovable.app";
-  const url = new URL("/admin/integrations", base);
+  const url = new URL("/campaigns", base);
   url.searchParams.set("meta", result);
   if (reason) url.searchParams.set("reason", reason);
   return url.toString();

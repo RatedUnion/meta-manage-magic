@@ -7,6 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { FacebookPublisher } from "@/components/FacebookPublisher";
 import { createCampaign, toggleCampaignStatus, type CampaignItem } from "@/lib/campaigns.functions";
 
 export const Route = createFileRoute("/_authenticated/campaigns")({
@@ -114,6 +115,8 @@ function CampaignsPage() {
             New Campaign
           </Button>
         </div>
+
+        <FacebookPublisher />
 
         {isDialogOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
