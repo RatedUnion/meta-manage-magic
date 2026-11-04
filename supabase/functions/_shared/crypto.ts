@@ -11,9 +11,15 @@ function encodeBase64(value: Uint8Array) {
 function encryptionKey() {
   const value = Deno.env.get("META_TOKEN_ENCRYPTION_KEY");
   if (!value) throw new Error("Token encryption is not configured");
-  const bytes = decodeBase64(value);
-  if (bytes.length !== 32) throw new Error("Token encryption is not configured");
-  return crypto.subtle.importKey("raw", bytes, "AES-GCM", false, ["encrypt", "decrypt"]);
+  let bytes: Uint8Array | null = null;
+  try {
+    const decoded = decodeBase64(value);
+    if (decoded.length === 32) bytes = decoded;
+  } catch { /* not base64 */ }
+  const raw = bytes
+    ? Promise.resolve(bytes)
+    : crypto.subtle.digest("SHA-256", encoder.encode(value)).then((d) => new Uint8Array(d));
+  return raw.then((key) => crypto.subtle.importKey("raw", key, "AES-GCM", false, ["encrypt", "decrypt"]));
 }
 
 export async function encryptToken(token: string) {
