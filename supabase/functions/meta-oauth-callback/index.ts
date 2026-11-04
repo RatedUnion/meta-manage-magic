@@ -1,7 +1,8 @@
 import { encryptToken, sha256 } from "../_shared/crypto.ts";
 import { adminClient, appRedirect, metaConfig } from "../_shared/meta.ts";
 
-function redirect(result: "connected" | "error", reason?: string) {
+function redirect(result: "connected" | "error", reason?: string, detail?: unknown) {
+  console.log(`meta-oauth-callback result=${result} reason=${reason ?? "none"} detail=${typeof detail === "string" ? detail.slice(0, 200) : ""}`);
   return Response.redirect(appRedirect(result, reason), 302);
 }
 
@@ -30,19 +31,19 @@ Deno.serve(async (request) => {
     tokenUrl.search = new URLSearchParams({ client_id: appId, client_secret: appSecret, redirect_uri: redirectUri, code }).toString();
     const shortTokenResponse = await fetch(tokenUrl, { signal: AbortSignal.timeout(10_000) });
     const shortToken = await shortTokenResponse.json();
-    if (!shortTokenResponse.ok || typeof shortToken.access_token !== "string") return redirect("error", "token_exchange_failed");
+    if (!shortTokenResponse.ok || typeof shortToken.access_token !== "string") return redirect("error", "token_exchange_failed", shortToken?.error?.message);
 
     const longUrl = new URL(`https://graph.facebook.com/${version}/oauth/access_token`);
     longUrl.search = new URLSearchParams({ grant_type: "fb_exchange_token", client_id: appId, client_secret: appSecret, fb_exchange_token: shortToken.access_token }).toString();
     const longResponse = await fetch(longUrl, { signal: AbortSignal.timeout(10_000) });
     const longToken = await longResponse.json();
-    if (!longResponse.ok || typeof longToken.access_token !== "string") return redirect("error", "token_exchange_failed");
+    if (!longResponse.ok || typeof longToken.access_token !== "string") return redirect("error", "token_exchange_failed", longToken?.error?.message);
 
     const pagesUrl = new URL(`https://graph.facebook.com/${version}/me/accounts`);
     pagesUrl.search = new URLSearchParams({ fields: "id,name,access_token", limit: "100", access_token: longToken.access_token }).toString();
     const pagesResponse = await fetch(pagesUrl, { signal: AbortSignal.timeout(10_000) });
     const pagesPayload = await pagesResponse.json();
-    if (!pagesResponse.ok || !Array.isArray(pagesPayload.data)) return redirect("error", "page_access_unavailable");
+    if (!pagesResponse.ok || !Array.isArray(pagesPayload.data)) return redirect("error", "page_access_unavailable", pagesPayload?.error?.message);
     if (pagesPayload.data.length === 0) return redirect("error", "no_pages_available");
 
     const userExpiresAt = Number.isFinite(longToken.expires_in) && longToken.expires_in > 0
@@ -59,11 +60,11 @@ Deno.serve(async (request) => {
         status: "active",
         updated_at: new Date().toISOString(),
       }, { onConflict: "user_id,page_id" });
-      if (error) return redirect("error", "connection_save_failed");
+      if (error) return redirect("error", "connection_save_failed", error.message);
     }
     return redirect("connected");
-  } catch {
-    // Never log provider payloads or credentials; only redirect a generic code to the app.
-    return redirect("error", "connection_failed");
+  } catch (e) {
+    // Never log provider payloads or credentials; only the error message.
+    return redirect("error", "connection_failed", e instanceof Error ? e.message : "unknown");
   }
 });
