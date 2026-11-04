@@ -1,7 +1,8 @@
 import { encryptToken, sha256 } from "../_shared/crypto.ts";
 import { adminClient, appRedirect, metaConfig } from "../_shared/meta.ts";
 
-function redirect(result: "connected" | "error", reason?: string) {
+function redirect(result: "connected" | "error", reason?: string, detail?: unknown) {
+  console.log(`meta-oauth-callback result=${result} reason=${reason ?? "none"} detail=${typeof detail === "string" ? detail.slice(0, 200) : ""}`);
   return Response.redirect(appRedirect(result, reason), 302);
 }
 

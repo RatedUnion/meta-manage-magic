@@ -50,7 +50,18 @@ export function FacebookPublisher() {
     const params = new URLSearchParams(window.location.search);
     const result = params.get("meta");
     if (result === "connected") toast.success("Facebook Page connected.");
-    if (result === "error") toast.error("Facebook connection didn't finish. Please try again.");
+    if (result === "error") {
+      const reason = params.get("reason") ?? "";
+      const reasons: Record<string, string> = {
+        no_pages_available: "Facebook didn't share any Pages. Reconnect and tick your DUAA Page.",
+        token_exchange_failed: "Facebook rejected the sign-in code. The app secret or callback address may not match.",
+        page_access_unavailable: "Facebook didn't grant Page access. Approve the Page permissions.",
+        state_expired: "The sign-in took too long. Please try again.",
+        authorization_denied: "Facebook access was cancelled.",
+        connection_save_failed: "Facebook connected, but saving the Page failed.",
+      };
+      toast.error(reasons[reason] ?? `Facebook connection didn't finish (${reason || "unknown"}).`, { duration: 15000 });
+    }
     void load();
   }, [load]);
 
