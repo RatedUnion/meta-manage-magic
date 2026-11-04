@@ -16,13 +16,17 @@ Deno.serve(async (request) => {
     if (error) throw new Error("OAuth state could not be created");
 
     const authorize = new URL(`https://www.facebook.com/${version}/dialog/oauth`);
-    authorize.search = new URLSearchParams({
+    const configId = Deno.env.get("META_CONFIG_ID");
+    const params: Record<string, string> = {
       client_id: appId,
       redirect_uri: redirectUri,
       response_type: "code",
       state,
-      scope: "pages_show_list,pages_read_engagement,pages_manage_posts",
-    }).toString();
+    };
+    // Facebook Login for Business requires a configuration ID instead of scope.
+    if (configId) params.config_id = configId;
+    else params.scope = "pages_show_list,pages_read_engagement,pages_manage_posts";
+    authorize.search = new URLSearchParams(params).toString();
     return json(request, { authorizationUrl: authorize.toString() });
   } catch (error) {
     return authFailure(request, error);
