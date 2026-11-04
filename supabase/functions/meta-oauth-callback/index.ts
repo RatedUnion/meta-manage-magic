@@ -31,13 +31,13 @@ Deno.serve(async (request) => {
     tokenUrl.search = new URLSearchParams({ client_id: appId, client_secret: appSecret, redirect_uri: redirectUri, code }).toString();
     const shortTokenResponse = await fetch(tokenUrl, { signal: AbortSignal.timeout(10_000) });
     const shortToken = await shortTokenResponse.json();
-    if (!shortTokenResponse.ok || typeof shortToken.access_token !== "string") return redirect("error", "token_exchange_failed");
+    if (!shortTokenResponse.ok || typeof shortToken.access_token !== "string") return redirect("error", "token_exchange_failed", (shortToken?.error?.message ?? longToken?.error?.message));
 
     const longUrl = new URL(`https://graph.facebook.com/${version}/oauth/access_token`);
     longUrl.search = new URLSearchParams({ grant_type: "fb_exchange_token", client_id: appId, client_secret: appSecret, fb_exchange_token: shortToken.access_token }).toString();
     const longResponse = await fetch(longUrl, { signal: AbortSignal.timeout(10_000) });
     const longToken = await longResponse.json();
-    if (!longResponse.ok || typeof longToken.access_token !== "string") return redirect("error", "token_exchange_failed");
+    if (!longResponse.ok || typeof longToken.access_token !== "string") return redirect("error", "token_exchange_failed", (shortToken?.error?.message ?? longToken?.error?.message));
 
     const pagesUrl = new URL(`https://graph.facebook.com/${version}/me/accounts`);
     pagesUrl.search = new URLSearchParams({ fields: "id,name,access_token", limit: "100", access_token: longToken.access_token }).toString();
