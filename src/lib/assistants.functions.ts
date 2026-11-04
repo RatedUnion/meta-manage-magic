@@ -26,19 +26,41 @@ const dispatchSchema = z.object({
   contextData: z.record(z.any()).optional(),
 });
 
+/** Returns authorization for the signed-in user; UI visibility is not the security boundary. */
+export const getRosterAccess = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: isAdmin, error } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    return { canManage: !error && Boolean(isAdmin), userId: context.userId };
+  });
+
 export const runAssistantTask = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => dispatchSchema.parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    // Owner/admin authorization is enforced server-side, not just by hiding UI.
+    const { data: isAdmin, error: roleError } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (roleError || !isAdmin) {
+      throw new Error("Access restricted: owner/admin privileges are required.");
+    }
+
     const bot = ASSISTANT_ROSTER.find((item) => item.id === data.botId) ?? ASSISTANT_ROSTER[0];
-    const timestamp = new Date().toISOString();
-    const context = data.contextData ?? {};
-    const rawRoster = context["roster"];
+    const contextData = data.contextData ?? {};
+    const rawRoster = contextData["roster"];
     const roster = Array.isArray(rawRoster) ? rawRoster as Array<Record<string, unknown>> : [];
-    const task = typeof context["task"] === "string" ? context["task"] : data.prompt;
+    const task = typeof contextData["task"] === "string" ? contextData["task"] : data.prompt;
     const taskTerms = task.toLowerCase().split(/[^a-z0-9]+/).filter((term) => term.length > 2);
     const ranked = roster.map((member) => {
-      const searchable = [member["name"], member["role"], member["specialty"], member["area"], member["serviceFit"]].filter((value): value is string => typeof value === "string").join(" ").toLowerCase();
+      const searchable = [member["name"], member["role"], member["specialty"], member["area"], member["serviceFit"]]
+        .filter((value): value is string => typeof value === "string")
+        .join(" ")
+        .toLowerCase();
       const status = typeof member["status"] === "string" ? member["status"] : "Unknown";
       const load = typeof member["projectedLoad"] === "number" ? member["projectedLoad"] : 0;
       const fit = taskTerms.reduce((score, term) => score + (searchable.includes(term) ? 1 : 0), 0);
@@ -51,16 +73,16 @@ export const runAssistantTask = createServerFn({ method: "POST" })
           const area = typeof member["area"] === "string" ? member["area"] : "coverage not specified";
           const status = typeof member["status"] === "string" ? member["status"] : "Unknown";
           const load = typeof member["projectedLoad"] === "number" ? member["projectedLoad"] : 0;
-          return `${index === 0 ? "Top suggested match" : "Alternative"}: ${name} (${role}); coverage: ${area}; current status: ${status}; projected task load: ${load}. Confirm availability and assignment details before dispatch.`;
+          return `${index === 0 ? "Top suggested match" : "Alternative"}: ${name} (${role}); coverage: ${area}; status: ${status}; projected task load: ${load}. Confirm availability before dispatch.`;
         })
-      : ["No roster context was provided. Review the task requirements and confirm crew availability manually."];
+      : ["No roster context was provided. Review task requirements and confirm crew availability manually."];
 
     return {
       success: true,
       bot: bot.name,
       role: bot.role,
-      timestamp,
-      summary: `[${bot.role}] Task-specific roster projection for: "${task}". Suggestions are advisory and do not modify or dispatch roster members.`,
+      timestamp: new Date().toISOString(),
+      summary: `[${bot.role}] Task-specific roster projection for: "${task}". Suggestions are advisory and do not change the roster or dispatch crew.`,
       recommendations,
     };
   });
