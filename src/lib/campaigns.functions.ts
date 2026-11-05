@@ -12,35 +12,25 @@ export interface CampaignItem {
   startDate: string;
 }
 
-const DEFAULT_CAMPAIGNS: CampaignItem[] = [
-  {
-    id: "camp-1",
-    title: "Commercial Generator Transfer Switch Outreach",
-    targetAudience: "Warehouses & Factories (Point Lisas & Macoya)",
-    channel: "WhatsApp & Direct Email",
-    budgetTTD: 1500,
-    status: "Active",
-    startDate: "2026-11-01",
-  },
-  {
-    id: "camp-2",
-    title: "Holiday Grounds Maintenance & Illumination",
-    targetAudience: "Residential Compounds (Westmoorings & Maraval)",
-    channel: "Meta Ads & Flyer Distribution",
-    budgetTTD: 850,
-    status: "Draft",
-    startDate: "2026-11-15",
-  },
-  {
-    id: "camp-3",
-    title: "Fleet Towing & Transport Retainer Contracts",
-    targetAudience: "Logistics Companies & Construction Firms",
-    channel: "B2B Calls & Site Visits",
-    budgetTTD: 2400,
-    status: "Active",
-    startDate: "2026-11-05",
-  },
-];
+type Row = {
+  id: string;
+  title: string;
+  target_audience: string;
+  channel: string;
+  budget_ttd: number;
+  status: string;
+  start_date: string;
+};
+
+const toItem = (r: Row): CampaignItem => ({
+  id: r.id,
+  title: r.title,
+  targetAudience: r.target_audience,
+  channel: r.channel,
+  budgetTTD: Number(r.budget_ttd),
+  status: r.status as CampaignItem["status"],
+  startDate: r.start_date,
+});
 
 const createCampaignSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters").max(120),
@@ -52,36 +42,48 @@ const createCampaignSchema = z.object({
 
 export const listCampaigns = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async (): Promise<CampaignItem[]> => {
-    return DEFAULT_CAMPAIGNS;
+  .handler(async ({ context }): Promise<CampaignItem[]> => {
+    const { data, error } = await context.supabase
+      .from("campaigns")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) throw new Error("Could not load campaigns");
+    return (data as Row[]).map(toItem);
   });
 
 export const createCampaign = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => createCampaignSchema.parse(data))
-  .handler(async ({ data }): Promise<CampaignItem> => {
-    const newCamp: CampaignItem = {
-      id: "camp-" + Math.random().toString(36).substring(2, 9),
-      title: data.title,
-      targetAudience: data.targetAudience,
-      channel: data.channel,
-      budgetTTD: data.budgetTTD,
-      status: "Active",
-      startDate: data.startDate,
-    };
-    return newCamp;
+  .handler(async ({ data, context }): Promise<CampaignItem> => {
+    const { data: row, error } = await context.supabase
+      .from("campaigns")
+      .insert({
+        title: data.title,
+        target_audience: data.targetAudience,
+        channel: data.channel,
+        budget_ttd: data.budgetTTD,
+        start_date: data.startDate,
+        status: "Active",
+        created_by: context.userId,
+      })
+      .select("*")
+      .single();
+    if (error || !row) throw new Error("Could not save campaign");
+    return toItem(row as Row);
   });
 
 export const toggleCampaignStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
     z
-      .object({
-        id: z.string(),
-        status: z.enum(["Active", "Draft", "Completed"]),
-      })
+      .object({ id: z.string().uuid(), status: z.enum(["Active", "Draft", "Completed"]) })
       .parse(data),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("campaigns")
+      .update({ status: data.status })
+      .eq("id", data.id);
+    if (error) throw new Error("Could not update campaign");
     return { ok: true, id: data.id, status: data.status };
   });
