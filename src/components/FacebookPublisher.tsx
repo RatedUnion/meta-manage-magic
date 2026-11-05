@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Facebook, Link2, Send, Unplug, RefreshCw } from "lucide-react";
+import { Facebook, Link2, Send, Unplug, RefreshCw, Download } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { MARKETPLACE_SCRIPTS } from "@/data/marketplace-scripts";
+import { referenceFor, renderQrFlyer, serviceUrlFor } from "@/lib/qr-flyer";
 
 type FacebookPage = { id: string; page_id: string; page_name: string; status: string };
 
@@ -30,6 +31,22 @@ export function FacebookPublisher() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [unavailable, setUnavailable] = useState<string | null>(null);
+  const [scriptId, setScriptId] = useState("");
+  const [attachQr, setAttachQr] = useState(true);
+  const [flyer, setFlyer] = useState<string | null>(null);
+  const script = MARKETPLACE_SCRIPTS.find((s) => s.id === scriptId);
+  const qrUrl = serviceUrlFor(script?.category);
+  const qrRef = referenceFor(qrUrl);
+
+  useEffect(() => {
+    let cancelled = false;
+    void renderQrFlyer(qrUrl, script?.title ?? "Book your appointment", qrRef).then((d) => {
+      if (!cancelled) setFlyer(d);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [qrUrl, qrRef, script?.title]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -91,7 +108,11 @@ export function FacebookPublisher() {
     setBusy(true);
     const { data, error } = await supabase.functions.invoke("meta-publish", {
       method: "POST",
-      body: { connectionId: selected, message },
+      body: {
+        connectionId: selected,
+        message: `${message.trim()}\n\nBook: ${qrUrl}\nRef: ${qrRef}`,
+        imageBase64: attachQr && flyer ? flyer : undefined,
+      },
     });
     setBusy(false);
     if (error) return toast.error(await errorText(error, "Facebook couldn't publish this post."));
@@ -154,8 +175,9 @@ export function FacebookPublisher() {
               </select>
               <select
                 className="h-9 flex-1 rounded-md border border-input bg-background px-2 text-sm"
-                value=""
+                value={scriptId}
                 onChange={(e) => {
+                  setScriptId(e.target.value);
                   const s = MARKETPLACE_SCRIPTS.find((x) => x.id === e.target.value);
                   if (s) setMessage(s.fullScript);
                 }}
@@ -167,6 +189,26 @@ export function FacebookPublisher() {
               </select>
             </div>
             <Textarea rows={5} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Write your Facebook post…" />
+            <div className="flex flex-col gap-3 rounded-md border border-border p-3 sm:flex-row sm:items-center">
+              {flyer ? (
+                <img src={flyer} alt={`QR flyer linking to ${qrUrl}`} className="h-32 w-32 shrink-0 rounded-md" />
+              ) : (
+                <div className="h-32 w-32 shrink-0 animate-pulse rounded-md bg-muted" />
+              )}
+              <div className="min-w-0 flex-1 space-y-2 text-sm">
+                <p className="font-mono font-semibold">{qrRef}</p>
+                <p className="truncate text-muted-foreground">{qrUrl}</p>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={attachQr} onChange={(e) => setAttachQr(e.target.checked)} />
+                  Attach QR flyer image to the post
+                </label>
+                {flyer && (
+                  <a href={flyer} download={`${qrRef}.png`} className="inline-flex items-center gap-1 text-primary underline">
+                    <Download className="h-4 w-4" /> Download QR flyer
+                  </a>
+                )}
+              </div>
+            </div>
             <Button onClick={publish} disabled={busy || !message.trim()} className="w-full">
               <Send className="mr-2 h-4 w-4" /> Publish to Facebook now
             </Button>
