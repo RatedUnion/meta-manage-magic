@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Calendar, Megaphone, ArrowLeft, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { FacebookPublisher } from "@/components/FacebookPublisher";
-import { createCampaign, toggleCampaignStatus, type CampaignItem } from "@/lib/campaigns.functions";
+import { createCampaign, listCampaigns, toggleCampaignStatus, type CampaignItem } from "@/lib/campaigns.functions";
 
 export const Route = createFileRoute("/_authenticated/campaigns")({
   component: CampaignsPage,
@@ -19,26 +19,13 @@ function CampaignsPage() {
   const addCampaignFn = useServerFn(createCampaign);
   const toggleStatusFn = useServerFn(toggleCampaignStatus);
 
-  const [campaigns, setCampaigns] = useState<CampaignItem[]>([
-    {
-      id: "camp-1",
-      title: "Commercial Generator Transfer Switch Outreach",
-      targetAudience: "Warehouses & Factories (Point Lisas & Macoya)",
-      channel: "WhatsApp & Email",
-      budgetTTD: 1500,
-      status: "Active",
-      startDate: "2026-11-01",
-    },
-    {
-      id: "camp-2",
-      title: "Holiday Grounds Maintenance & Illumination",
-      targetAudience: "Residential Compounds (Westmoorings & Maraval)",
-      channel: "Meta Ads & Flyer Drop",
-      budgetTTD: 850,
-      status: "Draft",
-      startDate: "2026-11-15",
-    },
-  ]);
+  const listFn = useServerFn(listCampaigns);
+  const [campaigns, setCampaigns] = useState<CampaignItem[]>([]);
+  useEffect(() => {
+    listFn()
+      .then(setCampaigns)
+      .catch((err) => toast.error(err instanceof Error ? err.message : "Could not load campaigns"));
+  }, [listFn]);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);

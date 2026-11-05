@@ -50,6 +50,13 @@
       "when": 1793664235298,
       "tag": "0006_meta_social_integrations",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793838582626,
+      "tag": "0007_create_campaigns",
+      "breakpoints": true
     }
   ]
 }
