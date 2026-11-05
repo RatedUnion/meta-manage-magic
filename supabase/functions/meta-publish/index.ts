@@ -24,12 +24,30 @@ Deno.serve(async (request) => {
 
     const token = await decryptToken(connection.token_ciphertext);
     const { version } = metaConfig();
-    const response = await fetch(`https://graph.facebook.com/${version}/${encodeURIComponent(connection.page_id)}/feed`, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({ message: input.message.trim(), access_token: token }),
-      signal: AbortSignal.timeout(15_000),
-    });
+    const image = typeof input.imageBase64 === "string" ? input.imageBase64.replace(/^data:image\/png;base64,/, "") : "";
+    let response: Response;
+    if (image) {
+      if (image.length > 8_000_000 || !/^[A-Za-z0-9+/=]+$/.test(image)) {
+        return json(request, { error: "The QR image is invalid or too large." }, 400);
+      }
+      const bytes = Uint8Array.from(atob(image), (c) => c.charCodeAt(0));
+      const form = new FormData();
+      form.append("caption", input.message.trim());
+      form.append("access_token", token);
+      form.append("source", new Blob([bytes], { type: "image/png" }), "duaa-qr.png");
+      response = await fetch(`https://graph.facebook.com/${version}/${encodeURIComponent(connection.page_id)}/photos`, {
+        method: "POST",
+        body: form,
+        signal: AbortSignal.timeout(30_000),
+      });
+    } else {
+      response = await fetch(`https://graph.facebook.com/${version}/${encodeURIComponent(connection.page_id)}/feed`, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ message: input.message.trim(), access_token: token }),
+        signal: AbortSignal.timeout(15_000),
+      });
+    }
     const result = await response.json();
     const providerCode = typeof result?.error?.code === "number" ? result.error.code : null;
     if (!response.ok || typeof result.id !== "string") {

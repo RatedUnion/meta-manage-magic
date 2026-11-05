@@ -20,7 +20,6 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AuthenticatedAssistantsRouteImport } from './routes/_authenticated/assistants'
 import { Route as AuthenticatedBookingsRouteImport } from './routes/_authenticated/bookings'
 import { Route as AuthenticatedCampaignsRouteImport } from './routes/_authenticated/campaigns'
-import { Route as AuthenticatedPublishRouteImport } from './routes/_authenticated/publish'
 import { Route as AuthenticatedMonitoringRouteImport } from './routes/_authenticated/monitoring'
 import { Route as AuthenticatedRosterRouteImport } from './routes/_authenticated/roster'
 import { Route as AuthenticatedStaffFeedbackRouteImport } from './routes/_authenticated/staff-feedback'
@@ -83,11 +82,6 @@ const AuthenticatedCampaignsRoute = AuthenticatedCampaignsRouteImport.update({
   path: '/campaigns',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedPublishRoute = AuthenticatedPublishRouteImport.update({
-  id: '/publish',
-  path: '/publish',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedMonitoringRoute = AuthenticatedMonitoringRouteImport.update({
   id: '/monitoring',
   path: '/monitoring',
@@ -136,7 +130,6 @@ export interface FileRoutesByFullPath {
   '/assistants': typeof AuthenticatedAssistantsRoute
   '/bookings': typeof AuthenticatedBookingsRoute
   '/campaigns': typeof AuthenticatedCampaignsRoute
-  '/publish': typeof AuthenticatedPublishRoute
   '/monitoring': typeof AuthenticatedMonitoringRoute
   '/roster': typeof AuthenticatedRosterRoute
   '/staff-feedback': typeof AuthenticatedStaffFeedbackRoute
@@ -156,7 +149,6 @@ export interface FileRoutesByTo {
   '/assistants': typeof AuthenticatedAssistantsRoute
   '/bookings': typeof AuthenticatedBookingsRoute
   '/campaigns': typeof AuthenticatedCampaignsRoute
-  '/publish': typeof AuthenticatedPublishRoute
   '/monitoring': typeof AuthenticatedMonitoringRoute
   '/roster': typeof AuthenticatedRosterRoute
   '/staff-feedback': typeof AuthenticatedStaffFeedbackRoute
@@ -178,7 +170,6 @@ export interface FileRoutesById {
   '/_authenticated/assistants': typeof AuthenticatedAssistantsRoute
   '/_authenticated/bookings': typeof AuthenticatedBookingsRoute
   '/_authenticated/campaigns': typeof AuthenticatedCampaignsRoute
-  '/_authenticated/publish': typeof AuthenticatedPublishRoute
   '/_authenticated/monitoring': typeof AuthenticatedMonitoringRoute
   '/_authenticated/roster': typeof AuthenticatedRosterRoute
   '/_authenticated/staff-feedback': typeof AuthenticatedStaffFeedbackRoute
@@ -200,7 +191,6 @@ export interface FileRouteTypes {
     | '/assistants'
     | '/bookings'
     | '/campaigns'
-    | '/publish'
     | '/monitoring'
     | '/roster'
     | '/staff-feedback'
@@ -220,7 +210,6 @@ export interface FileRouteTypes {
     | '/assistants'
     | '/bookings'
     | '/campaigns'
-    | '/publish'
     | '/monitoring'
     | '/roster'
     | '/staff-feedback'
@@ -241,7 +230,6 @@ export interface FileRouteTypes {
     | '/_authenticated/assistants'
     | '/_authenticated/bookings'
     | '/_authenticated/campaigns'
-    | '/_authenticated/publish'
     | '/_authenticated/monitoring'
     | '/_authenticated/roster'
     | '/_authenticated/staff-feedback'
@@ -344,13 +332,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCampaignsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/publish': {
-      id: '/_authenticated/publish'
-      path: '/publish'
-      fullPath: '/publish'
-      preLoaderRoute: typeof AuthenticatedPublishRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/monitoring': {
       id: '/_authenticated/monitoring'
       path: '/monitoring'
@@ -407,7 +388,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAssistantsRoute: typeof AuthenticatedAssistantsRoute
   AuthenticatedBookingsRoute: typeof AuthenticatedBookingsRoute
   AuthenticatedCampaignsRoute: typeof AuthenticatedCampaignsRoute
-  AuthenticatedPublishRoute: typeof AuthenticatedPublishRoute
   AuthenticatedMonitoringRoute: typeof AuthenticatedMonitoringRoute
   AuthenticatedRosterRoute: typeof AuthenticatedRosterRoute
   AuthenticatedStaffFeedbackRoute: typeof AuthenticatedStaffFeedbackRoute
@@ -418,7 +398,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAssistantsRoute: AuthenticatedAssistantsRoute,
   AuthenticatedBookingsRoute: AuthenticatedBookingsRoute,
   AuthenticatedCampaignsRoute: AuthenticatedCampaignsRoute,
-  AuthenticatedPublishRoute: AuthenticatedPublishRoute,
   AuthenticatedMonitoringRoute: AuthenticatedMonitoringRoute,
   AuthenticatedRosterRoute: AuthenticatedRosterRoute,
   AuthenticatedStaffFeedbackRoute: AuthenticatedStaffFeedbackRoute,

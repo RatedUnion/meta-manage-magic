@@ -59,19 +59,38 @@ function PhotoModal({ urls, onClose }: { urls: string[]; onClose: () => void }) 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
       <div className="relative max-h-[90vh] max-w-2xl">
-        <button type="button" onClick={onClose} className="absolute -right-10 -top-10 p-2 text-white hover:text-gray-300" aria-label="Close gallery">
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute -right-10 -top-10 p-2 text-white hover:text-gray-300"
+          aria-label="Close gallery"
+        >
           <X className="h-6 w-6" />
         </button>
 
-        <img src={urls[currentIndex]} alt={`Photo ${currentIndex + 1}`} className="max-h-[80vh] w-auto rounded-lg object-contain" />
+        <img
+          src={urls[currentIndex]}
+          alt={`Photo ${currentIndex + 1}`}
+          className="max-h-[80vh] w-auto rounded-lg object-contain"
+        />
 
         {urls.length > 1 && (
           <div className="mt-4 flex items-center justify-between gap-2">
-            <button type="button" onClick={() => setCurrentIndex((i) => (i - 1 + urls.length) % urls.length)} className="rounded-lg bg-white/20 px-4 py-2 text-sm font-medium text-white hover:bg-white/30">
+            <button
+              type="button"
+              onClick={() => setCurrentIndex((i) => (i - 1 + urls.length) % urls.length)}
+              className="rounded-lg bg-white/20 px-4 py-2 text-sm font-medium text-white hover:bg-white/30"
+            >
               ← Previous
             </button>
-            <span className="text-sm text-gray-300">{currentIndex + 1} / {urls.length}</span>
-            <button type="button" onClick={() => setCurrentIndex((i) => (i + 1) % urls.length)} className="rounded-lg bg-white/20 px-4 py-2 text-sm font-medium text-white hover:bg-white/30">
+            <span className="text-sm text-gray-300">
+              {currentIndex + 1} / {urls.length}
+            </span>
+            <button
+              type="button"
+              onClick={() => setCurrentIndex((i) => (i + 1) % urls.length)}
+              className="rounded-lg bg-white/20 px-4 py-2 text-sm font-medium text-white hover:bg-white/30"
+            >
               Next →
             </button>
           </div>
@@ -99,7 +118,13 @@ function BookingPhotos({ paths }: { paths: string[] }) {
 
   return (
     <>
-      <Button size="sm" variant="outline" onClick={() => setShowModal(true)} disabled={loading} className="mt-3 gap-2">
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => setShowModal(true)}
+        disabled={loading}
+        className="mt-3 gap-2"
+      >
         <Images className="h-4 w-4" />
         Show images ({paths.length})
       </Button>
@@ -283,12 +308,19 @@ function BookingsPage() {
             </Link>
             <h1 className="mt-3 text-3xl font-semibold tracking-tight">Booking history</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              {data ? `${counts.all} booking${counts.all === 1 ? "" : "s"} saved · ${counts.awaiting} awaiting confirmation · ${counts.paid} paid · ${counts.unpaid} unpaid` : "Loading bookings…"}
+              {data
+                ? `${counts.all} booking${counts.all === 1 ? "" : "s"} saved · ${counts.awaiting} awaiting confirmation · ${counts.paid} paid · ${counts.unpaid} unpaid`
+                : "Loading bookings…"}
             </p>
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={openAllImages} disabled={loadingAllImages || allPhotoPaths.length === 0}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={openAllImages}
+              disabled={loadingAllImages || allPhotoPaths.length === 0}
+            >
               <Images className="mr-2 h-4 w-4" />
               Show all images
             </Button>
@@ -306,9 +338,6 @@ function BookingsPage() {
                 <Link to="/campaigns">Campaigns</Link>
               </Button>
               <Button variant="outline" size="sm" asChild>
-                <Link to="/publish">Publish</Link>
-              </Button>
-              <Button variant="outline" size="sm" asChild>
                 <Link to="/voice-sms">Voice & SMS</Link>
               </Button>
               <Button variant="outline" size="sm" asChild>
@@ -323,12 +352,25 @@ function BookingsPage() {
 
         <div className="relative mt-6">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by reference, name, email, phone, service or payment" className="pl-9" />
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search by reference, name, email, phone, service or payment"
+            className="pl-9"
+          />
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2">
           {PAY_FILTERS.map((f) => (
-            <button key={f} type="button" onClick={() => setPayFilter(f)} className={cn("rounded-full border px-4 py-1.5 text-sm capitalize transition-colors", payFilter === f ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground hover:border-primary/50")}>
+            <button
+              key={f}
+              type="button"
+              onClick={() => setPayFilter(f)}
+              className={cn(
+                "rounded-full border px-4 py-1.5 text-sm capitalize transition-colors",
+                payFilter === f ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground hover:border-primary/50",
+              )}
+            >
               {f === "all" ? "All" : f} ({counts[f]})
             </button>
           ))}
@@ -338,12 +380,18 @@ function BookingsPage() {
           <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
             <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">Approved payments</p>
             <p className="mt-1 text-xl font-semibold text-emerald-700">{paymentSummary.approved}</p>
-            <p className="mt-1 text-xs text-emerald-700/80">{paymentSummary.approvedCount} booking{paymentSummary.approvedCount === 1 ? "" : "s"} confirmed paid</p>
+            <p className="mt-1 text-xs text-emerald-700/80">
+              {paymentSummary.approvedCount} booking{paymentSummary.approvedCount === 1 ? "" : "s"} confirmed paid
+            </p>
           </div>
           <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
             <p className="text-xs font-medium uppercase tracking-wide text-amber-700">Awaiting your approval</p>
             <p className="mt-1 text-xl font-semibold text-amber-700">{paymentSummary.awaiting}</p>
-            <p className="mt-1 text-xs text-amber-700/80">{paymentSummary.awaiting > 0 ? `${paymentSummary.awaitingTotal} to verify in First Citizens Acc. 003108954` : "No payments waiting"}</p>
+            <p className="mt-1 text-xs text-amber-700/80">
+              {paymentSummary.awaiting > 0
+                ? `${paymentSummary.awaitingTotal} to verify in First Citizens Acc. 003108954`
+                : "No payments waiting"}
+            </p>
           </div>
           <div className="rounded-xl border border-border bg-muted/50 p-4">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Declined / unpaid</p>
@@ -357,7 +405,9 @@ function BookingsPage() {
           {!isLoading && rows.length === 0 && (
             <div className="rounded-xl border border-dashed border-border p-10 text-center">
               <CalendarDays className="mx-auto h-8 w-8 text-muted-foreground" />
-              <p className="mt-3 text-sm text-muted-foreground">No bookings yet. New requests from the booking form appear here.</p>
+              <p className="mt-3 text-sm text-muted-foreground">
+                No bookings yet. New requests from the booking form appear here.
+              </p>
               <Button asChild variant="secondary" size="sm" className="mt-4">
                 <Link to="/book">Open booking form</Link>
               </Button>
@@ -370,8 +420,12 @@ function BookingsPage() {
                 <div className="flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="text-lg font-semibold">{b.service}</h2>
-                    <Badge variant="outline" className={statusTone[b.status] ?? ""}>{b.status}</Badge>
-                    <Badge variant="outline" className={payTone[b.payment_status] ?? ""}>{payLabel[b.payment_status] ?? "Unpaid"}</Badge>
+                    <Badge variant="outline" className={statusTone[b.status] ?? ""}>
+                      {b.status}
+                    </Badge>
+                    <Badge variant="outline" className={payTone[b.payment_status] ?? ""}>
+                      {payLabel[b.payment_status] ?? "Unpaid"}
+                    </Badge>
                     <span className="font-mono text-xs text-muted-foreground">{b.reference}</span>
                   </div>
 
@@ -382,7 +436,9 @@ function BookingsPage() {
 
                   {Array.isArray(b.photo_paths) && b.photo_paths.length > 0 && <BookingPhotos paths={b.photo_paths} />}
                 </div>
-                <p className="text-xs text-muted-foreground">Received {format(new Date(b.created_at), "d MMM yyyy, HH:mm")}</p>
+                <p className="text-xs text-muted-foreground">
+                  Received {format(new Date(b.created_at), "d MMM yyyy, HH:mm")}
+                </p>
               </div>
 
               <div className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
@@ -394,7 +450,12 @@ function BookingsPage() {
                   <Phone className="h-4 w-4" /> {b.phone}
                 </a>
                 {b.calendar_event_url && (
-                  <a href={b.calendar_event_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground">
+                  <a
+                    href={b.calendar_event_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground"
+                  >
                     <CalendarDays className="h-4 w-4" /> Calendar event
                   </a>
                 )}
@@ -403,7 +464,12 @@ function BookingsPage() {
               {b.notes && <p className="mt-3 rounded-lg bg-muted/50 p-3 text-sm">{b.notes}</p>}
 
               {(b.payment_status === "paid" || b.payment_status === "pending_review") && (
-                <div className={cn("mt-3 rounded-lg px-3 py-2 text-sm", b.payment_status === "paid" ? "bg-emerald-500/10 text-emerald-700" : "bg-amber-500/10 text-amber-700")}>
+                <div
+                  className={cn(
+                    "mt-3 rounded-lg px-3 py-2 text-sm",
+                    b.payment_status === "paid" ? "bg-emerald-500/10 text-emerald-700" : "bg-amber-500/10 text-amber-700",
+                  )}
+                >
                   <p className="inline-flex flex-wrap items-center gap-2">
                     <CreditCard className="h-4 w-4" />
                     {money(b.payment_amount, b.payment_currency) ?? "Payment submitted"}
@@ -412,7 +478,9 @@ function BookingsPage() {
                     {b.paid_at ? ` · ${format(new Date(b.paid_at), "d MMM yyyy, HH:mm")}` : ""}
                   </p>
                   {b.payment_status === "pending_review" && (
-                    <p className="mt-1 text-xs">Check First Citizens Bank Acc. 003108954 for this amount, then confirm it below.</p>
+                    <p className="mt-1 text-xs">
+                      Check First Citizens Bank Acc. 003108954 for this amount, then confirm it below.
+                    </p>
                   )}
                 </div>
               )}
@@ -425,18 +493,40 @@ function BookingsPage() {
                 ))}
                 {b.payment_status === "pending_review" && (
                   <>
-                    <Button size="sm" onClick={() => onPayment(b.id, "paid")}>Approve payment</Button>
-                    <Button size="sm" variant="ghost" onClick={() => onPayment(b.id, "unpaid")}>Decline payment</Button>
+                    <Button size="sm" onClick={() => onPayment(b.id, "paid")}>
+                      Approve payment
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => onPayment(b.id, "unpaid")}>
+                      Decline payment
+                    </Button>
                   </>
                 )}
                 {b.payment_status === "paid" && (
                   <>
-                    <Button size="sm" variant="ghost" onClick={() => onPayment(b.id, "unpaid")}>Mark unpaid</Button>
-                    <Button size="sm" variant="ghost" onClick={() => onPayment(b.id, "refunded")}>Mark refunded</Button>
+                    <Button size="sm" variant="ghost" onClick={() => onPayment(b.id, "unpaid")}>
+                      Mark unpaid
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => onPayment(b.id, "refunded")}>
+                      Mark refunded
+                    </Button>
                   </>
                 )}
                 {(b.payment_status === "unpaid" || b.payment_status === "refunded") && (
-                  <Button size="sm" variant="outline" onClick={async () => { try { await executeCustomAction({ data: { bookingId: b.id, notes: "Audited by staff" } }); toast.success("Task audited"); queryClient.invalidateQueries({ queryKey: ["bookings"] }); } catch (e) { toast.error(e instanceof Error ? e.message : "Audit action failed"); } }}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={async () => {
+                      try {
+                        await executeCustomAction({
+                          data: { bookingId: b.id, notes: "Audited by staff" },
+                        });
+                        toast.success("Task audited");
+                        queryClient.invalidateQueries({ queryKey: ["bookings"] });
+                      } catch (e) {
+                        toast.error(e instanceof Error ? e.message : "Audit action failed");
+                      }
+                    }}
+                  >
                     Audit Task
                   </Button>
                 )}
@@ -448,3 +538,4 @@ function BookingsPage() {
     </main>
   );
 }
+
