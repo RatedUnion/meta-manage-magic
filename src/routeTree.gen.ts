@@ -16,6 +16,7 @@ import { Route as BookRouteImport } from './routes/book'
 import { Route as FeedbackRouteImport } from './routes/feedback'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as PayRouteImport } from './routes/pay'
+import { Route as PublishRouteImport } from './routes/publish'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AuthenticatedAssistantsRouteImport } from './routes/_authenticated/assistants'
 import { Route as AuthenticatedBookingsRouteImport } from './routes/_authenticated/bookings'
@@ -60,6 +61,11 @@ const MarketplaceRoute = MarketplaceRouteImport.update({
 const PayRoute = PayRouteImport.update({
   id: '/pay',
   path: '/pay',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PublishRoute = PublishRouteImport.update({
+  id: '/publish',
+  path: '/publish',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -126,6 +132,7 @@ export interface FileRoutesByFullPath {
   '/feedback': typeof FeedbackRoute
   '/marketplace': typeof MarketplaceRoute
   '/pay': typeof PayRoute
+  '/publish': typeof PublishRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/assistants': typeof AuthenticatedAssistantsRoute
   '/bookings': typeof AuthenticatedBookingsRoute
@@ -145,6 +152,7 @@ export interface FileRoutesByTo {
   '/feedback': typeof FeedbackRoute
   '/marketplace': typeof MarketplaceRoute
   '/pay': typeof PayRoute
+  '/publish': typeof PublishRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/assistants': typeof AuthenticatedAssistantsRoute
   '/bookings': typeof AuthenticatedBookingsRoute
@@ -166,6 +174,7 @@ export interface FileRoutesById {
   '/feedback': typeof FeedbackRoute
   '/marketplace': typeof MarketplaceRoute
   '/pay': typeof PayRoute
+  '/publish': typeof PublishRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/assistants': typeof AuthenticatedAssistantsRoute
   '/_authenticated/bookings': typeof AuthenticatedBookingsRoute
@@ -187,6 +196,7 @@ export interface FileRouteTypes {
     | '/feedback'
     | '/marketplace'
     | '/pay'
+    | '/publish'
     | '/sitemap.xml'
     | '/assistants'
     | '/bookings'
@@ -206,6 +216,7 @@ export interface FileRouteTypes {
     | '/feedback'
     | '/marketplace'
     | '/pay'
+    | '/publish'
     | '/sitemap.xml'
     | '/assistants'
     | '/bookings'
@@ -226,6 +237,7 @@ export interface FileRouteTypes {
     | '/feedback'
     | '/marketplace'
     | '/pay'
+    | '/publish'
     | '/sitemap.xml'
     | '/_authenticated/assistants'
     | '/_authenticated/bookings'
@@ -247,6 +259,7 @@ export interface RootRouteChildren {
   FeedbackRoute: typeof FeedbackRoute
   MarketplaceRoute: typeof MarketplaceRoute
   PayRoute: typeof PayRoute
+  PublishRoute: typeof PublishRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiChatRoute: typeof ApiChatRoute
   ServicesSlugRoute: typeof ServicesSlugRoute
@@ -302,6 +315,13 @@ declare module '@tanstack/react-router' {
       path: '/pay'
       fullPath: '/pay'
       preLoaderRoute: typeof PayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/publish': {
+      id: '/publish'
+      path: '/publish'
+      fullPath: '/publish'
+      preLoaderRoute: typeof PublishRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -415,6 +435,7 @@ const rootRouteChildren: RootRouteChildren = {
   FeedbackRoute: FeedbackRoute,
   MarketplaceRoute: MarketplaceRoute,
   PayRoute: PayRoute,
+  PublishRoute: PublishRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiChatRoute: ApiChatRoute,
   ServicesSlugRoute: ServicesSlugRoute,

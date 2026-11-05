@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Outlet, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Eye, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +35,9 @@ function ShellHeader() {
           </Link>
           <Link to="/campaigns" className={linkCls} activeProps={{ className: "text-sm font-semibold text-foreground" }}>
             Campaigns
+          </Link>
+          <Link to="/publish" className={linkCls} activeProps={{ className: "text-sm font-semibold text-foreground" }}>
+            Publish
           </Link>
         </nav>
         <div className="ml-auto flex items-center gap-2">

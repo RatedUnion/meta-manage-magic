@@ -341,6 +341,9 @@ function BookingsPage() {
                 <Link to="/campaigns">Campaigns</Link>
               </Button>
               <Button variant="outline" size="sm" asChild>
+                <Link to="/publish">Publish</Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
                 <Link to="/voice-sms">Voice & SMS</Link>
               </Button>
               <Button variant="outline" size="sm" asChild>
@@ -541,4 +544,3 @@ function BookingsPage() {
     </main>
   );
 }
-
