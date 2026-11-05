@@ -11,7 +11,7 @@ function encodeBase64(value: Uint8Array) {
 function encryptionKey() {
   const value = Deno.env.get("META_TOKEN_ENCRYPTION_KEY");
   if (!value) throw new Error("Token encryption is not configured");
-  let bytes: Uint8Array | null = null;
+  let bytes: Uint8Array<ArrayBuffer> | null = null;
   try {
     const decoded = decodeBase64(value);
     if (decoded.length === 32) bytes = decoded;

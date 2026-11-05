@@ -142,6 +142,45 @@ export type Database = {
           },
         ]
       }
+      campaigns: {
+        Row: {
+          budget_ttd: number
+          channel: string
+          created_at: string
+          created_by: string | null
+          id: string
+          start_date: string
+          status: string
+          target_audience: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          budget_ttd?: number
+          channel: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          start_date?: string
+          status?: string
+          target_audience: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          budget_ttd?: number
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          start_date?: string
+          status?: string
+          target_audience?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       feedback: {
         Row: {
           booking_reference: string | null
