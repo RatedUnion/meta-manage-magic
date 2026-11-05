@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useViewMode } from "@/lib/view-mode";
 import { supabase } from "@/integrations/supabase/client";
 import {
   listBookings,
@@ -287,6 +288,8 @@ function BookingsPage() {
     }
   };
 
+  const { viewOnly } = useViewMode();
+
   const signOut = async () => {
     await queryClient.cancelQueries();
     queryClient.clear();
@@ -485,7 +488,7 @@ function BookingsPage() {
                 </div>
               )}
 
-              <div className="mt-4 flex flex-wrap gap-2">
+              {!viewOnly && <div className="mt-4 flex flex-wrap gap-2">
                 {STATUSES.filter((s) => s !== b.status).map((s) => (
                   <Button key={s} size="sm" variant="outline" onClick={() => onStatus(b.id, s)}>
                     Mark {s}
@@ -530,7 +533,7 @@ function BookingsPage() {
                     Audit Task
                   </Button>
                 )}
-              </div>
+              </div>}
             </article>
           ))}
         </div>
