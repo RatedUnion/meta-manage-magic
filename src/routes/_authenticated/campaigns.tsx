@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { FacebookPublisher } from "@/components/FacebookPublisher";
+import { useViewMode } from "@/lib/view-mode";
 import { createCampaign, listCampaigns, toggleCampaignStatus, type CampaignItem } from "@/lib/campaigns.functions";
 
 export const Route = createFileRoute("/_authenticated/campaigns")({
@@ -19,6 +20,7 @@ function CampaignsPage() {
   const addCampaignFn = useServerFn(createCampaign);
   const toggleStatusFn = useServerFn(toggleCampaignStatus);
 
+  const { viewOnly } = useViewMode();
   const listFn = useServerFn(listCampaigns);
   const [campaigns, setCampaigns] = useState<CampaignItem[]>([]);
   useEffect(() => {
@@ -97,15 +99,17 @@ function CampaignsPage() {
               Seasonal & Location Campaigns
             </h1>
           </div>
-          <Button size="sm" onClick={() => setIsDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-1" />
-            New Campaign
-          </Button>
+          {!viewOnly && (
+            <Button size="sm" onClick={() => setIsDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-1" />
+              New Campaign
+            </Button>
+          )}
         </div>
 
-        <FacebookPublisher />
+        {!viewOnly && <FacebookPublisher />}
 
-        {isDialogOpen && (
+        {isDialogOpen && !viewOnly && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
             <div className="w-full max-w-md rounded-xl border bg-card p-6 shadow-xl space-y-4">
               <div className="flex items-center justify-between">
@@ -190,7 +194,7 @@ function CampaignsPage() {
                     <Calendar className="h-3 w-3" /> Starts {camp.startDate}
                   </span>
                 </div>
-                <div className="pt-2 flex justify-end">
+                {!viewOnly && <div className="pt-2 flex justify-end">
                   <Button
                     size="sm"
                     variant="outline"
@@ -199,7 +203,7 @@ function CampaignsPage() {
                   >
                     Mark as {camp.status === "Active" ? "Completed" : "Active"}
                   </Button>
-                </div>
+                </div>}
               </CardContent>
             </Card>
           ))}
