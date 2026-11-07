@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const OPERATIONAL_AREAS = {
+export const OPERATIONAL_AREAS = {
   "Port of Spain": { latitude: 10.6667, longitude: -61.5189 },
   "Diego Martin": { latitude: 10.6925, longitude: -61.5662 },
   Chaguanas: { latitude: 10.5167, longitude: -61.4111 },
@@ -16,7 +16,9 @@ const OPERATIONAL_AREAS = {
   Roxborough: { latitude: 11.2485, longitude: -60.588 },
 } as const;
 
-const areaSchema = z.enum(Object.keys(OPERATIONAL_AREAS) as [keyof typeof OPERATIONAL_AREAS, ...(keyof typeof OPERATIONAL_AREAS)[]]);
+export type OperationalArea = keyof typeof OPERATIONAL_AREAS;
+
+const areaSchema = z.enum(Object.keys(OPERATIONAL_AREAS) as [OperationalArea, ...OperationalArea[]]);
 
 const weatherResponseSchema = z.object({
   current: z.object({
@@ -35,6 +37,7 @@ const weatherResponseSchema = z.object({
     precipitation_probability: z.array(z.number()),
     precipitation: z.array(z.number()),
     wind_speed_10m: z.array(z.number()),
+    wind_gusts_10m: z.array(z.number()),
     weather_code: z.array(z.number()),
   }),
 });
@@ -48,8 +51,8 @@ export const getOperationalWeather = createServerFn({ method: "POST" })
       latitude: String(coordinates.latitude),
       longitude: String(coordinates.longitude),
       current: "temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,wind_speed_10m,wind_gusts_10m,weather_code",
-      hourly: "temperature_2m,precipitation_probability,precipitation,wind_speed_10m,weather_code",
-      forecast_days: "1",
+      hourly: "temperature_2m,precipitation_probability,precipitation,wind_speed_10m,wind_gusts_10m,weather_code",
+      forecast_days: "2",
       timezone: "America/Port_of_Spain",
     });
 
@@ -57,31 +60,40 @@ export const getOperationalWeather = createServerFn({ method: "POST" })
       signal: AbortSignal.timeout(10_000),
       headers: { Accept: "application/json" },
     });
-    if (!response.ok) throw new Error("Weather service is temporarily unavailable. Try again shortly.");
+
+    if (!response.ok) {
+      throw new Error("Live weather broadcast feed is temporarily unavailable. Try again shortly.");
+    }
 
     const parsed = weatherResponseSchema.safeParse(await response.json());
-    if (!parsed.success) throw new Error("Weather service returned an unexpected response.");
+    if (!parsed.success) {
+      throw new Error("Weather service returned an unrecognized telemetry format.");
+    }
 
     const { current, hourly } = parsed.data;
-    const currentIndex = Math.max(0, hourly.time.findIndex((time) => time >= current.time));
-    const forecast = hourly.time.slice(currentIndex, currentIndex + 4).map((time, offset) => {
-      const index = currentIndex + offset;
+    const currentIndex = Math.max(0, hourly.time.findIndex((t) => t >= current.time));
+
+    // Next 6 hours forecast broadcast
+    const forecast = hourly.time.slice(currentIndex, currentIndex + 6).map((time, offset) => {
+      const idx = currentIndex + offset;
       return {
         time,
-        temperatureC: hourly.temperature_2m[index],
-        precipitationProbability: hourly.precipitation_probability[index],
-        precipitationMm: hourly.precipitation[index],
-        windSpeedKmh: hourly.wind_speed_10m[index],
-        weatherCode: hourly.weather_code[index],
+        temperatureC: hourly.temperature_2m[idx],
+        precipitationProbability: hourly.precipitation_probability[idx],
+        precipitationMm: hourly.precipitation[idx],
+        windSpeedKmh: hourly.wind_speed_10m[idx],
+        windGustKmh: hourly.wind_gusts_10m[idx],
+        weatherCode: hourly.weather_code[idx],
       };
     });
 
     return {
       area: data.area,
-      latitude: coordinates.latitude,
-      longitude: coordinates.longitude,
-      updatedAt: current.time,
+      coordinates,
+      updatedAt: new Date().toISOString(),
+      source: "Open-Meteo High-Resolution Regional Model",
       current: {
+        time: current.time,
         temperatureC: current.temperature_2m,
         feelsLikeC: current.apparent_temperature,
         humidityPercent: current.relative_humidity_2m,
@@ -91,6 +103,5 @@ export const getOperationalWeather = createServerFn({ method: "POST" })
         weatherCode: current.weather_code,
       },
       forecast,
-      source: "Open-Meteo",
     };
   });
