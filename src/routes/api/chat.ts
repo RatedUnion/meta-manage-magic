@@ -71,11 +71,11 @@ export const Route = createFileRoute("/api/chat")({
 
         try {
           const result = streamText({
-            model: openai.chat("google/gemini-3-flash-preview"),
+            model: openai.chat("google/gemini-2.5-flash"),
             system: SYSTEM_PROMPT,
             messages: await convertToModelMessages(messages),
           });
-          return withLovableAiGatewayRunIdHeader(result.toUIMessageStreamResponse(), gateway);
+          return withLovableAiGatewayRunIdHeader(result.toUIMessageStreamResponse({ onError: (e) => { console.error("kimi", e); return e instanceof Error ? e.message : "Kimi AI is unavailable."; } }), gateway);
         } catch (err) {
           const msg = err instanceof Error ? err.message : "Kimi AI is unavailable.";
           const status = /402|credit/i.test(msg) ? 402 : /429|rate/i.test(msg) ? 429 : 500;
