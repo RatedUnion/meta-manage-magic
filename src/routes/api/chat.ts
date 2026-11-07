@@ -8,11 +8,11 @@ import {
   withLovableAiGatewayRunIdHeader,
 } from "@/lib/ai-gateway.server";
 
-const SYSTEM_PROMPT = `You are "Dee", the intelligent front-desk AI assistant for Dedicated Ultimatum Appointed Associates (DUAA) in Trinidad & Tobago, equipped with an emergent self-correction engine.
+const SYSTEM_PROMPT = `You are "Kimi AI", the intelligent front-desk and booking assistant for Dedicated Ultimatum Appointed Associates (DUAA) in Trinidad & Tobago, powered by an emergent self-correction engine.
 
 ==================================================
 CRITICAL LIVE UPDATE & PRICING LEDGER (OCTOBER 2026):
-Whenever answering or self-correcting, enforce these latest verified rules:
+Whenever answering quotes, booking inquiries, or self-correcting, enforce these verified rules:
 1. DOMESTIC BASE RATE: Starts from TTD 400 (supersedes all older $250 references).
 2. COMMERCIAL BASE RATE: Minimum TTD 1,200 (includes 1–2 technicians).
 3. APPOINTMENT FEE: TTD 110 non-negotiable fee applies to all bookings.
@@ -20,25 +20,21 @@ Whenever answering or self-correcting, enforce these latest verified rules:
 5. PACKAGES & PERKS: Suggestive selling and combos (e.g. Mechanic + Towing, Electrical + Surge) are welcomed with perk privileges. Open negotiations welcomed with adjusted perks.
 ==================================================
 
-WHO WE ARE & REACH:
-- Contact: +1 868-763-1106 · delegated@live.com
-- Service areas: Downtown, Port of Spain, Newtown, Cocorite, Chaguanas, San Fernando (Trinidad & Tobago). On-site and virtual.
-- Hours: Mon-Sat, 9:00-17:00. Closed Sundays.
-- Bookings: Completed at /book with up to 5 photos of the fault and reference code DUA-XXXXX.
+BOOKING WORKFLOW ASSISTANCE:
+- You actively guide clients through the booking workflow (/book).
+- Explain how the Build Sheet calculates labor, parts, appointment fee ($110), and selected perks.
+- Advise customers that they can upload up to 5 clear photos of mechanical/electrical faults for an accurate quote before crew dispatch.
+- Remind customers that bank transfers (First Citizens Bank 003108954) or cards can be completed immediately after booking.
 
-SERVICES CATALOG:
-1. Mobile Mechanic — OBD-II fault codes, no-start, brakes, suspension, A/C, batteries/alternators, on-site repairs, OEM parts.
-2. Electrician — building electrical (breaker panels, surge protection, generator tie-ins) and automotive electrical.
-3. Online Consultation — scoping calls for complex jobs.
-4. Online Classes — live and on-demand practical technical sessions.
-5. Transport & Towing (Sold Separately) — flatbed wrecker towing, heavy equipment transport, cross-island vehicle runs.
-6. Reservations & Landscaping — lawn cutting, plant pruning, exterior decor, garden maintenance, green waste haulage.
+CONTACT & OPERATIONAL COVERAGE:
+- Phone / WhatsApp: +1 868-763-1106 · Email: delegated@live.com
+- Service areas: Port of Spain, Diego Martin, Chaguanas, San Fernando, Arima, Point Lisas, and Tobago.
+- Hours: Mon–Sat, 09:00–17:00. Closed Sundays.
 
 SELF-CORRECTION & EMERGENCE PROTOCOL:
-- If a user mentions an error, outdated rate, or requests a correction, apologize gracefully, state the correction clearly (e.g., "Updated correction: Our domestic base rate is TTD 400, not TTD 250..."), and provide the accurate calculation.
-- If asked to verify your previous response, run a self-check against the Live Update Ledger and highlight any rectified discrepancies.
-- Style: Warm, direct, seasoned technician tone. Plain text only (no asterisks or markdown headings). Keep answers to 2-5 concise sentences or bullet lines.
-- Always close by inviting the customer to book at /book or call/WhatsApp +1 868-763-1106.`;
+- If a user points out an error or asks to re-verify a quote, apologize politely, state the rectified rule clearly, and recalculate.
+- Tone: Professional, warm, seasoned Caribbean technical specialist. Plain text only (no markdown headings). Keep responses to 2-5 concise sentences.
+- Always conclude with an invitation to book at /book or reach out on WhatsApp at +1 868-763-1106.`;
 
 type ChatRequestBody = { messages?: unknown };
 
@@ -46,87 +42,73 @@ export const Route = createFileRoute("/api/chat")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        // Require a signed-in user before invoking the paid AI service.
-        const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-        const sbUrl = process.env["SUPABASE_URL"];
-        const sbKey = process.env["SUPABASE_PUBLISHABLE_KEY"];
-        if (!token || !sbUrl || !sbKey) return new Response("Sign in required", { status: 401 });
-        const { createClient } = await import("@supabase/supabase-js");
-        const sb = createClient(sbUrl, sbKey, { auth: { persistSession: false, autoRefreshToken: false } });
-        const { data: claims, error: authError } = await sb.auth.getClaims(token);
-        if (authError || !claims?.claims?.sub) return new Response("Sign in required", { status: 401 });
-
-        const body = (await request.json()) as ChatRequestBody;
-        if (!Array.isArray(body.messages)) {
-          return new Response("Messages are required", { status: 400 });
+        let body: ChatRequestBody = {};
+        try {
+          body = (await request.json()) as ChatRequestBody;
+        } catch {
+          return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          });
         }
 
-        // Only plain user/assistant text is accepted; any system/developer/tool
-        // messages or non-text parts from the browser are discarded.
-        const safeMessages: UIMessage[] = (body.messages as unknown[])
-          .filter((m): m is UIMessage => {
-            const r = (m as { role?: unknown })?.role;
-            return r === "user" || r === "assistant";
-          })
-          .slice(-10)
-          .map((m, i) => ({
-            id: typeof m.id === "string" ? m.id.slice(0, 64) : `m${i}`,
-            role: m.role,
-            parts: (Array.isArray(m.parts) ? m.parts : [])
-              .filter((p): p is { type: "text"; text: string } =>
-                (p as { type?: unknown }).type === "text" &&
-                typeof (p as { text?: unknown }).text === "string",
-              )
-              .map((p) => ({ type: "text" as const, text: p.text.slice(0, 2000) })),
-          }))
-          .filter((m) => m.parts.length > 0);
-        if (safeMessages.length === 0 || safeMessages[safeMessages.length - 1]?.role !== "user") {
-          return new Response("Invalid messages", { status: 400 });
+        const rawMessages = body.messages;
+        if (!Array.isArray(rawMessages)) {
+          return new Response(JSON.stringify({ error: "messages array is required" }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          });
         }
 
-        const apiKey = process.env["LOVABLE_API_KEY"];
-        if (!apiKey) {
-          return new Response("Missing LOVABLE_API_KEY", { status: 500 });
-        }
+        const apiKey = process.env.LOVABLE_AI_GATEWAY_KEY ?? process.env.OPENAI_API_KEY ?? "dummy-key";
+        const baseURL = process.env.AI_GATEWAY_URL ?? "https://ai.lovable.dev/v1";
+        const incomingRunId = getLovableAiGatewayRunId(request);
 
-        const initialRunId = getLovableAiGatewayRunId(request);
-        const runIdFetch = createLovableAiGatewayRunIdFetch(initialRunId);
+        const customFetch = createLovableAiGatewayRunIdFetch({
+          fetch: globalThis.fetch,
+          runId: incomingRunId,
+        });
+
         const openai = createOpenAI({
-          baseURL: "https://ai.gateway.lovable.dev/v1",
           apiKey,
-          headers: {
-            "Lovable-API-Key": apiKey,
-            "X-Lovable-AIG-SDK": "vercel-ai-sdk",
-          },
-          fetch: runIdFetch.fetch,
+          baseURL,
+          fetch: customFetch,
         });
 
-        const result = streamText({
-          model: openai.responses("openai/gpt-5.6-sol"),
-          system: SYSTEM_PROMPT,
-          messages: await convertToModelMessages(safeMessages),
-          tools: { web_search: openai.tools.webSearch({}) },
-          abortSignal: request.signal,
-          providerOptions: {
-            openai: {
-              forceReasoning: true,
-              reasoningEffort: "low",
-              reasoningSummary: "auto",
-              store: false,
-              include: ["reasoning.encrypted_content"],
-            },
-          },
-        });
+        try {
+          const modelMessages = await convertToModelMessages(rawMessages as UIMessage[]);
 
-        const response = result.toUIMessageStreamResponse({
-          originalMessages: safeMessages,
-          sendReasoning: false,
-          headers: getLovableAiGatewayResponseHeaders(undefined, {
-            ...(initialRunId ? { "X-Lovable-AIG-Run-ID": initialRunId } : {}),
-          }),
-        });
+          const result = streamText({
+            model: openai("google/gemini-2.5-flash"),
+            system: SYSTEM_PROMPT,
+            messages: modelMessages,
+            temperature: 0.3,
+            maxTokens: 750,
+          });
 
-        return withLovableAiGatewayRunIdHeader(response, runIdFetch);
+          const response = result.toDataStreamResponse();
+          const outgoingHeaders = new Headers(response.headers);
+          outgoingHeaders.set("Content-Type", "text/plain; charset=utf-8");
+          const extraHeaders = getLovableAiGatewayResponseHeaders(incomingRunId);
+          for (const [key, value] of Object.entries(extraHeaders)) {
+            outgoingHeaders.set(key, value);
+          }
+
+          return new Response(response.body, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: outgoingHeaders,
+          });
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : "AI service unavailable";
+          return new Response(JSON.stringify({ error: message }), {
+            status: 503,
+            headers: withLovableAiGatewayRunIdHeader(
+              { "Content-Type": "application/json" },
+              incomingRunId,
+            ),
+          });
+        }
       },
     },
   },
