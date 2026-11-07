@@ -246,7 +246,9 @@ export function ChatBot() {
                       : "mr-auto bg-muted/80 text-foreground rounded-bl-none border"
                   )}
                 >
-                  <p className="whitespace-pre-wrap">{m.content}</p>
+                  <p className="whitespace-pre-wrap">{m.parts
+                      .map((p) => (p.type === "text" ? p.text : ""))
+                      .join("")}</p>
                 </div>
               ))
             )}
