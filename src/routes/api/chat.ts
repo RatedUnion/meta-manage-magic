@@ -1,3 +1,14 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { createOpenAI } from "@ai-sdk/openai";
+import { convertToModelMessages, streamText, type UIMessage } from "ai";
+import {
+  createLovableAiGatewayRunIdFetch,
+  getLovableAiGatewayResponseHeaders,
+  getLovableAiGatewayRunId,
+  withLovableAiGatewayRunIdHeader,
+} from "@/lib/ai-gateway.server";
+
+
 const SYSTEM_PROMPT = `You are "Kimi AI", the intelligent front-desk and booking assistant for Dedicated Ultimatum Appointed Associates (DUAA) in Trinidad & Tobago.
 
 ==================================================
@@ -27,3 +38,53 @@ SERVICES CATALOG:
 HOW TO ANSWER:
 - Style: Warm, direct, seasoned technician tone. Plain text only (no asterisks or markdown headings). Keep answers to 2-5 concise sentences or bullet lines.
 - Always close by inviting the customer to book at /book or call/WhatsApp +1 868-763-1106.`;
+
+export const Route = createFileRoute("/api/chat")({
+  server: {
+    handlers: {
+      POST: async ({ request }) => {
+        const apiKey = process.env.LOVABLE_API_KEY;
+        if (!apiKey) {
+          return new Response(JSON.stringify({ error: "Kimi AI is not configured." }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+
+        let body: { messages?: UIMessage[] };
+        try {
+          body = (await request.json()) as { messages?: UIMessage[] };
+        } catch {
+          return new Response(JSON.stringify({ error: "Invalid request." }), { status: 400 });
+        }
+        const messages = Array.isArray(body.messages) ? body.messages : [];
+        if (messages.length === 0) {
+          return new Response(JSON.stringify({ error: "No messages provided." }), { status: 400 });
+        }
+
+        const gateway = createLovableAiGatewayRunIdFetch(getLovableAiGatewayRunId(request));
+        const openai = createOpenAI({
+          apiKey,
+          baseURL: "https://ai.gateway.lovable.dev/v1",
+          fetch: gateway.fetch,
+        });
+
+        try {
+          const result = streamText({
+            model: openai.chat("google/gemini-2.5-flash"),
+            system: SYSTEM_PROMPT,
+            messages: await convertToModelMessages(messages),
+          });
+          return withLovableAiGatewayRunIdHeader(result.toUIMessageStreamResponse({ onError: (e) => { console.error("kimi", e); const m = e instanceof Error ? e.message : ""; if (/payment required|402/i.test(m)) return "Kimi AI is out of AI credits right now. Please call or WhatsApp +1 868-763-1106."; if (/429|rate/i.test(m)) return "Kimi AI is busy, please try again in a minute."; return "Kimi AI is unavailable right now."; } }), gateway);
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "Kimi AI is unavailable.";
+          const status = /402|credit/i.test(msg) ? 402 : /429|rate/i.test(msg) ? 429 : 500;
+          return new Response(JSON.stringify({ error: msg }), {
+            status,
+            headers: getLovableAiGatewayResponseHeaders(undefined, { "Content-Type": "application/json" }),
+          });
+        }
+      },
+    },
+  },
+});
