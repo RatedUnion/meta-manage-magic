@@ -75,7 +75,7 @@ export const Route = createFileRoute("/api/chat")({
             system: SYSTEM_PROMPT,
             messages: await convertToModelMessages(messages),
           });
-          return withLovableAiGatewayRunIdHeader(result.toUIMessageStreamResponse({ onError: (e) => { console.error("kimi", e); return e instanceof Error ? e.message : "Kimi AI is unavailable."; } }), gateway);
+          return withLovableAiGatewayRunIdHeader(result.toUIMessageStreamResponse({ onError: (e) => { console.error("kimi", e); const m = e instanceof Error ? e.message : ""; if (/payment required|402/i.test(m)) return "Kimi AI is out of AI credits right now. Please call or WhatsApp +1 868-763-1106."; if (/429|rate/i.test(m)) return "Kimi AI is busy, please try again in a minute."; return "Kimi AI is unavailable right now."; } }), gateway);
         } catch (err) {
           const msg = err instanceof Error ? err.message : "Kimi AI is unavailable.";
           const status = /402|credit/i.test(msg) ? 402 : /429|rate/i.test(msg) ? 429 : 500;
