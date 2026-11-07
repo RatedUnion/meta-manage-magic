@@ -1,5 +1,4 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
 import {
@@ -7,18 +6,10 @@ import {
   BadgePercent,
   CalendarIcon,
   CheckCircle2,
-  Clock,
   Gift,
   Handshake,
   ImagePlus,
-  Images,
-  ListChecks,
-  Mail,
-  Phone,
   Sparkles,
-  SquareCheckBig,
-  Truck,
-  User,
   X,
 } from "lucide-react";
 import { z } from "zod";
@@ -180,8 +171,6 @@ type Confirmation = {
   perks: ServicePerk[];
   negotiatePreferred: boolean;
   total: number;
-  calendarLink?: string;
-  calendarScheduled?: boolean;
 };
 
 function BookPage() {
@@ -367,7 +356,9 @@ function BookPage() {
             <CardHeader className="text-center pb-2">
               <CheckCircle2 className="w-12 h-12 text-primary mx-auto mb-2" />
               <CardTitle className="text-2xl font-bold">Booking Request Confirmed</CardTitle>
-              <CardDescription>Reference: <span className="font-mono font-bold text-foreground">{confirmation.ref}</span></CardDescription>
+              <CardDescription>
+                Reference: <span className="font-mono font-bold text-foreground">{confirmation.ref}</span>
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 pt-4 text-sm">
               <div className="grid grid-cols-2 gap-3 bg-muted p-4 rounded-lg">
@@ -454,7 +445,6 @@ function BookPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Step 1: Choose Service */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
@@ -485,7 +475,6 @@ function BookPage() {
             </CardContent>
           </Card>
 
-          {/* Step 2: Suggestive Selling Combos & Packages */}
           {relevantCombos.length > 0 && (
             <Card className="border-primary/30 bg-primary/[0.02]">
               <CardHeader>
@@ -554,7 +543,6 @@ function BookPage() {
             </Card>
           )}
 
-          {/* Step 3: Privilege Perks Addons */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
@@ -591,7 +579,6 @@ function BookPage() {
             </CardContent>
           </Card>
 
-          {/* Negotiation Toggle */}
           <Card className="border-dashed border-amber-500/40 bg-amber-500/[0.03]">
             <CardContent className="pt-6 flex items-start gap-3">
               <Checkbox
@@ -612,7 +599,6 @@ function BookPage() {
             </CardContent>
           </Card>
 
-          {/* Step 4: Schedule & Client Info */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
@@ -683,7 +669,6 @@ function BookPage() {
                 />
               </div>
 
-              {/* Photos upload */}
               <div>
                 <Label className="text-xs block mb-1">Attach Photos (Up to 5 images, max 10MB each)</Label>
                 <input
@@ -722,7 +707,6 @@ function BookPage() {
             </CardContent>
           </Card>
 
-          {/* Pricing Summary & Submit */}
           <Card className="bg-muted/40 border-primary/20">
             <CardContent className="pt-6 space-y-3">
               <div className="flex justify-between text-xs text-muted-foreground">
