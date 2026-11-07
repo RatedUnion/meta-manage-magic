@@ -1,3 +1,14 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { createOpenAI } from "@ai-sdk/openai";
+import { convertToModelMessages, streamText, type UIMessage } from "ai";
+import {
+  createLovableAiGatewayRunIdFetch,
+  getLovableAiGatewayResponseHeaders,
+  getLovableAiGatewayRunId,
+  withLovableAiGatewayRunIdHeader,
+} from "@/lib/ai-gateway.server";
+
+
 const SYSTEM_PROMPT = `You are "Kimi AI", the intelligent front-desk and booking assistant for Dedicated Ultimatum Appointed Associates (DUAA) in Trinidad & Tobago.
 
 ==================================================
@@ -27,3 +38,79 @@ SERVICES CATALOG:
 HOW TO ANSWER:
 - Style: Warm, direct, seasoned technician tone. Plain text only (no asterisks or markdown headings). Keep answers to 2-5 concise sentences or bullet lines.
 - Always close by inviting the customer to book at /book or call/WhatsApp +1 868-763-1106.`;
+
+export const Route = createFileRoute("/api/chat")({
+  server: {
+    handlers: {
+      POST: async ({ request }) => {
+        let body: ChatRequestBody = {};
+        try {
+          body = (await request.json()) as ChatRequestBody;
+        } catch {
+          return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+
+        const rawMessages = body.messages;
+        if (!Array.isArray(rawMessages)) {
+          return new Response(JSON.stringify({ error: "messages array is required" }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+
+        const apiKey = process.env.LOVABLE_AI_GATEWAY_KEY ?? process.env.OPENAI_API_KEY ?? "dummy-key";
+        const baseURL = process.env.AI_GATEWAY_URL ?? "https://ai.lovable.dev/v1";
+        const incomingRunId = getLovableAiGatewayRunId(request);
+
+        const customFetch = createLovableAiGatewayRunIdFetch({
+          fetch: globalThis.fetch,
+          runId: incomingRunId,
+        });
+
+        const openai = createOpenAI({
+          apiKey,
+          baseURL,
+          fetch: customFetch,
+        });
+
+        try {
+          const modelMessages = await convertToModelMessages(rawMessages as UIMessage[]);
+
+          const result = streamText({
+            model: openai("google/gemini-2.5-flash"),
+            system: SYSTEM_PROMPT,
+            messages: modelMessages,
+            temperature: 0.3,
+            maxTokens: 750,
+          });
+
+          const response = result.toDataStreamResponse();
+          const outgoingHeaders = new Headers(response.headers);
+          outgoingHeaders.set("Content-Type", "text/plain; charset=utf-8");
+          const extraHeaders = getLovableAiGatewayResponseHeaders(incomingRunId);
+          for (const [key, value] of Object.entries(extraHeaders)) {
+            outgoingHeaders.set(key, value);
+          }
+
+          return new Response(response.body, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: outgoingHeaders,
+          });
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : "AI service unavailable";
+          return new Response(JSON.stringify({ error: message }), {
+            status: 503,
+            headers: withLovableAiGatewayRunIdHeader(
+              { "Content-Type": "application/json" },
+              incomingRunId,
+            ),
+          });
+        }
+      },
+    },
+  },
+});
