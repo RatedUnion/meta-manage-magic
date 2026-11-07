@@ -43,71 +43,45 @@ export const Route = createFileRoute("/api/chat")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        let body: ChatRequestBody = {};
+        const apiKey = process.env.LOVABLE_API_KEY;
+        if (!apiKey) {
+          return new Response(JSON.stringify({ error: "Kimi AI is not configured." }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+
+        let body: { messages?: UIMessage[] };
         try {
-          body = (await request.json()) as ChatRequestBody;
+          body = (await request.json()) as { messages?: UIMessage[] };
         } catch {
-          return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
-            status: 400,
-            headers: { "Content-Type": "application/json" },
-          });
+          return new Response(JSON.stringify({ error: "Invalid request." }), { status: 400 });
+        }
+        const messages = Array.isArray(body.messages) ? body.messages : [];
+        if (messages.length === 0) {
+          return new Response(JSON.stringify({ error: "No messages provided." }), { status: 400 });
         }
 
-        const rawMessages = body.messages;
-        if (!Array.isArray(rawMessages)) {
-          return new Response(JSON.stringify({ error: "messages array is required" }), {
-            status: 400,
-            headers: { "Content-Type": "application/json" },
-          });
-        }
-
-        const apiKey = process.env.LOVABLE_AI_GATEWAY_KEY ?? process.env.OPENAI_API_KEY ?? "dummy-key";
-        const baseURL = process.env.AI_GATEWAY_URL ?? "https://ai.lovable.dev/v1";
-        const incomingRunId = getLovableAiGatewayRunId(request);
-
-        const customFetch = createLovableAiGatewayRunIdFetch({
-          fetch: globalThis.fetch,
-          runId: incomingRunId,
-        });
-
+        const gateway = createLovableAiGatewayRunIdFetch(getLovableAiGatewayRunId(request));
         const openai = createOpenAI({
           apiKey,
-          baseURL,
-          fetch: customFetch,
+          baseURL: "https://ai.gateway.lovable.dev/v1",
+          fetch: gateway.fetch,
         });
 
         try {
-          const modelMessages = await convertToModelMessages(rawMessages as UIMessage[]);
-
           const result = streamText({
-            model: openai("google/gemini-2.5-flash"),
+            model: openai.chat("google/gemini-3-flash-preview"),
             system: SYSTEM_PROMPT,
-            messages: modelMessages,
-            temperature: 0.3,
-            maxTokens: 750,
+            messages: await convertToModelMessages(messages),
           });
-
-          const response = result.toDataStreamResponse();
-          const outgoingHeaders = new Headers(response.headers);
-          outgoingHeaders.set("Content-Type", "text/plain; charset=utf-8");
-          const extraHeaders = getLovableAiGatewayResponseHeaders(incomingRunId);
-          for (const [key, value] of Object.entries(extraHeaders)) {
-            outgoingHeaders.set(key, value);
-          }
-
-          return new Response(response.body, {
-            status: response.status,
-            statusText: response.statusText,
-            headers: outgoingHeaders,
-          });
-        } catch (err: unknown) {
-          const message = err instanceof Error ? err.message : "AI service unavailable";
-          return new Response(JSON.stringify({ error: message }), {
-            status: 503,
-            headers: withLovableAiGatewayRunIdHeader(
-              { "Content-Type": "application/json" },
-              incomingRunId,
-            ),
+          return withLovableAiGatewayRunIdHeader(result.toUIMessageStreamResponse(), gateway);
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "Kimi AI is unavailable.";
+          const status = /402|credit/i.test(msg) ? 402 : /429|rate/i.test(msg) ? 429 : 500;
+          return new Response(JSON.stringify({ error: msg }), {
+            status,
+            headers: getLovableAiGatewayResponseHeaders(undefined, { "Content-Type": "application/json" }),
           });
         }
       },
