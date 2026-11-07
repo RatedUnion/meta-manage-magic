@@ -3,6 +3,7 @@ import { DefaultChatTransport } from "ai";
 import {
   AlertCircle,
   Bot,
+  Calendar,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
@@ -26,10 +27,10 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "@tanstack/react-router";
 
-const SUGGESTIONS = [
-  "My car won't start — what will you check?",
-  "What is the starting price for domestic work?",
-  "Is towing included with repairs or separate?",
+const KIMI_SUGGESTIONS = [
+  "Calculate my booking estimate with the $110 fee",
+  "Which combo package saves money on repairs & towing?",
+  "What mechanical diagnostics do you cover on-site?",
 ];
 
 const CORRECTION_TEMPLATES = [
@@ -43,395 +44,279 @@ export function ChatBot() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [showLedger, setShowLedger] = useState(false);
-  const [showCorrectionMenu, setShowCorrectionMenu] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [userSession, setUserSession] = useState<unknown>(null);
+  const [attachedFile, setAttachedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  const inputRef = useRef<HTMLInputElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const [signedIn, setSignedIn] = useState<boolean | null>(null);
   useEffect(() => {
-    void supabase.auth.getSession().then(({ data }) => setSignedIn(!!data.session));
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => setSignedIn(!!session));
-    return () => sub.subscription.unsubscribe();
+    supabase.auth.getSession().then(({ data }) => setUserSession(data.session));
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserSession(session);
+    });
+    return () => authListener.subscription.unsubscribe();
   }, []);
 
   const transport = useMemo(
-    () =>
-      new DefaultChatTransport({
-        api: "/api/chat",
-        headers: async (): Promise<Record<string, string>> => {
-          const { data } = await supabase.auth.getSession();
-          const t = data.session?.access_token;
-          return t ? { Authorization: `Bearer ${t}` } : {};
-        },
-      }),
+    () => new DefaultChatTransport({ api: "/api/chat" }),
     [],
   );
-  const { messages, sendMessage, status, setMessages } = useChat({
+
+  const { messages, sendMessage, status, setMessages, error } = useChat({
     transport,
-    onError: (error) =>
-      toast.error("The assistant is unavailable right now", { description: error.message }),
+    onError: (err) => {
+      toast.error(err.message || "Kimi AI is currently unavailable.");
+    },
   });
 
-  const busy = status === "submitted" || status === "streaming";
+  const isLoading = status === "streaming" || status === "submitted";
 
   useEffect(() => {
-    if (open) inputRef.current?.focus();
-  }, [open]);
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
-  useEffect(() => {
-    if (!busy) inputRef.current?.focus();
-  }, [busy]);
+  const handleSend = async (textToSend?: string) => {
+    const query = (textToSend ?? input).trim();
+    if (!query && !attachedFile) return;
 
-  useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, status]);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("File is too large (max 10MB allowed)");
+    if (!userSession) {
+      toast.info("Please sign in to chat with Kimi AI.");
       return;
     }
 
-    setSelectedFile(file);
-    toast.success(`Attached: ${file.name}`);
-  };
-
-  const removeFile = () => {
-    setSelectedFile(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
-  const send = (text: string) => {
-    const value = text.trim();
-    if ((!value && !selectedFile) || busy) return;
-    if (!signedIn) {
-      toast.info("Please sign in to chat with Dee.");
-      return;
-    }
-
-    let outgoing = value;
-    if (selectedFile) {
-      outgoing = `[Attached File: ${selectedFile.name} (${Math.round(selectedFile.size / 1024)} KB)]\n${value || "Please inspect this file and assist me with service options."}`;
+    let fullPrompt = query;
+    if (attachedFile) {
+      fullPrompt = `[Attached Document/Photo: ${attachedFile.name} (${Math.round(attachedFile.size / 1024)} KB)]\n${query || "Please analyze this file for my booking inquiry."}`;
+      setAttachedFile(null);
     }
 
     setInput("");
-    setSelectedFile(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-    setShowCorrectionMenu(false);
-    void sendMessage({ text: outgoing });
+    await sendMessage({ text: fullPrompt });
   };
 
-  // Roll back the latest assistant + user turn
+  const handleApplyCorrection = (correctionText: string) => {
+    void handleSend(correctionText);
+  };
+
   const handleRollback = () => {
-    if (messages.length === 0 || busy) return;
-    const lastUserIdx = [...messages].reverse().findIndex((m) => m.role === "user");
-    if (lastUserIdx === -1) {
-      setMessages([]);
-    } else {
-      const cutIdx = messages.length - 1 - lastUserIdx;
-      setMessages(messages.slice(0, cutIdx));
+    if (messages.length >= 2) {
+      setMessages(messages.slice(0, -2));
+      toast.success("Previous turn rolled back.");
     }
-    toast.info("Previous turn undone. Ready for updated query.");
   };
 
-  // Self-correct the last response against the live update ledger
-  const handleSelfCorrectLast = () => {
-    if (messages.length === 0 || busy) return;
-    const prompt =
-      "Emergent Self-Check: Please review your previous answer against the DUAA October 2026 updates (Domestic $400 base, Commercial $1,200 min, $110 booking fee, Towing sold separately). If there were any mistakes or outdated pricing, state the correction explicitly and provide the updated facts.";
-    send(prompt);
+  const handleVerifyLedger = async () => {
+    if (!messages.length) {
+      toast.info("Start a chat first before running an audit.");
+      return;
+    }
+    setIsVerifying(true);
+    await handleSend("Please perform an internal audit: verify your previous reply against the latest DUAA October 2026 Pricing Ledger ($400 domestic base, $1,200 commercial, $110 fee, towing sold separately) and report any self-corrections.");
+    setIsVerifying(false);
   };
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-label={open ? "Close assistant" : "Chat with Dee"}
-        className="fixed bottom-5 right-5 z-50 grid h-14 w-14 place-items-center rounded-full bg-primary text-primary-foreground shadow-xl transition hover:scale-105 hover:opacity-95"
-      >
-        {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
-      </button>
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2 print:hidden">
+        {!open && (
+          <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-primary/20 bg-background/95 px-3 py-1 shadow-md text-xs font-medium text-foreground backdrop-blur">
+            <Sparkles className="h-3.5 w-3.5 text-primary animate-pulse" />
+            <span>Kimi AI UI · Booking & Dispatch</span>
+          </div>
+        )}
+
+        <Button
+          onClick={() => setOpen(!open)}
+          size="lg"
+          className="h-14 w-14 rounded-full shadow-2xl p-0 relative bg-primary hover:bg-primary/90 text-primary-foreground"
+          aria-label={open ? "Close Kimi assistant" : "Chat with Kimi AI"}
+        >
+          {open ? <X className="h-6 w-6" /> : <Bot className="h-7 w-7" />}
+          <span className="absolute -top-1 -right-1 flex h-4 w-4">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500 border-2 border-background"></span>
+          </span>
+        </Button>
+      </div>
 
       {open && (
-        <div className="fixed bottom-24 right-4 z-50 flex h-[76vh] max-h-[640px] w-[calc(100vw-2rem)] max-w-md flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl backdrop-blur-md">
+        <div className="fixed bottom-24 right-4 z-50 w-[95vw] sm:w-[440px] max-h-[82vh] h-[640px] flex flex-col rounded-2xl border bg-background shadow-2xl overflow-hidden print:hidden animate-in slide-in-from-bottom-5">
           {/* Header */}
-          <div className="border-b border-border bg-card/90 px-4 py-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary/15 text-primary">
-                  <Bot className="h-5 w-5" />
-                </span>
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <p className="text-sm font-semibold leading-tight">Dee · Emergent AI</p>
-                    <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
-                      Live Sync
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground">Self-correcting business assistant</p>
-                </div>
+          <div className="flex items-center justify-between border-b bg-muted/40 px-4 py-3">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow">
+                <Bot className="h-5 w-5" />
               </div>
-
-              <div className="flex items-center gap-1">
-                {messages.length > 0 && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleRollback}
-                    disabled={busy}
-                    title="Undo last message / rollback"
-                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                  >
-                    <Undo2 className="h-4 w-4" />
-                  </Button>
-                )}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowLedger((prev) => !prev)}
-                  title="Toggle live update policy ledger"
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                >
-                  <Sparkles className="h-4 w-4 text-amber-500" />
-                </Button>
+              <div>
+                <p className="text-sm font-semibold leading-tight flex items-center gap-1.5">
+                  Kimi AI UI
+                  <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                    Emergent 2.5
+                  </span>
+                </p>
+                <p className="text-[11px] text-muted-foreground">DUAA Booking & Operational Engine</p>
               </div>
             </div>
-
-            {/* Expandable Live Policy Ledger */}
-            {showLedger && (
-              <div className="mt-3 rounded-xl border border-border/70 bg-secondary/60 p-2.5 text-xs">
-                <div className="flex items-center justify-between font-medium text-foreground">
-                  <span className="flex items-center gap-1.5 text-primary">
-                    <ShieldAlert className="h-3.5 w-3.5" />
-                    Active Business Policy Ledger
-                  </span>
-                  <span className="text-[10px] text-muted-foreground">v2.4 Oct 2026</span>
-                </div>
-                <div className="mt-2 space-y-1 text-[11px] text-muted-foreground">
-                  <p>• <strong className="text-foreground">Domestic:</strong> Base from TTD 400</p>
-                  <p>• <strong className="text-foreground">Commercial:</strong> Min TTD 1,200 (1–2 crew)</p>
-                  <p>• <strong className="text-foreground">Appointment Fee:</strong> TTD 110 (mandatory)</p>
-                  <p>• <strong className="text-foreground">Towing:</strong> Sold separately (flatbed $450+, haul $750+)</p>
-                  <p>• <strong className="text-foreground">Combos & Perks:</strong> Suggestive packages & perks active</p>
-                </div>
-              </div>
-            )}
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                onClick={() => setShowLedger(!showLedger)}
+                title="View Live Pricing Ledger"
+              >
+                <History className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setOpen(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
-          {/* Messages Body */}
-          <div ref={scrollRef} className="flex-1 space-y-3.5 overflow-y-auto px-4 py-4 text-sm">
-            {messages.length === 0 && (
-              <div className="space-y-4">
-                <div className="rounded-xl border border-border/60 bg-secondary/30 p-3.5 text-xs text-muted-foreground">
-                  <p className="font-medium text-foreground">Greetings from Dee at DUAA</p>
-                  <p className="mt-1 leading-relaxed">
-                    I am trained on our full technical scope and active policies. You can attach photos or spec sheets using the <strong>paperclip</strong> icon below.
+          {/* Pricing Ledger Banner */}
+          {showLedger && (
+            <div className="border-b bg-muted/70 p-3 text-xs space-y-1.5 animate-in slide-in-from-top-2">
+              <div className="flex items-center justify-between font-semibold text-foreground">
+                <span className="flex items-center gap-1">
+                  <ShieldAlert className="h-3.5 w-3.5 text-amber-500" />
+                  Live Policy & Rates Ledger
+                </span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 px-2 text-[10px]"
+                  onClick={() => setShowLedger(false)}
+                >
+                  Hide
+                </Button>
+              </div>
+              <p className="text-muted-foreground">
+                • Domestic base: <strong>TTD $400</strong> · Commercial min: <strong>TTD $1,200</strong>
+              </p>
+              <p className="text-muted-foreground">
+                • Appointment fee: <strong>$110 non-negotiable</strong>
+              </p>
+              <p className="text-muted-foreground">
+                • Transport & Towing: <strong>Sold separately</strong> (Wrecker from $450)
+              </p>
+            </div>
+          )}
+
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 text-sm">
+            {messages.length === 0 ? (
+              <div className="space-y-4 py-4">
+                <div className="rounded-xl border border-primary/10 bg-primary/5 p-4">
+                  <p className="font-medium text-foreground flex items-center gap-1.5">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    Kimi AI Booking Specialist
                   </p>
+                  <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                    Hello! I can review your mechanical or electrical fault, structure your Build Sheet estimate, and verify appointment scheduling.
+                  </p>
+                  <div className="mt-3 flex gap-2">
+                    <Button asChild size="sm" variant="outline" className="h-7 text-xs">
+                      <Link to="/book">Open Booking Sheet</Link>
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                    Quick inquiries
-                  </p>
+                  <p className="text-xs font-medium text-muted-foreground">Quick Booking Prompts:</p>
                   <div className="flex flex-col gap-1.5">
-                    {SUGGESTIONS.map((s) => (
+                    {KIMI_SUGGESTIONS.map((suggestion) => (
                       <button
-                        key={s}
-                        type="button"
-                        onClick={() => send(s)}
-                        className="rounded-lg border border-border bg-card/60 px-3 py-2 text-left text-xs text-muted-foreground transition hover:border-primary/50 hover:bg-secondary hover:text-foreground"
+                        key={suggestion}
+                        onClick={() => void handleSend(suggestion)}
+                        className="rounded-lg border bg-card px-3 py-2 text-left text-xs text-foreground transition-colors hover:bg-muted"
                       >
-                        {s}
+                        {suggestion}
                       </button>
                     ))}
                   </div>
                 </div>
               </div>
-            )}
-
-            {messages.map((message, i) => {
-              const text = message.parts
-                .map((part) => (part.type === "text" ? part.text : ""))
-                .join("");
-              if (!text) return null;
-
-              const isUser = message.role === "user";
-              const isCorrectionPrompt =
-                text.includes("Emergent Self-Check") || text.includes("Correction:");
-
-              return (
-                <div key={message.id || i} className="group relative space-y-1">
-                  {isCorrectionPrompt && isUser && (
-                    <div className="flex items-center gap-1 text-[10px] text-amber-500">
-                      <AlertCircle className="h-3 w-3" />
-                      <span>Correction Triggered</span>
-                    </div>
+            ) : (
+              messages.map((m) => (
+                <div
+                  key={m.id}
+                  className={cn(
+                    "flex flex-col max-w-[85%] rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm leading-relaxed",
+                    m.role === "user"
+                      ? "ml-auto bg-primary text-primary-foreground rounded-br-none"
+                      : "mr-auto bg-muted/80 text-foreground rounded-bl-none border"
                   )}
-
-                  <div
-                    className={cn(
-                      "max-w-[88%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed sm:text-sm",
-                      isUser
-                        ? "ml-auto bg-primary text-primary-foreground"
-                        : "bg-secondary text-foreground",
-                    )}
-                  >
-                    {text}
-                  </div>
-
-                  {/* Emergent Action Bar on Assistant Messages */}
-                  {!isUser && i === messages.length - 1 && !busy && (
-                    <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] text-muted-foreground">
-                      <button
-                        type="button"
-                        onClick={handleSelfCorrectLast}
-                        className="inline-flex items-center gap-1 rounded-md border border-border/80 bg-background/80 px-2 py-0.5 hover:border-amber-500/50 hover:text-amber-500 transition"
-                      >
-                        <RefreshCw className="h-3 w-3" />
-                        Verify & Correct
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setShowCorrectionMenu((v) => !v)}
-                        className="inline-flex items-center gap-1 rounded-md border border-border/80 bg-background/80 px-2 py-0.5 hover:border-primary/50 hover:text-primary transition"
-                      >
-                        Flag Mistake
-                        {showCorrectionMenu ? (
-                          <ChevronUp className="h-3 w-3" />
-                        ) : (
-                          <ChevronDown className="h-3 w-3" />
-                        )}
-                      </button>
-                    </div>
-                  )}
+                >
+                  <p className="whitespace-pre-wrap">{m.content}</p>
                 </div>
-              );
-            })}
-
-            {/* Quick Correction Options Menu */}
-            {showCorrectionMenu && (
-              <div className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-3 space-y-2">
-                <p className="text-[11px] font-medium text-amber-600 dark:text-amber-400">
-                  Select a correction to apply immediately:
-                </p>
-                <div className="flex flex-col gap-1.5">
-                  {CORRECTION_TEMPLATES.map((tmpl) => (
-                    <button
-                      key={tmpl}
-                      type="button"
-                      onClick={() => send(tmpl)}
-                      className="text-left rounded-lg border border-border bg-card/80 px-2.5 py-1.5 text-xs text-foreground hover:border-primary transition"
-                    >
-                      {tmpl}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              ))
             )}
-
-            {/* Thinking / Streaming Indicator */}
-            {busy && (
-              <div className="flex items-center gap-2 rounded-2xl bg-secondary px-3.5 py-2.5 text-xs text-muted-foreground w-fit">
-                <span className="flex gap-1">
-                  {[0, 150, 300].map((delay) => (
-                    <span
-                      key={delay}
-                      className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary"
-                      style={{ animationDelay: `${delay}ms` }}
-                    />
-                  ))}
-                </span>
-                <span>Self-checking live updates...</span>
-              </div>
-            )}
+            <div ref={messagesEndRef} />
           </div>
 
-          {signedIn === false && (
-            <div className="border-t border-border bg-secondary/40 px-4 py-2 text-xs text-muted-foreground">
-              Please{" "}
-              <Link to="/auth" className="font-medium text-primary underline">
-                sign in
-              </Link>{" "}
-              to chat with Dee, or call/WhatsApp +1 868-763-1106.
-            </div>
-          )}
+          {/* Input & Controls */}
+          <div className="border-t bg-background p-3 space-y-2">
+            {attachedFile && (
+              <div className="flex items-center justify-between rounded-lg bg-muted px-2.5 py-1 text-xs">
+                <span className="truncate max-w-[280px]">📎 {attachedFile.name}</span>
+                <button
+                  type="button"
+                  onClick={() => setAttachedFile(null)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
 
-          {/* File Attachment Chip */}
-          {selectedFile && (
-            <div className="flex items-center justify-between border-t border-border bg-secondary/60 px-3 py-1.5 text-xs">
-              <span className="flex items-center gap-1.5 truncate text-foreground">
-                <FileText className="h-3.5 w-3.5 text-primary shrink-0" />
-                <span className="truncate">{selectedFile.name}</span>
-                <span className="text-[10px] text-muted-foreground">
-                  ({Math.round(selectedFile.size / 1024)} KB)
-                </span>
-              </span>
-              <button
+            <div className="flex items-center gap-1.5">
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*,.pdf,.doc,.docx"
+                onChange={(e) => {
+                  if (e.target.files?.[0]) setAttachedFile(e.target.files[0]);
+                }}
+              />
+              <Button
                 type="button"
-                onClick={removeFile}
-                className="text-muted-foreground hover:text-foreground ml-2 p-0.5"
-                title="Remove attachment"
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 shrink-0 text-muted-foreground"
+                onClick={() => fileInputRef.current?.click()}
+                title="Attach photo or fault document"
               >
-                <X className="h-3.5 w-3.5" />
-              </button>
+                <Paperclip className="h-4 w-4" />
+              </Button>
+              <Input
+                placeholder="Ask Kimi about bookings, scope, or pricing..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    void handleSend();
+                  }
+                }}
+                className="h-9 text-xs sm:text-sm"
+              />
+              <Button
+                onClick={() => void handleSend()}
+                disabled={isLoading || (!input.trim() && !attachedFile)}
+                size="icon"
+                className="h-9 w-9 shrink-0"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
             </div>
-          )}
-
-          {/* Input Footer */}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              send(input);
-            }}
-            className="flex items-center gap-1.5 border-t border-border bg-card px-2.5 py-2"
-          >
-            {/* Hidden File Input */}
-            <input
-              type="file"
-              ref={fileInputRef}
-              className="hidden"
-              accept="image/*,application/pdf"
-              onChange={handleFileChange}
-            />
-
-            {/* Paperclip Button */}
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={busy}
-              title="Attach photo or document for Dee"
-              className="h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground"
-            >
-              <Paperclip className="h-4 w-4" />
-            </Button>
-
-            <Input
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder={selectedFile ? "Add note about file..." : "Ask a question..."}
-              className="h-9 text-xs sm:text-sm"
-            />
-            <Button
-              type="submit"
-              size="icon"
-              disabled={busy || (!input.trim() && !selectedFile)}
-              className="h-9 w-9 shrink-0"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </form>
+          </div>
         </div>
       )}
     </>
