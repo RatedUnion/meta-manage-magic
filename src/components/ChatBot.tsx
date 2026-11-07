@@ -144,15 +144,10 @@ export function ChatBot() {
         <div className="fixed bottom-24 right-4 z-50 w-[95vw] sm:w-[440px] max-h-[82vh] h-[640px] flex flex-col rounded-2xl border bg-background shadow-2xl overflow-hidden print:hidden animate-in slide-in-from-bottom-5">
           {/* Header */}
           <div className="flex items-center justify-between border-b bg-muted/40 px-4 py-3">
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow">
-                <Bot className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold leading-tight flex items-center gap-1.5">
-                  Kimi AI UI
-                  <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
-                    Emergent 2.5
+// REMOVE this badge:
+<span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+  Emergent 2.5
+</span>
                   </span>
                 </p>
                 <p className="text-[11px] text-muted-foreground">DUAA Booking & Operational Engine</p>
