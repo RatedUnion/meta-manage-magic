@@ -13,6 +13,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BookRouteImport } from './routes/book'
+import { Route as CookiesRouteImport } from './routes/cookies'
+import { Route as DataDeletionRouteImport } from './routes/data-deletion'
 import { Route as FeedbackRouteImport } from './routes/feedback'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as PayRouteImport } from './routes/pay'
@@ -49,6 +51,16 @@ const AuthRoute = AuthRouteImport.update({
 const BookRoute = BookRouteImport.update({
   id: '/book',
   path: '/book',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CookiesRoute = CookiesRouteImport.update({
+  id: '/cookies',
+  path: '/cookies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DataDeletionRoute = DataDeletionRouteImport.update({
+  id: '/data-deletion',
+  path: '/data-deletion',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FeedbackRoute = FeedbackRouteImport.update({
@@ -147,6 +159,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/book': typeof BookRoute
+  '/cookies': typeof CookiesRoute
+  '/data-deletion': typeof DataDeletionRoute
   '/feedback': typeof FeedbackRoute
   '/marketplace': typeof MarketplaceRoute
   '/pay': typeof PayRoute
@@ -170,6 +184,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/book': typeof BookRoute
+  '/cookies': typeof CookiesRoute
+  '/data-deletion': typeof DataDeletionRoute
   '/feedback': typeof FeedbackRoute
   '/marketplace': typeof MarketplaceRoute
   '/pay': typeof PayRoute
@@ -195,6 +211,8 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/book': typeof BookRoute
+  '/cookies': typeof CookiesRoute
+  '/data-deletion': typeof DataDeletionRoute
   '/feedback': typeof FeedbackRoute
   '/marketplace': typeof MarketplaceRoute
   '/pay': typeof PayRoute
@@ -220,6 +238,8 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/book'
+    | '/cookies'
+    | '/data-deletion'
     | '/feedback'
     | '/marketplace'
     | '/pay'
@@ -243,6 +263,8 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/book'
+    | '/cookies'
+    | '/data-deletion'
     | '/feedback'
     | '/marketplace'
     | '/pay'
@@ -267,6 +289,8 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/book'
+    | '/cookies'
+    | '/data-deletion'
     | '/feedback'
     | '/marketplace'
     | '/pay'
@@ -292,6 +316,8 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   BookRoute: typeof BookRoute
+  CookiesRoute: typeof CookiesRoute
+  DataDeletionRoute: typeof DataDeletionRoute
   FeedbackRoute: typeof FeedbackRoute
   MarketplaceRoute: typeof MarketplaceRoute
   PayRoute: typeof PayRoute
@@ -333,6 +359,20 @@ declare module '@tanstack/react-router' {
       path: '/book'
       fullPath: '/book'
       preLoaderRoute: typeof BookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cookies': {
+      id: '/cookies'
+      path: '/cookies'
+      fullPath: '/cookies'
+      preLoaderRoute: typeof CookiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-deletion': {
+      id: '/data-deletion'
+      path: '/data-deletion'
+      fullPath: '/data-deletion'
+      preLoaderRoute: typeof DataDeletionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/feedback': {
@@ -492,6 +532,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   BookRoute: BookRoute,
+  CookiesRoute: CookiesRoute,
+  DataDeletionRoute: DataDeletionRoute,
   FeedbackRoute: FeedbackRoute,
   MarketplaceRoute: MarketplaceRoute,
   PayRoute: PayRoute,
