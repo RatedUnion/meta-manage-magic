@@ -16,8 +16,11 @@ import { Route as BookRouteImport } from './routes/book'
 import { Route as FeedbackRouteImport } from './routes/feedback'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as PayRouteImport } from './routes/pay'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PublishRouteImport } from './routes/publish'
+import { Route as RefundRouteImport } from './routes/refund'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedAssistantsRouteImport } from './routes/_authenticated/assistants'
 import { Route as AuthenticatedBookingsRouteImport } from './routes/_authenticated/bookings'
 import { Route as AuthenticatedCampaignsRouteImport } from './routes/_authenticated/campaigns'
@@ -63,14 +66,29 @@ const PayRoute = PayRouteImport.update({
   path: '/pay',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PublishRoute = PublishRouteImport.update({
   id: '/publish',
   path: '/publish',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RefundRoute = RefundRouteImport.update({
+  id: '/refund',
+  path: '/refund',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAssistantsRoute = AuthenticatedAssistantsRouteImport.update({
@@ -132,8 +150,11 @@ export interface FileRoutesByFullPath {
   '/feedback': typeof FeedbackRoute
   '/marketplace': typeof MarketplaceRoute
   '/pay': typeof PayRoute
+  '/privacy': typeof PrivacyRoute
   '/publish': typeof PublishRoute
+  '/refund': typeof RefundRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/assistants': typeof AuthenticatedAssistantsRoute
   '/bookings': typeof AuthenticatedBookingsRoute
   '/campaigns': typeof AuthenticatedCampaignsRoute
@@ -152,8 +173,11 @@ export interface FileRoutesByTo {
   '/feedback': typeof FeedbackRoute
   '/marketplace': typeof MarketplaceRoute
   '/pay': typeof PayRoute
+  '/privacy': typeof PrivacyRoute
   '/publish': typeof PublishRoute
+  '/refund': typeof RefundRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/assistants': typeof AuthenticatedAssistantsRoute
   '/bookings': typeof AuthenticatedBookingsRoute
   '/campaigns': typeof AuthenticatedCampaignsRoute
@@ -174,8 +198,11 @@ export interface FileRoutesById {
   '/feedback': typeof FeedbackRoute
   '/marketplace': typeof MarketplaceRoute
   '/pay': typeof PayRoute
+  '/privacy': typeof PrivacyRoute
   '/publish': typeof PublishRoute
+  '/refund': typeof RefundRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/_authenticated/assistants': typeof AuthenticatedAssistantsRoute
   '/_authenticated/bookings': typeof AuthenticatedBookingsRoute
   '/_authenticated/campaigns': typeof AuthenticatedCampaignsRoute
@@ -196,8 +223,11 @@ export interface FileRouteTypes {
     | '/feedback'
     | '/marketplace'
     | '/pay'
+    | '/privacy'
     | '/publish'
+    | '/refund'
     | '/sitemap.xml'
+    | '/terms'
     | '/assistants'
     | '/bookings'
     | '/campaigns'
@@ -216,8 +246,11 @@ export interface FileRouteTypes {
     | '/feedback'
     | '/marketplace'
     | '/pay'
+    | '/privacy'
     | '/publish'
+    | '/refund'
     | '/sitemap.xml'
+    | '/terms'
     | '/assistants'
     | '/bookings'
     | '/campaigns'
@@ -237,8 +270,11 @@ export interface FileRouteTypes {
     | '/feedback'
     | '/marketplace'
     | '/pay'
+    | '/privacy'
     | '/publish'
+    | '/refund'
     | '/sitemap.xml'
+    | '/terms'
     | '/_authenticated/assistants'
     | '/_authenticated/bookings'
     | '/_authenticated/campaigns'
@@ -259,8 +295,11 @@ export interface RootRouteChildren {
   FeedbackRoute: typeof FeedbackRoute
   MarketplaceRoute: typeof MarketplaceRoute
   PayRoute: typeof PayRoute
+  PrivacyRoute: typeof PrivacyRoute
   PublishRoute: typeof PublishRoute
+  RefundRoute: typeof RefundRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  TermsRoute: typeof TermsRoute
   ApiChatRoute: typeof ApiChatRoute
   ServicesSlugRoute: typeof ServicesSlugRoute
   ServicesIndexRoute: typeof ServicesIndexRoute
@@ -317,6 +356,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PayRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/publish': {
       id: '/publish'
       path: '/publish'
@@ -324,11 +370,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublishRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/refund': {
+      id: '/refund'
+      path: '/refund'
+      fullPath: '/refund'
+      preLoaderRoute: typeof RefundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/assistants': {
@@ -435,8 +495,11 @@ const rootRouteChildren: RootRouteChildren = {
   FeedbackRoute: FeedbackRoute,
   MarketplaceRoute: MarketplaceRoute,
   PayRoute: PayRoute,
+  PrivacyRoute: PrivacyRoute,
   PublishRoute: PublishRoute,
+  RefundRoute: RefundRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  TermsRoute: TermsRoute,
   ApiChatRoute: ApiChatRoute,
   ServicesSlugRoute: ServicesSlugRoute,
   ServicesIndexRoute: ServicesIndexRoute,
