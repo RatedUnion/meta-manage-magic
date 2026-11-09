@@ -23,6 +23,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { SimoneCallbacks } from "@/components/SimoneCallbacks";
+import { BUSINESS_PHONE_LABEL, SIMONE_GREETING } from "@/lib/simone";
 import {
   initiateVoiceCall,
   sendSmsNotification,
@@ -32,7 +34,14 @@ import {
 
 export const Route = createFileRoute("/_authenticated/voice-sms")({
   component: VoiceSmsPage,
-  head: () => ({ meta: [{ title: "VoIP & SMS AI Engine — DUAA" }] }),
+  head: () => ({ meta: [
+    { title: "Simone Call & SMS Callback Support — DUAA" },
+    { name: "description", content: "DUAA call and SMS callback reminders managed by Simone support." },
+    { property: "og:title", content: "Simone Callback Support — DUAA" },
+    { property: "og:description", content: "Track unanswered calls, busy calls and SMS callback reminders." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
 });
 
 function VoiceSmsPage() {
@@ -51,53 +60,8 @@ function VoiceSmsPage() {
   const [selectedCall, setSelectedCall] = useState<CallRecord | null>(null);
 
   // Call Logs & Messages state
-  const [calls, setCalls] = useState<CallRecord[]>([
-    {
-      id: "call-1",
-      contactName: "Marcus Hernandez",
-      phoneNumber: "+1 868-682-4192",
-      direction: "inbound",
-      durationSeconds: 142,
-      status: "completed",
-      timestamp: "Today at 10:14 AM",
-      sentiment: "positive",
-      summary: "Customer confirmed domestic alternator replacement. Quoted base TTD $400 + $110 fee.",
-      transcript: [
-        { speaker: "Customer", text: "Good morning, my battery isn't holding charge in San Fernando." },
-        { speaker: "Agent", text: "Good morning! Dee from DUAA here. Domestic mobile diagnostics start from TTD $400 plus our standard $110 appointment fee." },
-        { speaker: "Customer", text: "Understood. Can we book for tomorrow afternoon?" },
-        { speaker: "Agent", text: "Certainly. Booking confirmed for 1:30 PM tomorrow." },
-      ],
-    },
-    {
-      id: "call-2",
-      contactName: "Point Lisas Industrial Supplies",
-      phoneNumber: "+1 868-744-8831",
-      direction: "outbound",
-      durationSeconds: 215,
-      status: "completed",
-      timestamp: "Yesterday at 3:45 PM",
-      sentiment: "urgent",
-      summary: "Commercial backup generator transfer switch quarterly inspection reminder.",
-      transcript: [
-        { speaker: "Agent", text: "Calling from DUAA regarding your facility emergency transfer switch inspection." },
-        { speaker: "Customer", text: "Yes, we need a 2-man crew on site before rainy season peak." },
-        { speaker: "Agent", text: "Confirmed. Commercial rates start at minimal TTD $1,200 with 2 technicians included." },
-      ],
-    },
-  ]);
-
-  const [smsList, setSmsList] = useState<SmsMessage[]>([
-    {
-      id: "sms-1",
-      recipientPhone: "+1 868-763-1106",
-      recipientName: "Field Unit Alpha",
-      messageText: "Dispatched to Couva: Domestic brake check & OBD-II scan. Ref DUA-84192.",
-      status: "delivered",
-      timestamp: "Today at 09:30 AM",
-      campaignTag: "Dispatch",
-    },
-  ]);
+  const [calls, setCalls] = useState<CallRecord[]>([]);
+  const [smsList, setSmsList] = useState<SmsMessage[]>([]);
 
   const handleMakeCall = async () => {
     if (!dialNumber || dialNumber.length < 8) {
@@ -174,17 +138,17 @@ function VoiceSmsPage() {
               </Link>
             </div>
             <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
-              VoIP & SMS AI Engine
+              Simone · Call & SMS Support
             </h1>
             <p className="text-xs text-muted-foreground sm:text-sm">
-              Inbound & outbound live call interface, AI receptionist transcripts, and SMS dispatch.
+              DUAA · {BUSINESS_PHONE_LABEL}
             </p>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
               <Radio className="h-3.5 w-3.5 animate-pulse" />
-              Dee Voice: Live on +1 868-763-1106
+              Phone service not connected
             </span>
           </div>
         </div>
@@ -267,8 +231,8 @@ function VoiceSmsPage() {
               <div className="flex gap-2 pt-2">
                 <Button
                   onClick={handleMakeCall}
-                  disabled={isCalling || !!activeCall}
-                  className="flex-1 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+                  disabled={true}
+                  className="flex-1 gap-2"
                 >
                   <PhoneCall className="h-4 w-4" />
                   {isCalling ? "Dialing..." : "Start AI Call"}
@@ -283,9 +247,9 @@ function VoiceSmsPage() {
               </div>
 
               <div className="rounded-lg border border-border/80 bg-secondary/30 p-2.5 text-xs text-muted-foreground">
-                <p className="font-medium text-foreground">AI Voice Receptionist Protocol:</p>
+                <p className="font-medium text-foreground">Simone greeting · pending activation</p>
                 <p className="mt-1 text-[11px]">
-                  Outbound calls announce DUAA, confirm client location, and quote domestic base $400 or commercial min $1,200 plus mandatory $110 fee.
+                  {SIMONE_GREETING}
                 </p>
               </div>
             </CardContent>
@@ -368,7 +332,7 @@ function VoiceSmsPage() {
                           }`}
                         >
                           <strong className="block text-[10px] text-muted-foreground mb-0.5">
-                            {line.speaker === "Agent" ? "Dee (AI Voice Agent)" : "Customer"}
+                            {line.speaker === "Agent" ? "Simone (Automated Support)" : "Customer"}
                           </strong>
                           {line.text}
                         </div>
@@ -427,7 +391,7 @@ function VoiceSmsPage() {
                     />
                   </div>
 
-                  <Button type="submit" size="sm" className="gap-2">
+                  <Button type="submit" size="sm" className="gap-2" disabled>
                     <Send className="h-3.5 w-3.5" />
                     Send Live SMS
                   </Button>
@@ -455,6 +419,7 @@ function VoiceSmsPage() {
             </Card>
           </div>
         </div>
+        <SimoneCallbacks />
       </div>
     </main>
   );
