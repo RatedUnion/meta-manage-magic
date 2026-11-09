@@ -142,6 +142,54 @@ export type Database = {
           },
         ]
       }
+      callback_reminders: {
+        Row: {
+          assistant_name: string
+          contact_name: string
+          created_at: string
+          created_by: string | null
+          handled_at: string | null
+          id: string
+          message: string
+          phone_number: string
+          provider_event_id: string | null
+          reason: string
+          reminder_at: string
+          source: string
+          status: string
+        }
+        Insert: {
+          assistant_name?: string
+          contact_name?: string
+          created_at?: string
+          created_by?: string | null
+          handled_at?: string | null
+          id?: string
+          message?: string
+          phone_number: string
+          provider_event_id?: string | null
+          reason: string
+          reminder_at?: string
+          source?: string
+          status?: string
+        }
+        Update: {
+          assistant_name?: string
+          contact_name?: string
+          created_at?: string
+          created_by?: string | null
+          handled_at?: string | null
+          id?: string
+          message?: string
+          phone_number?: string
+          provider_event_id?: string | null
+          reason?: string
+          reminder_at?: string
+          source?: string
+          status?: string
+        }
+        Relationships: []
+      }
       campaigns: {
         Row: {
           budget_ttd: number

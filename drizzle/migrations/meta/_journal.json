@@ -57,6 +57,13 @@
       "when": 1793838582626,
       "tag": "0007_create_campaigns",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794192057871,
+      "tag": "0008_simone_callback_reminders",
+      "breakpoints": true
     }
   ]
 }
