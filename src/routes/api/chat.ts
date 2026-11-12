@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createOpenAI } from "@ai-sdk/openai";
-import { convertToModelMessages, streamText, type UIMessage } from "ai";
+import { convertToModelMessages, createUIMessageStream, createUIMessageStreamResponse, streamText, type UIMessage } from "ai";
+import { kimiFallbackAnswer } from "@/lib/kimi-fallback";
 import {
   createLovableAiGatewayRunIdFetch,
-  getLovableAiGatewayResponseHeaders,
   getLovableAiGatewayRunId,
   withLovableAiGatewayRunIdHeader,
 } from "@/lib/ai-gateway.server";
@@ -69,21 +69,38 @@ export const Route = createFileRoute("/api/chat")({
           fetch: gateway.fetch,
         });
 
-        try {
-          const result = streamText({
-            model: openai.chat("google/gemini-2.5-flash"),
-            system: SYSTEM_PROMPT,
-            messages: await convertToModelMessages(messages),
-          });
-          return withLovableAiGatewayRunIdHeader(result.toUIMessageStreamResponse({ onError: (e) => { console.error("kimi", e); const m = e instanceof Error ? e.message : ""; if (/payment required|402/i.test(m)) return "Kimi AI is out of AI credits right now. Please call or WhatsApp +1 868-763-1106."; if (/429|rate/i.test(m)) return "Kimi AI is busy, please try again in a minute."; return "Kimi AI is unavailable right now."; } }), gateway);
-        } catch (err) {
-          const msg = err instanceof Error ? err.message : "Kimi AI is unavailable.";
-          const status = /402|credit/i.test(msg) ? 402 : /429|rate/i.test(msg) ? 429 : 500;
-          return new Response(JSON.stringify({ error: msg }), {
-            status,
-            headers: getLovableAiGatewayResponseHeaders(undefined, { "Content-Type": "application/json" }),
-          });
-        }
+        const last = messages[messages.length - 1];
+        const lastText = (Array.isArray(last?.parts) ? last.parts : [])
+          .map((p) => (p && (p as { type?: string }).type === "text" ? (p as { text?: string }).text ?? "" : ""))
+          .join(" ");
+        const modelMessages = await convertToModelMessages(messages).catch(() => null);
+
+        const stream = createUIMessageStream({
+          execute: async ({ writer }) => {
+            const id = "kimi-text";
+            let started = false;
+            let failed = !modelMessages;
+            if (modelMessages) {
+              try {
+                const result = streamText({ model: openai.chat("google/gemini-2.5-flash"), system: SYSTEM_PROMPT, messages: modelMessages });
+                for await (const part of result.fullStream) {
+                  if (part.type === "error") { failed = true; console.error("kimi", part.error); break; }
+                  if (part.type === "text-delta") {
+                    if (!started) { writer.write({ type: "text-start", id }); started = true; }
+                    writer.write({ type: "text-delta", id, delta: part.text });
+                  }
+                }
+              } catch (e) { console.error("kimi", e); failed = true; }
+            }
+            if (failed && !started) {
+              writer.write({ type: "text-start", id });
+              writer.write({ type: "text-delta", id, delta: kimiFallbackAnswer(lastText) });
+              started = true;
+            }
+            if (started) writer.write({ type: "text-end", id });
+          },
+        });
+        return withLovableAiGatewayRunIdHeader(createUIMessageStreamResponse({ stream }), gateway);
       },
     },
   },

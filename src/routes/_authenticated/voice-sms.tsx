@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { SimoneCallbacks } from "@/components/SimoneCallbacks";
+import { SimoneLogisticsSyncPanel } from "@/components/SimoneLogisticsSyncPanel";
 import { BUSINESS_PHONE_LABEL, SIMONE_GREETING } from "@/lib/simone";
 import {
   initiateVoiceCall,
@@ -420,6 +421,7 @@ function VoiceSmsPage() {
           </div>
         </div>
         <SimoneCallbacks />
+<SimoneLogisticsSyncPanel />
       </div>
     </main>
   );
