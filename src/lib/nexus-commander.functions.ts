@@ -35,7 +35,7 @@ export const runNexusProjectOversight = createServerFn({ method: "POST" })
     // 1. Fetch active bookings (projects)
     const { data: bookings, error: bookingsError } = await supabase
       .from("bookings")
-      .select("id, full_name, service_name, status, payment_status, total_cost, created_at, scheduled_date")
+      .select("id, name, service, status, payment_status, payment_amount, created_at, booking_date")
       .order("created_at", { ascending: false })
       .limit(20);
 
@@ -57,7 +57,7 @@ export const runNexusProjectOversight = createServerFn({ method: "POST" })
       let recommendedAction = "Review routing and field associate schedule.";
       let health: "on_track" | "warning" | "critical" = "on_track";
 
-      const serviceLower = (booking.service_name || "").toLowerCase();
+      const serviceLower = (booking.service || "").toLowerCase();
 
       // Delegation matrix
       if (serviceLower.includes("mechanic") || serviceLower.includes("repair") || serviceLower.includes("parts")) {
@@ -79,16 +79,16 @@ export const runNexusProjectOversight = createServerFn({ method: "POST" })
       }
 
       // Minimum pricing rule checks (Domestic $250, Commercial $1,200)
-      if (booking.total_cost && booking.total_cost < 110) {
+      if (booking.payment_amount && booking.payment_amount < 110) {
         health = "critical";
         recommendedAction = "Flagged: Cost is below non-negotiable TTD $110 appointment floor.";
       }
 
       return {
         projectId: booking.id,
-        customer: booking.full_name || "Valued Client",
-        service: booking.service_name || "General Service",
-        stage: booking.status === "completed" ? "review" : "in_progress",
+        customer: booking.name || "Valued Client",
+        service: booking.service || "General Service",
+        stage: (booking.status === "completed" ? "review" : "in_progress") as "review" | "in_progress",
         health,
         delegatedTo,
         recommendedAction,
