@@ -1,3 +1,33 @@
+import { evaluateTradeWeatherConditions, type WeatherTelemetryInput } from "./weather-dispatch-rules";
+
+// Inside runNexusProjectAudit:
+// Evaluates active bookings against regional telemetry
+const mockRegionalTelemetry: WeatherTelemetryInput = {
+  weatherCode: 61,       // Rain
+  precipitationMm: 2.4,  // Wet conditions
+  windSpeedKmh: 18,
+  windGustKmh: 28,
+  temperatureC: 28,
+};
+
+const tradeConditions = evaluateTradeWeatherConditions(mockRegionalTelemetry);
+
+// When looping over bookings:
+if (serviceLower.includes("landscape") || serviceLower.includes("garden")) {
+  delegatedTo = "FloraScape";
+  if (tradeConditions.landscaping.clearance === "HOLD") {
+    health = "warning";
+    recommendedAction = `WEATHER HOLD: ${tradeConditions.landscaping.reason} ${tradeConditions.landscaping.directive}`;
+  } else {
+    recommendedAction = "Check regional weather alerts; confirm site equipment and weather-window clearance.";
+  }
+} else if (serviceLower.includes("electric") || serviceLower.includes("wiring")) {
+  delegatedTo = "VoltSage";
+  if (tradeConditions.electrical.clearance === "HOLD") {
+    health = "critical";
+    recommendedAction = `ELECTRICAL WEATHER HOLD: ${tradeConditions.electrical.directive}`;
+  }
+}
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
