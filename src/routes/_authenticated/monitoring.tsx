@@ -672,4 +672,10 @@ function MonitoringPage() {
       </div>
     </main>
   );
-}
+import { SeismicMonitorCard } from "@/components/SeismicMonitorCard";
+
+// Inside the Monitoring page JSX:
+<div className="space-y-6">
+  <SeismicMonitorCard />
+  {/* Existing Weather card follows here */}
+</div>
