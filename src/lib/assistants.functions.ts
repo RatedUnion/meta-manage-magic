@@ -1,4 +1,37 @@
 import { createServerFn } from "@tanstack/react-start";
+import { supabase } from "@/integrations/supabase/client";
+import { type TenderOpportunity } from "./assistants.functions";
+
+export const getLiveScoutedTenders = createServerFn({ method: "GET" }).handler(
+  async (): Promise<TenderOpportunity[]> => {
+    const { data, error } = await supabase
+      .from("scouted_tenders")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error || !data || data.length === 0) {
+      // Return empty array or fallback to cached state
+      return [];
+    }
+
+    return data.map((row) => ({
+      id: row.id,
+      title: row.title,
+      issuingAgency: row.issuing_agency,
+      portalSource: row.portal_source,
+      scoutedByBotId: row.scouted_by_bot_id,
+      scoutedByBotName: row.scouted_by_bot_name,
+      deadline: row.deadline,
+      estimatedValueTTD: Number(row.estimated_value_ttd),
+      scopeSummary: row.scope_summary,
+      nexusFilterStatus: row.nexus_filter_status as TenderOpportunity["nexusFilterStatus"],
+      nexusScore: row.nexus_score,
+      nexusDirective: row.nexus_directive,
+      createdAt: row.created_at,
+    }));
+  }
+);
+import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
