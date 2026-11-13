@@ -363,7 +363,32 @@ function MonitoringPage() {
                       ))}
                     </div>
                   </div>
-
+                  {weather.fiveDayForecast && weather.fiveDayForecast.length > 0 && (
+  <div className="mt-4 pt-4 border-t border-border/60">
+    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+      5-Day Dispatch & Weather Outlook
+    </p>
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5">
+      {weather.fiveDayForecast.map((day) => {
+        const dateObj = new Date(day.date + "T12:00:00");
+        const weekday = dateObj.toLocaleDateString("en-TT", { weekday: "short", month: "short", day: "numeric" });
+        return (
+          <div key={day.date} className="rounded-lg border bg-muted/30 p-2.5 text-center">
+            <p className="text-xs font-bold text-foreground">{weekday}</p>
+            <p className="mt-1 text-sm font-semibold">
+              {Math.round(day.tempMaxC)}° <span className="text-xs font-normal text-muted-foreground">/ {Math.round(day.tempMinC)}°C</span>
+            </p>
+            <p className="text-[11px] text-muted-foreground truncate mt-0.5">{weatherLabel(day.weatherCode)}</p>
+            <div className="mt-2 pt-1.5 border-t border-border/40 text-[10px] space-y-0.5 text-muted-foreground">
+              <p>🌧️ {day.precipitationProbabilityMax}% ({day.precipitationSumMm} mm)</p>
+              <p>💨 Gusts {Math.round(day.windGustMaxKmh)} km/h</p>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+)}
                   <p className="text-[11px] text-muted-foreground">
                     Telemetry: {weather.source} · Updated {new Date(weather.updatedAt).toLocaleTimeString()} AST
                   </p>
