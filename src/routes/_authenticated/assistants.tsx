@@ -1,3 +1,19 @@
+// In src/routes/_authenticated/assistants.tsx
+import { verifyAndCreateTender, type ManualTenderInput } from "@/lib/tender-verification";
+
+// When submitting the tender intake modal:
+const verifiedTender = verifyAndCreateTender({
+  title: tenderForm.title,
+  issuingAgency: tenderForm.issuingAgency,
+  portalSource: tenderForm.portalSource,
+  portalStatusLabel: "Open", // or from a dropdown
+  submissionDeadline: tenderForm.deadline,
+  mandatorySiteVisitDate: tenderForm.siteVisitDate,
+  estimatedValueTTD: Number(tenderForm.estimatedValueTTD) || 0,
+  scopeSummary: tenderForm.scopeSummary,
+  scoutedByBotId: scoutBot.id,
+  scoutedByBotName: scoutBot.name,
+});
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
