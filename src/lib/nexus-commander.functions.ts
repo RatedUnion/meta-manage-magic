@@ -32,6 +32,141 @@ export const runNexusProjectOversight = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const supabase = context.supabase;
 
+    // 1. Fetch active bookings
+    const { data: bookings, error: bookingsError } = await supabase
+      .from("bookings")
+      .select("id, name, service, status, payment_status, payment_amount, created_at, booking_date, notes")
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    if (bookingsError) {
+      throw new Error(`Failed to load project records: ${bookingsError.message}`);
+    }
+
+    // 2. Fetch pending callbacks from Simone
+    const { data: reminders } = await supabase
+      .from("callback_reminders")
+      .select("id, status")
+      .eq("status", "pending");
+
+    const pendingCallbacks = reminders?.length ?? 0;
+
+    // 3. Evaluate directives against DUAA business rules
+    const projectDirectives = (bookings || []).map((booking) => {
+      let delegatedTo = "Logistics Dispatcher";
+      let recommendedAction = "Review routing and field associate schedule.";
+      let health: "on_track" | "warning" | "critical" = "on_track";
+
+      const serviceLower = (booking.service || "").toLowerCase();
+      const notesLower = (booking.notes || "").toLowerCase();
+      const isCommercial =
+        serviceLower.includes("commercial") ||
+        serviceLower.includes("fleet") ||
+        serviceLower.includes("industrial") ||
+        notesLower.includes("commercial");
+
+      // Trade delegation
+      if (serviceLower.includes("mechanic") || serviceLower.includes("repair") || serviceLower.includes("parts")) {
+        delegatedTo = "GearMaster Dee";
+        recommendedAction = "Verify OBD diagnostic logs and OEM part availability prior to dispatch.";
+      } else if (serviceLower.includes("electric") || serviceLower.includes("generator") || serviceLower.includes("wiring")) {
+        delegatedTo = "VoltSage";
+        recommendedAction = "Cross-check 110V/220V load requirements and ensure T&TEC safety code compliance.";
+      } else if (serviceLower.includes("landscape") || serviceLower.includes("floral") || serviceLower.includes("garden")) {
+        delegatedTo = "FloraScape";
+        recommendedAction = "Check regional weather alerts; confirm site equipment and weather-window clearance.";
+      }
+
+      // Financial status check
+      if (booking.payment_status === "pending_review" || booking.payment_status === "unpaid") {
+        health = "warning";
+        delegatedTo = "TTD CashFlow Auditor";
+        recommendedAction = "Confirm First Citizens Bank wire transfer reference before authorizing mobilization.";
+      }
+
+      // DUAA Pricing Rule Validation
+      const amount = booking.payment_amount ?? 0;
+
+      if (amount > 0 && amount < 110) {
+        health = "critical";
+        recommendedAction = "Flagged: Cost is below non-negotiable TTD $110 appointment floor.";
+      } else if (isCommercial && amount > 0 && amount < 1200) {
+        health = "critical";
+        recommendedAction = `Commercial tariff violation: Quote TTD $${amount} is below mandatory TTD $1,200 commercial floor (includes 1–2 crew).`;
+      } else if (!isCommercial && amount > 0 && amount < 400 && amount >= 110) {
+        health = "warning";
+        recommendedAction = `Domestic tariff alert: Quote TTD $${amount} is below standard TTD $400 domestic base price.`;
+      }
+
+      return {
+        projectId: booking.id,
+        customer: booking.name || "Valued Client",
+        service: booking.service || "General Service",
+        stage: (booking.status === "completed" ? "review" : "in_progress") as "review" | "in_progress",
+        health,
+        delegatedTo,
+        recommendedAction,
+      };
+    });
+
+    const pendingPayments = (bookings || []).filter(
+      (b) => b.payment_status === "pending_review" || b.payment_status === "unpaid"
+    ).length;
+
+    const criticalIssues = projectDirectives.filter((p) => p.health === "critical").length;
+    const warningIssues = projectDirectives.filter((p) => p.health === "warning").length;
+
+    const status: ProjectOversightReport["status"] =
+      criticalIssues > 0 ? "action_required" : warningIssues > 0 ? "caution" : "nominal";
+
+    return {
+      timestamp: new Date().toISOString(),
+      commander: "Nexus Commander",
+      status,
+      activeProjectsCount: bookings?.length ?? 0,
+      pendingPaymentApprovals: pendingPayments,
+      openCallbackAlerts: pendingCallbacks,
+      projectDirectives,
+      operationalSummary:
+        status === "nominal"
+          ? "All operational pipelines are within DUAA governance tolerances. Projects dispatched to specialists."
+          : `Project oversight identified ${criticalIssues} critical items and ${warningIssues} payment/routing holds requiring staff review.`,
+    } satisfies ProjectOversightReport;
+  });
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+
+export interface ProjectOversightReport {
+  timestamp: string;
+  commander: "Nexus Commander";
+  status: "nominal" | "caution" | "action_required";
+  activeProjectsCount: number;
+  pendingPaymentApprovals: number;
+  openCallbackAlerts: number;
+  projectDirectives: Array<{
+    projectId: string;
+    customer: string;
+    service: string;
+    stage: "intake" | "scheduled" | "in_progress" | "review";
+    health: "on_track" | "warning" | "critical";
+    delegatedTo: string;
+    recommendedAction: string;
+  }>;
+  operationalSummary: string;
+}
+
+const oversightInputSchema = z.object({
+  projectId: z.string().optional(),
+  includeEnvironmentalAudit: z.boolean().default(true),
+});
+
+export const runNexusProjectOversight = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => oversightInputSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const supabase = context.supabase;
+
     // 1. Fetch active bookings (projects)
     const { data: bookings, error: bookingsError } = await supabase
       .from("bookings")
