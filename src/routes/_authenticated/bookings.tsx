@@ -1,3 +1,4 @@
+import { ManualBookingDialog } from "@/components/ManualBookingDialog";
 import { createFileRoute, Link, useNavigate, type ErrorComponentProps } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
