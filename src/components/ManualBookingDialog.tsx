@@ -237,3 +237,15 @@ export function ManualBookingDialog({ onBookingCreated, disabled }: ManualBookin
     </Dialog>
   );
 }
+<div className="flex flex-wrap items-center gap-2">
+  <ManualBookingDialog onBookingCreated={() => void refetch()} disabled={viewOnly} />
+  <Button variant="outline" size="sm" onClick={() => void openAllImages()} disabled={loadingAllImages || allPhotoPaths.length === 0}>
+    <Images className="mr-2 h-4 w-4" />{loadingAllImages ? "Loading images…" : "Show all images"}
+  </Button>
+  <Button variant="outline" size="sm" onClick={() => void refetch()} disabled={isFetching}>
+    <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />Refresh
+  </Button>
+  <Button variant="ghost" size="sm" onClick={() => void signOut()}>
+    <LogOut className="mr-2 h-4 w-4" />Sign out
+  </Button>
+</div>
