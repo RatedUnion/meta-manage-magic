@@ -213,44 +213,19 @@ export const runNexusProjectOversight = createServerFn({ method: "POST" })
         recommendedAction = "Confirm First Citizens Bank wire transfer reference before authorizing mobilization.";
       }
 
-      // Minimum pricing rule checks (Domestic $250, Commercial $1,200)
-      if (booking.payment_amount && booking.payment_amount < 110) {
-        health = "critical";
-        recommendedAction = "Flagged: Cost is below non-negotiable TTD $110 appointment floor.";
+           // Pricing baseline checks:
+      // - Appointment fee floor: TTD $110 (non-negotiable)
+      // - Domestic service minimum: TTD $400
+      // - Commercial service baseline: TTD $1,200 (includes 1-2 crew)
+      if (booking.payment_amount) {
+        if (booking.payment_amount < 110) {
+          health = "critical";
+          recommendedAction = "Flagged: Quoted cost violates non-negotiable TTD $110 appointment floor.";
+        } else if (serviceLower.includes("commercial") && booking.payment_amount < 1200) {
+          health = "critical";
+          recommendedAction = "Commercial Policy Violation: Billed below minimum TTD $1,200 threshold for 1–2 crew.";
+        } else if (booking.payment_amount < 400 && !serviceLower.includes("consultation")) {
+          health = "warning";
+          recommendedAction = "Review Scope: Quoted below standard TTD $400 Domestic base rate.";
+        }
       }
-
-      return {
-        projectId: booking.id,
-        customer: booking.name || "Valued Client",
-        service: booking.service || "General Service",
-        stage: (booking.status === "completed" ? "review" : "in_progress") as "review" | "in_progress",
-        health,
-        delegatedTo,
-        recommendedAction,
-      };
-    });
-
-    const pendingPayments = (bookings || []).filter(
-      (b) => b.payment_status === "pending_review" || b.payment_status === "unpaid"
-    ).length;
-
-    const criticalIssues = projectDirectives.filter((p) => p.health === "critical").length;
-    const warningIssues = projectDirectives.filter((p) => p.health === "warning").length;
-
-    const status: ProjectOversightReport["status"] =
-      criticalIssues > 0 ? "action_required" : warningIssues > 0 ? "caution" : "nominal";
-
-    return {
-      timestamp: new Date().toISOString(),
-      commander: "Nexus Commander",
-      status,
-      activeProjectsCount: bookings?.length ?? 0,
-      pendingPaymentApprovals: pendingPayments,
-      openCallbackAlerts: pendingCallbacks,
-      projectDirectives,
-      operationalSummary:
-        status === "nominal"
-          ? "All operational pipelines are within DUAA governance tolerances. Projects dispatched to specialists."
-          : `Project oversight identified ${criticalIssues} critical items and ${warningIssues} payment/routing holds requiring staff review.`,
-    } satisfies ProjectOversightReport;
-  });
